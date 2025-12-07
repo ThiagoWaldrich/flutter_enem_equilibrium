@@ -318,7 +318,7 @@ class _EmojiButton extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? AppTheme.primaryColor : AppTheme.lightGray,
+            color: isActive ? Color(0xFFFF8000) : AppTheme.primaryColor,
             width: isActive ? 2 : 1,
           ),
         ),
@@ -356,7 +356,7 @@ class _SubjectCard extends StatelessWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color:Color(0xFF021328),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(color: AppTheme.lightGray),
       ),
@@ -382,7 +382,7 @@ class _SubjectCard extends StatelessWidget {
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 15,
-                      color: AppTheme.textPrimary,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -390,7 +390,7 @@ class _SubjectCard extends StatelessWidget {
                   '$completedSessions/$totalSessions',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppTheme.textSecondary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
