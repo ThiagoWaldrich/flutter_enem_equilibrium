@@ -4,6 +4,7 @@ import '../models/subject.dart';
 import '../models/monthly_goal.dart';
 import '../utils/constants.dart';
 import 'storage_service.dart';
+import 'package:intl/intl.dart';
 
 class CalendarService extends ChangeNotifier {
   final StorageService _storageService;
@@ -13,6 +14,14 @@ class CalendarService extends ChangeNotifier {
   CalendarService(this._storageService) {
     _loadData();
     _initializeMonthlyGoals();
+  }
+
+  // -------------------------
+  // Utilitário seguro de Data
+  // -------------------------
+  DateTime _parseDate(String dateStr) {
+    // dateStr sempre vem no formato yyyy-MM-dd
+    return DateTime.parse(dateStr);
   }
 
   // Carregar dados do armazenamento
@@ -59,16 +68,17 @@ class CalendarService extends ChangeNotifier {
     if (dayData?.customSubjects != null) {
       return dayData!.customSubjects!;
     }
-    
-    // Retornar matérias padrão
+
     return AppConstants.predefinedSubjects
         .asMap()
         .entries
-        .map((entry) => Subject(
-              id: (entry.key + 1).toString(),
-              name: entry.value['name'] as String,
-              sessions: entry.value['sessions'] as int,
-            ))
+        .map(
+          (entry) => Subject(
+            id: (entry.key + 1).toString(),
+            name: entry.value['name'] as String,
+            sessions: entry.value['sessions'] as int,
+          ),
+        )
         .toList();
   }
 
@@ -111,23 +121,25 @@ class CalendarService extends ChangeNotifier {
   ) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     final progress = Map<String, List<int>>.from(dayData.studyProgress);
-    
+
     if (!progress.containsKey(subjectId)) {
       progress[subjectId] = [];
     }
-    
+
     final subjectProgress = List<int>.from(progress[subjectId]!);
+
     if (subjectProgress.contains(session)) {
       subjectProgress.remove(session);
     } else {
       subjectProgress.add(session);
       subjectProgress.sort();
     }
-    
+
     progress[subjectId] = subjectProgress;
+
     _daysData[dateStr] = dayData.copyWith(studyProgress: progress);
-    
     await _saveData();
+
     await updateMonthlyGoals(dateStr);
     notifyListeners();
   }
@@ -137,74 +149,73 @@ class CalendarService extends ChangeNotifier {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(
       customSubjects: subjects,
-      studyProgress: {}, // Limpar progresso ao alterar matérias
+      studyProgress: {},
     );
     await _saveData();
     notifyListeners();
   }
 
-  // Atualizar metas mensais
+  // -------------------------
+  // CÁLCULO DAS METAS MENSAIS
+  // -------------------------
   Future<void> updateMonthlyGoals(String dateStr) async {
-    final date = DateTime.parse(dateStr);
-    final month = date.month;
+    final date = _parseDate(dateStr);
     final year = date.year;
-    
-    // Resetar contadores
-    _monthlyGoals.forEach((key, goal) {
-      _monthlyGoals[key] = goal.copyWith(current: 0);
-    });
-    
-    // Calcular dias no mês
+    final month = date.month;
+
+    final formattedMonth = DateFormat('yyyy-MM').format(date);
+
+    // Resetar
+    _monthlyGoals.updateAll((_, goal) => goal.copyWith(current: 0));
+
+    // Último dia do mês
     final lastDay = DateTime(year, month + 1, 0).day;
-    
-    // Contar horas estudadas no mês
+
     for (int day = 1; day <= lastDay; day++) {
-      final dayDateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-      final dayData = _daysData[dayDateStr];
-      
-      if (dayData?.studyProgress != null) {
-        final subjects = getDaySubjects(dayDateStr);
-        
+      final ds = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+      final dayData = _daysData[ds];
+
+      if (dayData != null) {
+        final subjects = getDaySubjects(ds);
+
         for (final subject in subjects) {
-          final progress = dayData!.studyProgress[subject.id] ?? [];
+          final progress = dayData.studyProgress[subject.id] ?? [];
           final hoursStudied = progress.length;
-          
+
           if (_monthlyGoals.containsKey(subject.name)) {
-            final currentGoal = _monthlyGoals[subject.name]!;
-            _monthlyGoals[subject.name] = currentGoal.copyWith(
-              current: currentGoal.current + hoursStudied,
+            final goal = _monthlyGoals[subject.name]!;
+            _monthlyGoals[subject.name] = goal.copyWith(
+              current: goal.current + hoursStudied,
             );
           }
         }
       }
     }
-    
+
     notifyListeners();
   }
 
-  // Obter progresso total de um dia
+  // -------------------------
+  // PROGRESSO DIÁRIO
+  // -------------------------
   Map<String, int> getDayProgress(String dateStr) {
     final subjects = getDaySubjects(dateStr);
     final dayData = _daysData[dateStr];
-    
-    int completedSessions = 0;
-    int totalSessions = 0;
-    
-    for (final subject in subjects) {
-      totalSessions += subject.sessions;
-      final progress = dayData?.studyProgress[subject.id] ?? [];
-      completedSessions += progress.length;
+
+    int completed = 0;
+    int total = 0;
+
+    for (final s in subjects) {
+      total += s.sessions;
+      completed += (dayData?.studyProgress[s.id] ?? []).length;
     }
-    
+
     return {
-      'completed': completedSessions,
-      'total': totalSessions,
-      'percentage': totalSessions > 0
-          ? ((completedSessions / totalSessions) * 100).round()
-          : 0,
+      'completed': completed,
+      'total': total,
+      'percentage': total == 0 ? 0 : ((completed / total) * 100).round(),
     };
   }
 
-  // Obter metas mensais
   Map<String, MonthlyGoal> get monthlyGoals => _monthlyGoals;
 }

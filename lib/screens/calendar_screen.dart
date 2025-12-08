@@ -1,3 +1,5 @@
+import 'package:equilibrium/screens/access_logs_screen.dart';
+import 'package:equilibrium/screens/flashcards_screen.dart';
 import 'package:equilibrium/screens/manage_subjects_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -120,7 +122,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               items: List.generate(12, (index) {
                 return DropdownMenuItem(
                   value: index,
-                  child: Text(_months[index]),
+                  child: Text(_months[index], style: const TextStyle(color: Colors.black)),
                 );
               }),
               onChanged: (value) {
@@ -157,7 +159,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ].map((year) {
                 return DropdownMenuItem(
                   value: year,
-                  child: Text(year.toString()),
+                  child: Text(year.toString(), style: const TextStyle(color: Colors.black)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -173,7 +175,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         const SizedBox(width: 8),
 
         IconButton(
-          icon: const Icon(Icons.flag),
+          icon: const Icon(Icons.flag, color: Colors.white),
           onPressed: () {
             Navigator.push(
               context,
@@ -184,17 +186,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
           },
           tooltip: 'Metas Mensais',
         ),
+        
+        IconButton(
+          icon: const Icon(Icons.credit_card, color: Colors.white),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const FlashcardsScreen(),
+            ),
+          ),
+          tooltip: 'Flashcards',
+        ),
+        
+        IconButton(
+          icon: const Icon(Icons.analytics, color: Colors.white),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AccessLogsScreen(),
+            ),
+          ),
+          tooltip: 'Logs de Acesso',
+        ),
 
         // Botão Hoje
         IconButton(
-          icon: const Icon(Icons.today),
+          icon: const Icon(Icons.today, color: Colors.white),
           onPressed: _goToToday,
           tooltip: 'Ir para hoje',
         ),
 
         // Botão Gerenciar Matérias
         IconButton(
-          icon: const Icon(Icons.edit),
+          icon: const Icon(Icons.edit, color: Colors.white),
           onPressed: _navigateToSubjects,
           tooltip: 'Gerenciar Matérias',
         ),
@@ -203,7 +227,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
         // Botão Autodiagnóstico
         IconButton(
-          icon: const Icon(Icons.assessment),
+          icon: const Icon(Icons.assessment, color: Colors.white),
           onPressed: _navigateToAutodiagnostico,
           tooltip: 'Autodiagnóstico',
         ),
@@ -224,8 +248,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               selectedMonth: _selectedMonth,
               selectedDate: _selectedDate,
               onDateSelected: _selectDate,
-              daySize: 40.0, // Reduzido de 50 para 40
-              spacing: 4.0, // Reduzido de 8 para 4
+              daySize: 40.0,
+              spacing: 4.0,
             ),
           ),
         ),
@@ -297,7 +321,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     selectedMonth: _selectedMonth,
                     selectedDate: _selectedDate,
                     onDateSelected: _selectDate,
-                    daySize: 38.0, // Reduzido ainda mais para tablet
+                    daySize: 38.0,
                     spacing: 4.0,
                   ),
                 ),
@@ -334,7 +358,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             selectedMonth: _selectedMonth,
             selectedDate: _selectedDate,
             onDateSelected: _selectDate,
-            daySize: 35.0, // Reduzido mais para mobile
+            daySize: 35.0,
             spacing: 3.0,
           ),
         ),
@@ -383,18 +407,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF011B3D),
       appBar: AppBar(
-        title: const Row(
-          children: [
-            SizedBox(width: 12),
-            Text(
-              '🎯Equilibrium',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ],
+        title: const Text(
+          '🎯Equilibrium',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            color: Colors.white
+          ),
         ),
+        backgroundColor: const Color(0xFF011B3D),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [_buildAppBarActions()],
       ),
       body: !_isContextReady

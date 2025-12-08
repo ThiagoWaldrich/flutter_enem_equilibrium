@@ -1,3 +1,4 @@
+// main.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // IMPORTANTE: Adicionar para inicializar formatos de data
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 // Importar serviços
 import 'services/storage_service.dart';
@@ -15,12 +17,15 @@ import 'services/database_service.dart';
 import 'services/calendar_service.dart';
 import 'services/mind_map_service.dart';
 import 'services/monthly_goals_service.dart';
+import 'services/enhanced_database_service.dart';
 
 // Importar utils
 import 'utils/theme.dart';
 
 // Importar telas
 import 'screens/calendar_screen.dart';
+import 'screens/flashcards_screen.dart';
+import 'screens/access_logs_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,8 +39,24 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
   
-  runApp(
-    MultiProvider(
+  // 3. INICIALIZAR BANCO DE DADOS APERFEIÇOADO
+  final db = EnhancedDatabaseService();
+  await db.init();
+  
+  // 4. REGISTRAR ACESSO INICIAL
+  await db.registerAccess();
+  
+  runApp(MyApp(db: db));
+}
+
+class MyApp extends StatelessWidget {
+  final EnhancedDatabaseService db;
+
+  const MyApp({super.key, required this.db});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
         // Serviços principais (inicializados primeiro)
         FutureProvider<StorageService?>(
@@ -55,6 +76,9 @@ void main() async {
           },
           initialData: null,
         ),
+        
+        // Banco de dados aperfeiçoado (já inicializado)
+        Provider<EnhancedDatabaseService>.value(value: db),
         
         // Serviços dependentes (usam ProxyProvider)
         ChangeNotifierProxyProvider<StorageService, CalendarService>(
@@ -90,8 +114,8 @@ void main() async {
       ],
       
       child: const EquilibriumApp(),
-    ),
-  );
+    );
+  }
 }
 
 class EquilibriumApp extends StatelessWidget {
@@ -110,9 +134,9 @@ class EquilibriumApp extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Inicializando serviços...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                const Text('Inicializando serviços...'),
               ],
             ),
           ),
@@ -121,10 +145,10 @@ class EquilibriumApp extends StatelessWidget {
     }
     
     return MaterialApp(
-      title: 'Equilibrium - Calendário de Estudos',
+      title: 'Equilibrium',
       theme: AppTheme.lightTheme,
       locale: const Locale('pt', 'BR'),
-      home: const CalendarScreen(),
+      home: const CalendarScreen(), 
       debugShowCheckedModeBanner: false,
     );
   }
