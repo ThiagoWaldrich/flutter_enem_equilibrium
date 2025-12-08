@@ -87,13 +87,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🎯 Metas Mensais'),
+
+        title: const Text('🎯 Metas Mensais', style: TextStyle(color: Colors.white),),
         actions: [
           if (_currentGoals != null)
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: _deleteGoals,
               tooltip: 'Excluir Metas',
+              color: Colors.white,
             ),
         ],
       ),

@@ -32,17 +32,24 @@ class AppTheme {
         surface: cardBackground,
       ),
       
-      // AppBar
+      // AppBar - TUDO BRANCO AQUI
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        foregroundColor: Colors.white, // ← Texto e ícones brancos
         elevation: 0,
         centerTitle: false,
+        iconTheme: IconThemeData(color: Colors.white), // ← Ícones brancos
+        actionsIconTheme: IconThemeData(color: Colors.white), // ← Ícones de ação brancos
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: Colors.white, // ← Título branco
         ),
+      ),
+      
+      // Ícones globais também brancos no AppBar
+      iconTheme: const IconThemeData(
+        color: Colors.white,
       ),
       
       // Botões
@@ -166,7 +173,9 @@ class AppTheme {
       'Português': const Color(0xFF22C55E),
       'Literatura': const Color(0xFFEC4899),
       'Redação': const Color(0xFFF97316),
-      'Artes': const Color(0xFFFBBF24),
+      'Artes': const Color(0xFFFBF24),
+      'Inglês': const Color(0xFF0EA5E9),
+      'Espanhol': const Color(0xFFF43F5E),
       'Simulado': const Color(0xFF78716C),
     };
     

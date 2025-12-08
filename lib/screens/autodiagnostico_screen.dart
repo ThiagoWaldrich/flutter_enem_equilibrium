@@ -480,31 +480,55 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text('📊 Autodiagnóstico ENEM'),
+        backgroundColor: const Color(0xFF011B3D), // Cor azul escuro igual ao CalendarScreen
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download),
+            icon: const Icon(Icons.download, color: Colors.white),
             onPressed: _exportData,
             tooltip: 'Exportar Dados',
           ),
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadData,
             tooltip: 'Atualizar',
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.white, // Cor do indicador (linha inferior) - BRANCO
+          labelColor: Colors.white, // Cor do texto da aba selecionada - BRANCO
+          unselectedLabelColor: Colors.white70, // Cor do texto das abas não selecionadas - BRANCO mais claro
           indicatorWeight: 3,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 13,
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
           tabs: const [
-            Tab(icon: Icon(Icons.add), text: 'Cadastrar'),
-            Tab(icon: Icon(Icons.bar_chart), text: 'Gráficos'),
-            Tab(icon: Icon(Icons.table_chart), text: 'Planilha'),
-            Tab(icon: Icon(Icons.menu_book), text: 'Caderno'),
-            Tab(icon: Icon(Icons.lightbulb), text: 'Mapas'),
+            Tab(
+              icon: Icon(Icons.add, color: Colors.white), // Ícone BRANCO
+              text: 'Cadastrar',
+            ),
+            Tab(
+              icon: Icon(Icons.bar_chart, color: Colors.white), // Ícone BRANCO
+              text: 'Gráficos',
+            ),
+            Tab(
+              icon: Icon(Icons.table_chart, color: Colors.white), // Ícone BRANCO
+              text: 'Planilha',
+            ),
+            Tab(
+              icon: Icon(Icons.menu_book, color: Colors.white), // Ícone BRANCO
+              text: 'Caderno',
+            ),
+            Tab(
+              icon: Icon(Icons.lightbulb, color: Colors.white), // Ícone BRANCO
+              text: 'Mapas',
+            ),
           ],
         ),
       ),
@@ -531,7 +555,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black,
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
