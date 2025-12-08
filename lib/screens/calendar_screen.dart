@@ -106,17 +106,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
         // Seletor de mês
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: _selectedMonth.month - 1,
-              dropdownColor: AppTheme.primaryColor,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.black, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down,
-                  color: Colors.white, size: 20),
+                  color: Colors.black, size: 20),
               items: List.generate(12, (index) {
                 return DropdownMenuItem(
                   value: index,
@@ -138,17 +138,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
         // Seletor de ano
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(8),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: _selectedMonth.year,
-              dropdownColor: AppTheme.primaryColor,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              dropdownColor: Colors.white,
+              style: const TextStyle(color: Colors.black, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down,
-                  color: Colors.white, size: 20),
+                  color: Colors.black, size: 20),
               items: [
                 for (int year = DateTime.now().year - 1;
                     year <= DateTime.now().year + 3;
@@ -171,6 +171,19 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ),
         const SizedBox(width: 8),
+
+        IconButton(
+          icon: const Icon(Icons.flag),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const GoalsScreen(),
+              ),
+            );
+          },
+          tooltip: 'Metas Mensais',
+        ),
 
         // Botão Hoje
         IconButton(

@@ -41,11 +41,11 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   int _totalQuestions = 0;
   bool _isLoading = false;
   
-  // Filtros
+ 
   String? _filterSubject;
   String? _filterErrorType;
   
-  // Edição
+ 
   Question? _questionToEdit;
   bool _isEditing = false;
 
@@ -75,7 +75,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     final stats = await databaseService.getSubjectStats();
     final count = await databaseService.getQuestionCount();
     
-    // Calcular estatísticas de erros
     final errorStats = <String, Map<String, dynamic>>{};
     for (final question in questions) {
       final subject = question.subject;
