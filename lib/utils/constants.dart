@@ -63,4 +63,5 @@ class AppConstants {
   static const String keyGoals = 'calendar_goals';
   static const String keyReview = 'calendar_review';
   static const String keyMindMaps = 'mind_maps';
+  static const String keyMonthlyGoals = 'monthly_goals';
 }

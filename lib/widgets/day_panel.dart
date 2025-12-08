@@ -51,21 +51,14 @@ class _DayPanelState extends State<DayPanel> {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
     final dayData = calendarService.getDayData(dateStr);
     final subjects = calendarService.getDaySubjects(dateStr);
-    final progress = calendarService.getDayProgress(dateStr);
     
-    final formattedDate = 'Selecione um dia';
+    // Formatar data corretamente
+    final formattedDate = DateFormat("d 'de' MMMM, EEEE", 'pt_BR').format(widget.selectedDate);
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF042044),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        // boxShadow: [
-        //   BoxShadow(
-        //     color: Colors.black,
-        //     blurRadius: 10,
-        //     offset: const Offset(0, 2),
-        //   ),
-        // ],
       ),
       margin: const EdgeInsets.all(16),
       child: Column(
@@ -78,10 +71,7 @@ class _DayPanelState extends State<DayPanel> {
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(AppTheme.borderRadius),
                 topRight: Radius.circular(AppTheme.borderRadius),
-               ),
-              // border: Border(
-              //   bottom: BorderSide(color: AppTheme.lightGray, width: 1),
-              // ),
+              ),
             ),
             child: Row(
               children: [
@@ -118,55 +108,36 @@ class _DayPanelState extends State<DayPanel> {
               controller: widget.scrollController,
               padding: const EdgeInsets.all(20),
               children: [
-                // Humor e Energia
+                // Humor
                 const Text(
                   'Humor:',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color:Colors.white,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(5, (index) {
-                    final value = index + 1;
-                    final isActive = dayData?.mood == value;
-                    return _EmojiButton(
-                      emoji: ['😞', '😕', '😊', '😄', '🤩'][index],
-                      isActive: isActive,
-                      onTap: () {
-                        calendarService.updateMood(dateStr, value);
-                      },
-                    );
-                  }),
+                _MoodSelector(
+                  dateStr: dateStr,
+                  currentMood: dayData?.mood,
                 ),
                 
                 const SizedBox(height: 24),
                 
+                // Energia
                 const Text(
                   'Energia:',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
-                    color:Colors.white,
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(5, (index) {
-                    final value = index + 1;
-                    final isActive = dayData?.energy == value;
-                    return _EmojiButton(
-                      emoji: ['🪫', '🔋', '🔋', '🔋', '⚡'][index],
-                      isActive: isActive,
-                      onTap: () {
-                        calendarService.updateEnergy(dateStr, value);
-                      },
-                    );
-                  }),
+                _EnergySelector(
+                  dateStr: dateStr,
+                  currentEnergy: dayData?.energy,
                 ),
                 
                 const SizedBox(height: 24),
@@ -184,11 +155,16 @@ class _DayPanelState extends State<DayPanel> {
                 TextField(
                   controller: _notesController,
                   maxLines: 4,
-                  style: const TextStyle(fontSize: 14,color: Colors.white),
-                  decoration: const InputDecoration(
-                    fillColor: Color(0xFF021328),
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
+                  decoration: InputDecoration(
+                    fillColor: const Color(0xFF021328),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
                     hintText: 'Adicione suas anotações aqui...',
-                    hintStyle: TextStyle(fontSize: 14, color: Colors.white54),
+                    hintStyle: const TextStyle(fontSize: 14, color: Colors.white54),
                   ),
                   onChanged: _saveNotes,
                 ),
@@ -207,6 +183,20 @@ class _DayPanelState extends State<DayPanel> {
                         color: Colors.white,
                       ),
                     ),
+                    IconButton(
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ManageSubjectsScreen(
+                              date: widget.selectedDate,
+                            ),
+                          ),
+                        );
+                      },
+                      tooltip: 'Adicionar matérias',
+                    ),
                   ],
                 ),
                 
@@ -223,13 +213,13 @@ class _DayPanelState extends State<DayPanel> {
                     ),
                     child: Column(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.book_outlined,
                           size: 48,
                           color: Colors.white,
                         ),
                         const SizedBox(height: 12),
-                        Text(
+                        const Text(
                           'Nenhuma matéria agendada para hoje',
                           style: TextStyle(
                             color: Colors.white,
@@ -238,8 +228,8 @@ class _DayPanelState extends State<DayPanel> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          'Adicione matérias usando o menu no canto superior direito',
+                        const Text(
+                          'Adicione matérias usando o botão acima',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -282,6 +272,8 @@ class _DayPanelState extends State<DayPanel> {
                     label: const Text('Adicionar mais matérias'),
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48),
+                      side: const BorderSide(color: Colors.white),
+                      foregroundColor: Colors.white,
                     ),
                   ),
               ],
@@ -289,6 +281,66 @@ class _DayPanelState extends State<DayPanel> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MoodSelector extends StatelessWidget {
+  final String dateStr;
+  final int? currentMood;
+
+  const _MoodSelector({
+    required this.dateStr,
+    required this.currentMood,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final calendarService = context.read<CalendarService>();
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(5, (index) {
+        final value = index + 1;
+        final isActive = currentMood == value;
+        return _EmojiButton(
+          emoji: ['😞', '😕', '😊', '😄', '🤩'][index],
+          isActive: isActive,
+          onTap: () {
+            calendarService.updateMood(dateStr, value);
+          },
+        );
+      }),
+    );
+  }
+}
+
+class _EnergySelector extends StatelessWidget {
+  final String dateStr;
+  final int? currentEnergy;
+
+  const _EnergySelector({
+    required this.dateStr,
+    required this.currentEnergy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final calendarService = context.read<CalendarService>();
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(5, (index) {
+        final value = index + 1;
+        final isActive = currentEnergy == value;
+        return _EmojiButton(
+          emoji: ['🪫', '🔋', '🔋', '🔋', '⚡'][index],
+          isActive: isActive,
+          onTap: () {
+            calendarService.updateEnergy(dateStr, value);
+          },
+        );
+      }),
     );
   }
 }
@@ -318,7 +370,7 @@ class _EmojiButton extends StatelessWidget {
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? Color(0xFFFF8000) : AppTheme.primaryColor,
+            color: isActive ? const Color(0xFFFF8000) : AppTheme.primaryColor,
             width: isActive ? 2 : 1,
           ),
         ),
@@ -327,7 +379,7 @@ class _EmojiButton extends StatelessWidget {
             emoji,
             style: TextStyle(
               fontSize: 28,
-              color: isActive ? null : Colors.black.withOpacity(0.3),
+              color: isActive ? null : Colors.white.withOpacity(0.5),
             ),
           ),
         ),
@@ -356,7 +408,7 @@ class _SubjectCard extends StatelessWidget {
     
     return Container(
       decoration: BoxDecoration(
-        color:Color(0xFF021328),
+        color: const Color(0xFF021328),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(color: AppTheme.lightGray),
       ),
