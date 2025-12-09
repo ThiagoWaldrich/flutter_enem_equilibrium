@@ -2,6 +2,7 @@ import 'package:equilibrium/screens/access_logs_screen.dart';
 import 'package:equilibrium/screens/flashcards_screen.dart';
 import 'package:equilibrium/screens/manage_subjects_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../services/calendar_service.dart';
@@ -18,6 +19,58 @@ class CalendarScreen extends StatefulWidget {
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
+}
+
+class GlassContainer extends StatelessWidget {
+  final Widget child;
+  final double? width;
+  final double? height;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+  final double borderRadius;
+  final double blur;
+  final double opacity;
+  final Color color;
+
+  const GlassContainer({
+    super.key,
+    required this.child,
+    this.width,
+    this.height,
+    this.padding = const EdgeInsets.all(16.0),
+    this.margin = const EdgeInsets.all(12.0),
+    this.borderRadius = 20.0,
+    this.blur = 6.0, // Blur mínimo
+    this.opacity = 0.03, // Quase transparente
+    this.color = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      decoration: BoxDecoration(
+        color: color.withOpacity(opacity),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.12),
+          width: 0.7,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+          child: Padding(
+            padding: padding,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _CalendarScreenState extends State<CalendarScreen> {
@@ -44,7 +97,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
-    // Usar WidgetsBinding para garantir que o contexto está pronto
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         setState(() {
@@ -53,8 +105,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         final calendarService =
             Provider.of<CalendarService>(context, listen: false);
         calendarService.updateMonthlyGoals(
-            DateFormat('yyyy-MM').format(DateTime.now()) // Mudado para yyyy-MM
-            );
+            DateFormat('yyyy-MM').format(DateTime.now()));
       }
     });
   }
@@ -108,21 +159,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
         // Seletor de mês
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: _selectedMonth.month - 1,
-              dropdownColor: Colors.white,
-              style: const TextStyle(color: Colors.black, fontSize: 14),
+              dropdownColor: const Color(0xFF011B3D).withOpacity(0.95),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down,
-                  color: Colors.black, size: 20),
+                  color: Colors.white, size: 20),
               items: List.generate(12, (index) {
                 return DropdownMenuItem(
                   value: index,
-                  child: Text(_months[index], style: const TextStyle(color: Colors.black)),
+                  child: Text(_months[index], style: const TextStyle(color: Colors.white)),
                 );
               }),
               onChanged: (value) {
@@ -140,17 +192,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
         // Seletor de ano
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Colors.white.withOpacity(0.15),
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: _selectedMonth.year,
-              dropdownColor: Colors.white,
-              style: const TextStyle(color: Colors.black, fontSize: 14),
+              dropdownColor: const Color(0xFF011B3D).withOpacity(0.95),
+              style: const TextStyle(color: Colors.white, fontSize: 14),
               icon: const Icon(Icons.arrow_drop_down,
-                  color: Colors.black, size: 20),
+                  color: Colors.white, size: 20),
               items: [
                 for (int year = DateTime.now().year - 1;
                     year <= DateTime.now().year + 3;
@@ -159,7 +212,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ].map((year) {
                 return DropdownMenuItem(
                   value: year,
-                  child: Text(year.toString(), style: const TextStyle(color: Colors.black)),
+                  child: Text(year.toString(), style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -239,11 +292,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Calendário reduzido
+        // Calendário SUPER transparente
         Expanded(
           flex: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
+          child: GlassContainer(
+            blur: 4.0,
+            opacity: 0.02,
             child: CalendarGrid(
               selectedMonth: _selectedMonth,
               selectedDate: _selectedDate,
@@ -254,41 +308,54 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ),
 
-        // Painel do dia ou espaço vazio
+        // Painel do dia SUPER transparente
         if (_selectedDate != null)
           Expanded(
             flex: 1,
-            child: DayPanel(
-              selectedDate: _selectedDate!,
-              onClose: () {
-                setState(() {
-                  _selectedDate = null;
-                });
-              },
+            child: GlassContainer(
+              blur: 4.0,
+              opacity: 0.02,
+              margin: const EdgeInsets.only(left: 8, right: 12, top: 12, bottom: 12),
+              child: DayPanel(
+                selectedDate: _selectedDate!,
+                onClose: () {
+                  setState(() {
+                    _selectedDate = null;
+                  });
+                },
+              ),
             ),
           )
         else
           Expanded(
             flex: 1,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+            child: Container(
+              margin: const EdgeInsets.all(12.0),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.02),
+                borderRadius: BorderRadius.circular(20.0),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.08),
+                  width: 0.5,
+                ),
+              ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.calendar_today,
-                        size: 64, color: Colors.grey),
+                    Icon(Icons.calendar_today,
+                        size: 64, color: Colors.white.withOpacity(0.3)),
                     const SizedBox(height: 16),
                     Text(
                       'Selecione um dia',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.grey,
+                            color: Colors.white.withOpacity(0.5),
                           ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Clique em qualquer dia do calendário',
-                      style: TextStyle(color: Colors.grey.shade500),
+                      style: TextStyle(color: Colors.white.withOpacity(0.3)),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -297,10 +364,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
 
-        // Metas mensais
+        // Metas mensais SUPER transparente
         const Expanded(
           flex: 1,
-          child: MonthlyGoalsPanel(),
+          child: GlassContainer(
+            blur: 4.0,
+            opacity: 0.02,
+            margin: EdgeInsets.only(right: 12, top: 12, bottom: 12),
+            child: MonthlyGoalsPanel(),
+          ),
         ),
       ],
     );
@@ -313,10 +385,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         Expanded(
           child: Column(
             children: [
+              // Calendário
               Expanded(
                 flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
+                child: GlassContainer(
+                  blur: 4.0,
+                  opacity: 0.02,
                   child: CalendarGrid(
                     selectedMonth: _selectedMonth,
                     selectedDate: _selectedDate,
@@ -326,9 +400,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ),
               ),
+              // Metas mensais
+              const SizedBox(height: 12),
               const Expanded(
                 flex: 1,
-                child: MonthlyGoalsPanel(),
+                child: GlassContainer(
+                  blur: 4.0,
+                  opacity: 0.02,
+                  child: MonthlyGoalsPanel(),
+                ),
               ),
             ],
           ),
@@ -336,13 +416,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
         if (_selectedDate != null)
           SizedBox(
             width: 400,
-            child: DayPanel(
-              selectedDate: _selectedDate!,
-              onClose: () {
-                setState(() {
-                  _selectedDate = null;
-                });
-              },
+            child: GlassContainer(
+              blur: 4.0,
+              opacity: 0.02,
+              margin: const EdgeInsets.all(12.0),
+              child: DayPanel(
+                selectedDate: _selectedDate!,
+                onClose: () {
+                  setState(() {
+                    _selectedDate = null;
+                  });
+                },
+              ),
             ),
           ),
       ],
@@ -353,13 +438,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Stack(
       children: [
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CalendarGrid(
-            selectedMonth: _selectedMonth,
-            selectedDate: _selectedDate,
-            onDateSelected: _selectDate,
-            daySize: 35.0,
-            spacing: 3.0,
+          padding: const EdgeInsets.all(12.0),
+          child: GlassContainer(
+            blur: 4.0,
+            opacity: 0.02,
+            child: CalendarGrid(
+              selectedMonth: _selectedMonth,
+              selectedDate: _selectedDate,
+              onDateSelected: _selectDate,
+              daySize: 35.0,
+              spacing: 3.0,
+            ),
           ),
         ),
         if (_selectedDate != null)
@@ -367,6 +456,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
             bottom: 70,
             right: 16,
             child: FloatingActionButton.extended(
+              backgroundColor: Colors.white.withOpacity(0.15),
+              foregroundColor: Colors.white,
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
@@ -377,14 +468,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     minChildSize: 0.5,
                     maxChildSize: 0.95,
                     expand: false,
-                    builder: (context, scrollController) => Container(
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                      ),
+                    builder: (context, scrollController) => GlassContainer(
+                      blur: 6.0,
+                      opacity: 0.03,
+                      margin: const EdgeInsets.all(16.0),
                       child: DayPanel(
                         selectedDate: _selectedDate!,
                         onClose: () => Navigator.pop(context),
@@ -436,8 +523,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
       bottomNavigationBar: MediaQuery.of(context).size.width <= 800
           ? BottomNavigationBar(
-              selectedItemColor: AppTheme.primaryColor,
-              unselectedItemColor: Colors.grey,
+              backgroundColor: Colors.transparent,
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white.withOpacity(0.6),
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.flag),

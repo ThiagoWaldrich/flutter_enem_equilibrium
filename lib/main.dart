@@ -29,6 +29,10 @@ import 'screens/access_logs_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    // Configurações específicas para web
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+  }
   
   // 1. INICIALIZAR FORMATOS DE DATA (RESOLVE O ERRO DO intl)
   await initializeDateFormatting();
