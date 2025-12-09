@@ -173,7 +173,7 @@ class AppTheme {
       'Português': const Color(0xFF22C55E),
       'Literatura': const Color(0xFFEC4899),
       'Redação': const Color(0xFFF97316),
-      'Artes': const Color(0xFFFBF24),
+      'Artes': const Color(0xFFFFFF55),
       'Inglês': const Color(0xFF0EA5E9),
       'Espanhol': const Color(0xFFF43F5E),
       'Simulado': const Color(0xFF78716C),

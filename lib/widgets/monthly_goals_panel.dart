@@ -40,8 +40,9 @@ class MonthlyGoalsPanel extends StatelessWidget {
       };
     }).toList();
     
-    // Ordenar por progresso (menor progresso primeiro)
-    goalsList.sort((a, b) => (a['percentage'] as double).compareTo(b['percentage'] as double));
+  
+   goalsList.sort((a, b) => (b['percentage'] as double).compareTo(a['percentage'] as double));
+
     
     // Calcular totais
     double totalHours = 0;
@@ -376,7 +377,7 @@ class _SummaryCard extends StatelessWidget {
           Icon(
             icon,
             size: 22,
-            color: color,
+            color: color.withOpacity(0.3),
           ),
           const SizedBox(height: 8),
           Text(

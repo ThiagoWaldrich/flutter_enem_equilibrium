@@ -21,31 +21,29 @@ class AutodiagnosticoScreen extends StatefulWidget {
 class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   String? _selectedSubject;
   final _topicController = TextEditingController();
   final _subtopicController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _errorDescriptionController = TextEditingController();
-  
+
   bool _contentError = false;
   bool _attentionError = false;
   bool _timeError = false;
-  
+
   File? _imageFile;
   String? _imageData;
-  
+
   List<Question> _questions = [];
   Map<String, int> _subjectStats = {};
   Map<String, Map<String, dynamic>> _errorStats = {};
   int _totalQuestions = 0;
   bool _isLoading = false;
-  
- 
+
   String? _filterSubject;
   String? _filterErrorType;
-  
- 
+
   Question? _questionToEdit;
   bool _isEditing = false;
 
@@ -68,13 +66,13 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
+
     final databaseService = context.read<DatabaseService>();
-    
+
     final questions = await databaseService.getQuestions(limit: 1000);
     final stats = await databaseService.getSubjectStats();
     final count = await databaseService.getQuestionCount();
-    
+
     final errorStats = <String, Map<String, dynamic>>{};
     for (final question in questions) {
       final subject = question.subject;
@@ -97,7 +95,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         errorStats[subject]!['tempo']++;
       }
     }
-    
+
     setState(() {
       _questions = questions;
       _subjectStats = stats;
@@ -106,32 +104,31 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       _isLoading = false;
     });
   }
-  
 
   Map<String, Map<String, int>> _loadTopicStats() {
     final topicStats = <String, Map<String, int>>{};
-    
+
     for (final question in _questions) {
       final subject = question.subject;
       final topic = question.topic;
-      
+
       if (!topicStats.containsKey(subject)) {
         topicStats[subject] = {};
       }
-      
+
       if (!topicStats[subject]!.containsKey(topic)) {
         topicStats[subject]![topic] = 0;
       }
-      
+
       topicStats[subject]![topic] = topicStats[subject]![topic]! + 1;
     }
-    
+
     return topicStats;
   }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    
+
     final source = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
@@ -153,11 +150,11 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ),
       ),
     );
-    
+
     if (source == null) return;
-    
+
     final XFile? image = await picker.pickImage(source: source);
-    
+
     if (image != null) {
       final bytes = await image.readAsBytes();
       setState(() {
@@ -179,13 +176,18 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     }
 
     final question = Question(
-      id: _isEditing ? _questionToEdit!.id : 'q_${DateTime.now().millisecondsSinceEpoch}',
+      id: _isEditing
+          ? _questionToEdit!.id
+          : 'q_${DateTime.now().millisecondsSinceEpoch}',
       subject: _selectedSubject!,
       topic: _topicController.text,
-      subtopic: _subtopicController.text.isEmpty ? null : _subtopicController.text,
-      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
-      errorDescription: _errorDescriptionController.text.isEmpty 
-          ? null 
+      subtopic:
+          _subtopicController.text.isEmpty ? null : _subtopicController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      errorDescription: _errorDescriptionController.text.isEmpty
+          ? null
           : _errorDescriptionController.text,
       errors: {
         'conteudo': _contentError,
@@ -199,24 +201,27 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               type: 'image/jpeg',
             )
           : null,
-      timestamp: _isEditing ? _questionToEdit!.timestamp : DateTime.now().toIso8601String(),
+      timestamp: _isEditing
+          ? _questionToEdit!.timestamp
+          : DateTime.now().toIso8601String(),
     );
 
     final databaseService = context.read<DatabaseService>();
-    
+
     if (_isEditing) {
       await databaseService.updateQuestion(question);
     } else {
       await databaseService.insertQuestion(question);
     }
-    
+
     _clearForm();
     await _loadData();
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('✅ Questão ${_isEditing ? 'atualizada' : 'salva'} com sucesso!'),
+          content: Text(
+              '✅ Questão ${_isEditing ? 'atualizada' : 'salva'} com sucesso!'),
           backgroundColor: AppTheme.successColor,
         ),
       );
@@ -244,7 +249,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     setState(() {
       _questionToEdit = question;
       _isEditing = true;
-      
+
       _selectedSubject = question.subject;
       _topicController.text = question.topic;
       _subtopicController.text = question.subtopic ?? '';
@@ -253,12 +258,12 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       _contentError = question.errors['conteudo'] ?? false;
       _attentionError = question.errors['atencao'] ?? false;
       _timeError = question.errors['tempo'] ?? false;
-      
+
       if (question.image != null) {
         _imageData = question.image!.data.split(',').last;
       }
     });
-    
+
     _tabController.animateTo(0);
   }
 
@@ -281,12 +286,12 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ],
       ),
     );
-    
+
     if (confirm == true) {
       final databaseService = context.read<DatabaseService>();
       await databaseService.deleteQuestions([question.id]);
       await _loadData();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -299,20 +304,22 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   }
 
   Future<void> _exportData() async {
-    final data = _questions.map((q) => {
-      'materia': q.subject,
-      'topico': q.topic,
-      'subtopico': q.subtopic ?? '',
-      'descricao': q.description ?? '',
-      'erro_descricao': q.errorDescription ?? '',
-      'erro_conteudo': q.errors['conteudo'] ?? false,
-      'erro_atencao': q.errors['atencao'] ?? false,
-      'erro_tempo': q.errors['tempo'] ?? false,
-      'data': q.timestamp,
-    }).toList();
-    
+    final data = _questions
+        .map((q) => {
+              'materia': q.subject,
+              'topico': q.topic,
+              'subtopico': q.subtopic ?? '',
+              'descricao': q.description ?? '',
+              'erro_descricao': q.errorDescription ?? '',
+              'erro_conteudo': q.errors['conteudo'] ?? false,
+              'erro_atencao': q.errors['atencao'] ?? false,
+              'erro_tempo': q.errors['tempo'] ?? false,
+              'data': q.timestamp,
+            })
+        .toList();
+
     final jsonData = jsonEncode(data);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -329,8 +336,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             ),
             const SizedBox(height: 16),
             SelectableText(
-              jsonData.length > 200 
-                  ? '${jsonData.substring(0, 200)}...' 
+              jsonData.length > 200
+                  ? '${jsonData.substring(0, 200)}...'
                   : jsonData,
               style: const TextStyle(
                 fontSize: 12,
@@ -351,17 +358,17 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
   List<Question> _getFilteredQuestions() {
     var filtered = _questions;
-    
+
     if (_filterSubject != null) {
       filtered = filtered.where((q) => q.subject == _filterSubject).toList();
     }
-    
+
     if (_filterErrorType != null) {
       filtered = filtered.where((q) {
         return q.errors[_filterErrorType] == true;
       }).toList();
     }
-    
+
     return filtered;
   }
 
@@ -381,9 +388,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               ),
               if (question.subtopic != null)
                 Text('Subtópico: ${question.subtopic}'),
-              
               const SizedBox(height: 16),
-              
               if (question.description != null) ...[
                 const Text(
                   'Descrição:',
@@ -392,7 +397,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 Text(question.description!),
                 const SizedBox(height: 16),
               ],
-              
               if (question.errorDescription != null) ...[
                 const Text(
                   'Análise do Erro:',
@@ -401,7 +405,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 Text(question.errorDescription!),
                 const SizedBox(height: 16),
               ],
-              
               const Text(
                 'Tipos de Erro:',
                 style: TextStyle(fontWeight: FontWeight.w600),
@@ -430,7 +433,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                     ),
                 ],
               ),
-              
               if (question.image != null) ...[
                 const SizedBox(height: 16),
                 const Text(
@@ -480,7 +482,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text('📊 Autodiagnóstico ENEM'),
-        backgroundColor: const Color(0xFF011B3D), // Cor azul escuro igual ao CalendarScreen
+        backgroundColor: const Color(0xFF011B3D),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -496,9 +498,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white, // Cor do indicador (linha inferior) - BRANCO
-          labelColor: Colors.white, // Cor do texto da aba selecionada - BRANCO
-          unselectedLabelColor: Colors.white70, // Cor do texto das abas não selecionadas - BRANCO mais claro
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           indicatorWeight: 3,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w600,
@@ -510,23 +512,23 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
           indicatorSize: TabBarIndicatorSize.tab,
           tabs: const [
             Tab(
-              icon: Icon(Icons.add, color: Colors.white), // Ícone BRANCO
+              icon: Icon(Icons.add, color: Colors.white),
               text: 'Cadastrar',
             ),
             Tab(
-              icon: Icon(Icons.bar_chart, color: Colors.white), // Ícone BRANCO
+              icon: Icon(Icons.bar_chart, color: Colors.white),
               text: 'Gráficos',
             ),
             Tab(
-              icon: Icon(Icons.table_chart, color: Colors.white), // Ícone BRANCO
+              icon: Icon(Icons.table_chart, color: Colors.white),
               text: 'Planilha',
             ),
             Tab(
-              icon: Icon(Icons.menu_book, color: Colors.white), // Ícone BRANCO
+              icon: Icon(Icons.menu_book, color: Colors.white),
               text: 'Caderno',
             ),
             Tab(
-              icon: Icon(Icons.lightbulb, color: Colors.white), // Ícone BRANCO
+              icon: Icon(Icons.lightbulb, color: Colors.white),
               text: 'Mapas',
             ),
           ],
@@ -593,7 +595,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                           ),
                         ),
                         Text(
-                          _isEditing 
+                          _isEditing
                               ? 'Atualize os dados da questão'
                               : 'Registre questões que você errou para análise',
                           style: const TextStyle(
@@ -606,11 +608,11 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 24),
-              
+
               DropdownButtonFormField<String>(
                 value: _selectedSubject,
                 decoration: const InputDecoration(
@@ -627,9 +629,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                     .toList(),
                 onChanged: (value) => setState(() => _selectedSubject = value),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _topicController,
                 decoration: const InputDecoration(
@@ -638,9 +640,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   hintText: 'Ex: Termodinâmica, Revolução Industrial...',
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _subtopicController,
                 decoration: const InputDecoration(
@@ -649,9 +651,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   hintText: 'Ex: Primeira Lei, Era Vargas...',
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _descriptionController,
                 maxLines: 3,
@@ -662,9 +664,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   alignLabelWithHint: true,
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _errorDescriptionController,
                 maxLines: 4,
@@ -675,9 +677,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   alignLabelWithHint: true,
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Seção de imagem
               Container(
                 padding: const EdgeInsets.all(16),
@@ -691,7 +693,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.image, size: 20, color: AppTheme.textSecondary),
+                        const Icon(Icons.image,
+                            size: 20, color: AppTheme.textSecondary),
                         const SizedBox(width: 8),
                         const Text(
                           'Imagem da Questão',
@@ -703,7 +706,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    
                     if (_imageFile != null)
                       Stack(
                         children: [
@@ -725,7 +727,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white, size: 20),
                                 onPressed: () {
                                   setState(() {
                                     _imageFile = null;
@@ -758,7 +761,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                                icon: const Icon(Icons.close,
+                                    color: Colors.white, size: 20),
                                 onPressed: () {
                                   setState(() {
                                     _imageFile = null;
@@ -782,9 +786,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Tipos de erro
               const Text(
                 'Tipo de Erro',
@@ -803,7 +807,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               _ErrorCheckbox(
                 label: 'Conteúdo',
                 subtitle: 'Não sabia o conteúdo necessário',
@@ -827,9 +831,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 value: _timeError,
                 onChanged: (value) => setState(() => _timeError = value),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Row(
                 children: [
                   Expanded(
@@ -847,7 +851,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                     child: ElevatedButton.icon(
                       onPressed: _saveQuestion,
                       icon: Icon(_isEditing ? Icons.update : Icons.check),
-                      label: Text(_isEditing ? 'Atualizar Questão' : 'Adicionar Questão'),
+                      label: Text(_isEditing
+                          ? 'Atualizar Questão'
+                          : 'Adicionar Questão'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(0, 52),
                       ),
@@ -872,7 +878,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
     // Calcular estatísticas de tópicos por matéria
     final topicStats = _loadTopicStats();
-    
+
     // Obter a matéria selecionada para o gráfico
     String? selectedChartSubject;
     if (_selectedSubject != null && topicStats.containsKey(_selectedSubject)) {
@@ -881,268 +887,290 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       selectedChartSubject = topicStats.keys.first;
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        // Cards de resumo
-        Row(
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
           children: [
-            Expanded(
-              child: _buildStatCard(
-                'Total de Questões',
-                _totalQuestions.toString(),
-                Icons.quiz,
-                AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildStatCard(
-                'Matérias',
-                _subjectStats.length.toString(),
-                Icons.book,
-                AppTheme.successColor,
-              ),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // Estatísticas de erros
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tipos de Erros',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            // Cards de resumo
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Total de Questões',
+                    _totalQuestions.toString(),
+                    Icons.quiz,
+                    AppTheme.primaryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildErrorStatCard(
-                      'Conteúdo',
-                      _countErrorType('conteudo'),
-                      Colors.red,
-                      Icons.menu_book,
-                    ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Matérias',
+                    _subjectStats.length.toString(),
+                    Icons.book,
+                    AppTheme.successColor,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildErrorStatCard(
-                      'Atenção',
-                      _countErrorType('atencao'),
-                      Colors.orange,
-                      Icons.visibility_off,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildErrorStatCard(
-                      'Tempo',
-                      _countErrorType('tempo'),
-                      Colors.blue,
-                      Icons.access_time,
-                    ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Estatísticas de erros
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-        
-        const SizedBox(height: 24),
-        
-        // Gráfico de Pizza
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Distribuição por Matéria',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              if (_totalQuestions > 0)
-                SizedBox(
-                  height: 250,
-                  child: PieChart(
-                    PieChartData(
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 60,
-                      sections: sortedStats.take(10).map((entry) {
-                        final color = AppTheme.getSubjectColor(entry.key);
-                        final percentage = (_totalQuestions > 0
-                            ? (entry.value / _totalQuestions * 100)
-                            : 0).round();
-                        
-                        return PieChartSectionData(
-                          value: entry.value.toDouble(),
-                          title: '$percentage%',
-                          color: color,
-                          radius: 80,
-                          titleStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        );
-                      }).toList(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tipos de Erros',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                )
-              else
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Text('Nenhum dado disponível'),
-                  ),
-                ),
-            
-              const SizedBox(height: 24),
-              
-              Wrap(
-                spacing: 16,
-                runSpacing: 12,
-                children: sortedStats.take(10).map((entry) {
-                  final color = AppTheme.getSubjectColor(entry.key);
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(4),
+                      Expanded(
+                        child: _buildErrorStatCard(
+                          'Conteúdo',
+                          _countErrorType('conteudo'),
+                          Colors.red,
+                          Icons.menu_book,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${entry.key} (${entry.value})',
-                        style: const TextStyle(fontSize: 13),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildErrorStatCard(
+                          'Atenção',
+                          _countErrorType('atencao'),
+                          Colors.orange,
+                          Icons.visibility_off,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildErrorStatCard(
+                          'Tempo',
+                          _countErrorType('tempo'),
+                          Colors.blue,
+                          Icons.access_time,
+                        ),
                       ),
                     ],
-                  );
-                }).toList(),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-        
-        const SizedBox(height: 24),
-        
-        // Gráfico de Barras (CORRIGIDO - Tópicos por Matéria)
-        if (selectedChartSubject != null && topicStats.containsKey(selectedChartSubject))
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Tópicos de $selectedChartSubject',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                    ),
-                    if (topicStats.length > 1)
-                      DropdownButton<String>(
-                        value: selectedChartSubject,
-                        items: topicStats.keys.map((subject) {
-                          return DropdownMenuItem(
-                            value: subject,
-                            child: Text(
-                              subject,
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSubject = value;
-                          });
-                        },
-                        underline: Container(),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                
-                if (topicStats[selectedChartSubject]!.isNotEmpty)
-                  _buildTopicsBarChart(selectedChartSubject, topicStats[selectedChartSubject]!)
-                else
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: Text('Nenhum tópico cadastrado para esta matéria'),
+
+            const SizedBox(height: 24),
+
+            // Gráfico de Pizza
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Distribuição por Matéria',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
                     ),
                   ),
-                
-                if (topicStats[selectedChartSubject]!.isNotEmpty)
-                  _buildTopicsLegend(selectedChartSubject, topicStats[selectedChartSubject]!),
-              ],
+                  const SizedBox(height: 24),
+                  if (_totalQuestions > 0)
+                    SizedBox(
+                      height: 250,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 60,
+                          sections: sortedStats.take(10).map((entry) {
+                            final color = AppTheme.getSubjectColor(entry.key);
+                            final percentage = (_totalQuestions > 0
+                                    ? (entry.value / _totalQuestions * 100)
+                                    : 0)
+                                .round();
+
+                            return PieChartSectionData(
+                              value: entry.value.toDouble(),
+                              title: '$percentage%',
+                              color: color,
+                              radius: 80,
+                              titleStyle: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    )
+                  else
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text('Nenhum dado disponível'),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 12,
+                    children: sortedStats.take(10).map((entry) {
+                      final color = AppTheme.getSubjectColor(entry.key);
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${entry.key} (${entry.value})',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
             ),
-          ),
-      ],
+
+            const SizedBox(height: 24),
+
+            // Gráfico de Barras (Tópicos por Matéria) - CORRIGIDO
+            if (selectedChartSubject != null &&
+                topicStats.containsKey(selectedChartSubject))
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Tópicos de $selectedChartSubject',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (topicStats.length > 1)
+                          StatefulBuilder(
+                            builder: (context, setLocalState) {
+                              return DropdownButton<String>(
+                                value: selectedChartSubject,
+                                items: topicStats.keys.map((subject) {
+                                  return DropdownMenuItem(
+                                    value: subject,
+                                    child: Text(
+                                      subject,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  // CORREÇÃO: Usar Future.delayed para evitar o erro do mouse_tracker
+                                  Future.delayed(Duration.zero, () {
+                                    if (mounted && value != null) {
+                                      setState(() {
+                                        _selectedSubject = value;
+                                      });
+                                    }
+                                  });
+                                },
+                                underline: Container(),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    if (topicStats[selectedChartSubject]!.isNotEmpty)
+                      _buildTopicsBarChart(selectedChartSubject!,
+                          topicStats[selectedChartSubject]!)
+                    else
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(40),
+                          child: Text(
+                              'Nenhum tópico cadastrado para esta matéria'),
+                        ),
+                      ),
+                    if (topicStats[selectedChartSubject]!.isNotEmpty)
+                      _buildTopicsLegend(selectedChartSubject!,
+                          topicStats[selectedChartSubject]!),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildTopicsBarChart(String subject, Map<String, int> topicsData) {
     final topicsEntries = topicsData.entries.toList();
     topicsEntries.sort((a, b) => b.value.compareTo(a.value));
-    
+
+    // CORREÇÃO: Verificar se há dados suficientes
+    if (topicsEntries.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text('Nenhum dado disponível para o gráfico'),
+        ),
+      );
+    }
+
     final barGroups = topicsEntries.asMap().entries.map((entry) {
       final color = AppTheme.getSubjectColor(subject);
       return BarChartGroupData(
@@ -1160,41 +1188,80 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ],
       );
     }).toList();
-    
-    final maxValue = topicsEntries.isNotEmpty 
-        ? topicsEntries.map((e) => e.value).reduce((a, b) => a > b ? a : b).toDouble() * 1.2
+
+    final maxValue = topicsEntries.isNotEmpty
+        ? topicsEntries
+                .map((e) => e.value)
+                .reduce((a, b) => a > b ? a : b)
+                .toDouble() *
+            1.2
         : 0;
-    
+
     return SizedBox(
       height: 400,
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
           maxY: maxValue.toDouble(),
-          barTouchData: BarTouchData(enabled: true),
+          // CORREÇÃO: Configurar barTouchData para evitar RangeError
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+              tooltipPadding: const EdgeInsets.all(8),
+              tooltipMargin: 8,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                // CORREÇÃO: Verificar se o índice está dentro dos limites
+                if (groupIndex < 0 || groupIndex >= topicsEntries.length) {
+                  return null;
+                }
+                final topic = topicsEntries[groupIndex].key;
+                final value = topicsEntries[groupIndex].value;
+                return BarTooltipItem(
+                  '$topic\n$value questão${value != 1 ? 's' : ''}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                );
+              },
+            ),
+            touchCallback: (event, response) {
+              // CORREÇÃO: Verificar se response não é null
+              if (response != null && response.spot != null) {
+                final spot = response.spot!;
+                if (spot.touchedBarGroupIndex >= 0 &&
+                    spot.touchedBarGroupIndex < topicsEntries.length) {
+                  // Interação válida
+                }
+              }
+            },
+          ),
           titlesData: FlTitlesData(
             show: true,
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
-                  if (value.toInt() >= topicsEntries.length) {
-                    return const Text('');
-                  }
-                  final topic = topicsEntries[value.toInt()].key;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: RotatedBox(
-                      quarterTurns: 3,
-                      child: Text(
-                        topic.length > 15 
-                            ? '${topic.substring(0, 15)}...'
-                            : topic,
-                        style: const TextStyle(fontSize: 10),
-                        overflow: TextOverflow.ellipsis,
+                  // CORREÇÃO: Verificar se o índice está dentro dos limites
+                  final index = value.toInt();
+                  if (index >= 0 && index < topicsEntries.length) {
+                    final topic = topicsEntries[index].key;
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: RotatedBox(
+                        quarterTurns: 3,
+                        child: Text(
+                          topic.length > 15
+                              ? '${topic.substring(0, 15)}...'
+                              : topic,
+                          style: const TextStyle(fontSize: 10),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
+                  return const SizedBox.shrink();
                 },
                 reservedSize: 60,
               ),
@@ -1228,7 +1295,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   Widget _buildTopicsLegend(String subject, Map<String, int> topicsData) {
     final topicsEntries = topicsData.entries.toList();
     topicsEntries.sort((a, b) => b.value.compareTo(a.value));
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1250,7 +1317,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 '${entry.key} (${entry.value})',
                 style: const TextStyle(fontSize: 12),
               ),
-              backgroundColor: AppTheme.getSubjectColor(subject).withOpacity(0.1),
+              backgroundColor:
+                  AppTheme.getSubjectColor(subject).withOpacity(0.1),
               side: BorderSide.none,
             );
           }).toList(),
@@ -1314,7 +1382,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   ),
                   items: const [
                     DropdownMenuItem(value: null, child: Text('Todos')),
-                    DropdownMenuItem(value: 'conteudo', child: Text('Conteúdo')),
+                    DropdownMenuItem(
+                        value: 'conteudo', child: Text('Conteúdo')),
                     DropdownMenuItem(value: 'atencao', child: Text('Atenção')),
                     DropdownMenuItem(value: 'tempo', child: Text('Tempo')),
                   ],
@@ -1338,7 +1407,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             ],
           ),
         ),
-        
+
         // Lista de questões
         Expanded(
           child: filteredQuestions.isEmpty
@@ -1418,15 +1487,18 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (question.image != null)
-                              Icon(Icons.image, size: 20, color: Colors.grey[600]),
+                              Icon(Icons.image,
+                                  size: 20, color: Colors.grey[600]),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.edit, color: AppTheme.infoColor),
+                              icon: const Icon(Icons.edit,
+                                  color: AppTheme.infoColor),
                               onPressed: () => _editQuestion(question),
                               tooltip: 'Editar questão',
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete, color: AppTheme.dangerColor),
+                              icon: const Icon(Icons.delete,
+                                  color: AppTheme.dangerColor),
                               onPressed: () => _deleteQuestion(question),
                               tooltip: 'Excluir questão',
                             ),
@@ -1480,11 +1552,22 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ),
       );
     }
+    final sortedQuestions = List<Question>.from(_questions);
+    sortedQuestions.sort((a, b) {
+      // Primeiro ordena por matéria
+      final subjectComparison = a.subject.compareTo(b.subject);
+      if (subjectComparison != 0) return subjectComparison;
 
-    return QuestionsGridView(questions: _questions);
+      // Depois ordena por tópico dentro da mesma matéria
+      return a.topic.compareTo(b.topic);
+    });
+
+    return QuestionsGridView(
+        questions: sortedQuestions); // ← Use sortedQuestions
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1528,7 +1611,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     );
   }
 
-  Widget _buildErrorStatCard(String label, int count, Color color, IconData icon) {
+  Widget _buildErrorStatCard(
+      String label, int count, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1605,7 +1689,9 @@ class _ErrorCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: value ? AppTheme.primaryColor.withOpacity(0.05) : Colors.transparent,
+        color: value
+            ? AppTheme.primaryColor.withOpacity(0.05)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: value ? AppTheme.primaryColor : AppTheme.lightGray,
@@ -1617,7 +1703,9 @@ class _ErrorCheckbox extends StatelessWidget {
         onChanged: (val) => onChanged(val ?? false),
         title: Row(
           children: [
-            Icon(icon, size: 20, color: value ? AppTheme.primaryColor : AppTheme.textSecondary),
+            Icon(icon,
+                size: 20,
+                color: value ? AppTheme.primaryColor : AppTheme.textSecondary),
             const SizedBox(width: 8),
             Text(
               label,

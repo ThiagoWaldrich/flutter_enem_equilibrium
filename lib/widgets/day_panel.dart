@@ -51,9 +51,10 @@ class _DayPanelState extends State<DayPanel> {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
     final dayData = calendarService.getDayData(dateStr);
     final subjects = calendarService.getDaySubjects(dateStr);
-    
+
     // Formatar data corretamente
-    final formattedDate = DateFormat("d 'de' MMMM, EEEE", 'pt_BR').format(widget.selectedDate);
+    final formattedDate =
+        DateFormat("d 'de' MMMM, EEEE", 'pt_BR').format(widget.selectedDate);
 
     return Container(
       decoration: BoxDecoration(
@@ -101,7 +102,7 @@ class _DayPanelState extends State<DayPanel> {
               ],
             ),
           ),
-          
+
           // Conteúdo scrollável
           Expanded(
             child: ListView(
@@ -122,9 +123,9 @@ class _DayPanelState extends State<DayPanel> {
                   dateStr: dateStr,
                   currentMood: dayData?.mood,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Energia
                 const Text(
                   'Energia:',
@@ -139,9 +140,9 @@ class _DayPanelState extends State<DayPanel> {
                   dateStr: dateStr,
                   currentEnergy: dayData?.energy,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Anotações
                 const Text(
                   '📝 Anotações do dia:',
@@ -164,13 +165,14 @@ class _DayPanelState extends State<DayPanel> {
                       borderSide: BorderSide.none,
                     ),
                     hintText: 'Adicione suas anotações aqui...',
-                    hintStyle: const TextStyle(fontSize: 14, color: Colors.white54),
+                    hintStyle:
+                        const TextStyle(fontSize: 14, color: Colors.white54),
                   ),
                   onChanged: _saveNotes,
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Rotina de Estudos
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -199,16 +201,17 @@ class _DayPanelState extends State<DayPanel> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Lista de matérias ou mensagem vazia
                 if (subjects.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       color: AppTheme.lightGray.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                      borderRadius:
+                          BorderRadius.circular(AppTheme.borderRadius),
                       border: Border.all(color: AppTheme.lightGray),
                     ),
                     child: Column(
@@ -241,8 +244,9 @@ class _DayPanelState extends State<DayPanel> {
                   )
                 else
                   ...subjects.map((subject) {
-                    final subjectProgress = dayData?.studyProgress[subject.id] ?? [];
-                    
+                    final subjectProgress =
+                        dayData?.studyProgress[subject.id] ?? [];
+
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _SubjectCard(
@@ -252,9 +256,9 @@ class _DayPanelState extends State<DayPanel> {
                       ),
                     );
                   }),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Botão para adicionar mais matérias
                 if (subjects.isNotEmpty)
                   OutlinedButton.icon(
@@ -297,18 +301,21 @@ class _MoodSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final calendarService = context.read<CalendarService>();
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
         final value = index + 1;
         final isActive = currentMood == value;
-        return _EmojiButton(
-          emoji: ['😞', '😕', '😊', '😄', '🤩'][index],
-          isActive: isActive,
-          onTap: () {
-            calendarService.updateMood(dateStr, value);
-          },
+        return Flexible(
+          // ← ADICIONE AQUI
+          child: _EmojiButton(
+            emoji: ['😞', '😕', '😊', '😄', '🤩'][index],
+            isActive: isActive,
+            onTap: () {
+              calendarService.updateMood(dateStr, value);
+            },
+          ),
         );
       }),
     );
@@ -327,18 +334,20 @@ class _EnergySelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final calendarService = context.read<CalendarService>();
-    
-    return Row(
+
+   return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
         final value = index + 1;
         final isActive = currentEnergy == value;
-        return _EmojiButton(
-          emoji: ['🪫', '🔋', '🔋', '🔋', '⚡'][index],
-          isActive: isActive,
-          onTap: () {
-            calendarService.updateEnergy(dateStr, value);
-          },
+        return Flexible( // ← ADICIONE AQUI
+          child: _EmojiButton(
+            emoji: ['🪫', '🔋', '🔋', '🔋', '⚡'][index],
+            isActive: isActive,
+            onTap: () {
+              calendarService.updateEnergy(dateStr, value);
+            },
+          ),
         );
       }),
     );
@@ -404,8 +413,9 @@ class _SubjectCard extends StatelessWidget {
     final calendarService = context.watch<CalendarService>();
     final color = AppTheme.getSubjectColor(subject.name);
     final totalSessions = subject.sessions;
-    final progress = totalSessions > 0 ? completedSessions / totalSessions : 0.0;
-    
+    final progress =
+        totalSessions > 0 ? completedSessions / totalSessions : 0.0;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF021328),
@@ -449,7 +459,7 @@ class _SubjectCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Barra de progresso
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -463,7 +473,7 @@ class _SubjectCard extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Sessões
           Padding(
             padding: const EdgeInsets.all(16),
@@ -473,7 +483,7 @@ class _SubjectCard extends StatelessWidget {
               children: List.generate(totalSessions, (index) {
                 final sessionNumber = index + 1;
                 final isCompleted = completedSessions >= sessionNumber;
-                
+
                 return InkWell(
                   onTap: () {
                     calendarService.toggleStudySession(
@@ -500,7 +510,9 @@ class _SubjectCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isCompleted ? Colors.white : AppTheme.textSecondary,
+                          color: isCompleted
+                              ? Colors.white
+                              : AppTheme.textSecondary,
                         ),
                       ),
                     ),
