@@ -1,17 +1,17 @@
 class AppConstants {
   // Matérias pré-definidas
   static const List<Map<String, dynamic>> predefinedSubjects = [
-    {'name': 'Matemática', 'sessions': 4},
-    {'name': 'Física', 'sessions': 4},
-    {'name': 'Química', 'sessions': 3},
-    {'name': 'Biologia', 'sessions': 2},
+    {'name': 'Matemática', 'sessions': 1},
+    {'name': 'Física', 'sessions': 1},
+    {'name': 'Química', 'sessions': 1},
+    {'name': 'Biologia', 'sessions': 1},
     {'name': 'História', 'sessions': 1},
     {'name': 'Geografia', 'sessions': 1},
     {'name': 'Sociologia', 'sessions': 1},
     {'name': 'Filosofia', 'sessions': 1},
     {'name': 'Português', 'sessions': 1},
-    {'name': 'Literatura', 'sessions': 2},
-    {'name': 'Redação', 'sessions': 3},
+    {'name': 'Literatura', 'sessions': 1},
+    {'name': 'Redação', 'sessions': 1},
     {'name': 'Artes', 'sessions': 1},
     {'name': 'Simulado', 'sessions': 1},
   ];

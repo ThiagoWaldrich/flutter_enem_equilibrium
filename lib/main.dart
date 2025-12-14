@@ -1,4 +1,6 @@
 // main.dart
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
 import 'package:flutter/foundation.dart';
@@ -10,7 +12,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 // IMPORTANTE: Adicionar para inicializar formatos de data
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:intl/intl.dart';
+//import 'package:intl/intl.dart';
 
 // Importar serviços
 import 'services/storage_service.dart';
@@ -19,7 +21,7 @@ import 'services/calendar_service.dart';
 import 'services/mind_map_service.dart';
 import 'services/monthly_goals_service.dart';
 import 'services/enhanced_database_service.dart';
-import 'services/supabase_service.dart';
+//import 'services/supabase_service.dart';
 import 'services/auth_service.dart'; // ← Adicionado
 
 // Importar utils
@@ -34,7 +36,7 @@ import 'screens/add_question_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/autodiagnostico_screen.dart';
-import 'screens/manage_subjects_screen.dart';
+//import 'screens/manage_subjects_screen.dart';
 import 'screens/login_screen.dart'; // ← Adicionado
 
 void main() async {
@@ -151,9 +153,7 @@ class EquilibriumApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final storageService = provider_package.Provider.of<StorageService?>(context);
     final databaseService = provider_package.Provider.of<DatabaseService?>(context);
-    final authService = provider_package.Provider.of<AuthService>(context);
-    
-    // Verificar autenticação
+    //final authService = provider_package.Provider.of<AuthService>(context);
     final isAuthenticated = AuthService.isAuthenticated;
     
     // Mostrar tela de carregamento se serviços não estiverem prontos
@@ -163,10 +163,10 @@ class EquilibriumApp extends StatelessWidget {
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                const Text('Inicializando serviços...'),
+              children: const [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Inicializando serviços...'),
               ],
             ),
           ),

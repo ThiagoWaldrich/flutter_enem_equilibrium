@@ -38,6 +38,9 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   String _sortBy = 'date';
   bool _sortAscending = false;
 
+  // Controle de respostas reveladas
+  Set<String> _revealedAnswers = {};
+
   @override
   void initState() {
     super.initState();
@@ -236,6 +239,17 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       _filteredTopics = _topics;
       _filteredQuestions = _questions;
       _sortQuestions(_filteredQuestions);
+    });
+  }
+
+  // Método para alternar visibilidade da resposta
+  void _toggleAnswerVisibility(String questionId) {
+    setState(() {
+      if (_revealedAnswers.contains(questionId)) {
+        _revealedAnswers.remove(questionId);
+      } else {
+        _revealedAnswers.add(questionId);
+      }
     });
   }
 
@@ -736,6 +750,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       }
     }
 
+    final isAnswerRevealed = _revealedAnswers.contains(question['id']);
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: InkWell(
@@ -836,30 +852,49 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                 runSpacing: 8,
                 children: [
                   if (correctAnswer.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: Colors.green.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.check_circle,
-                              size: 12, color: Colors.green[700]),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Resp: $correctAnswer',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green[700],
-                              fontWeight: FontWeight.w600,
-                            ),
+                    GestureDetector(
+                      onTap: () => _toggleAnswerVisibility(question['id']),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isAnswerRevealed
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.grey.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isAnswerRevealed
+                                ? Colors.green.withOpacity(0.3)
+                                : Colors.grey.withOpacity(0.3),
                           ),
-                        ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isAnswerRevealed
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              size: 12,
+                              color: isAnswerRevealed
+                                  ? Colors.green[700]
+                                  : Colors.grey[700],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isAnswerRevealed
+                                  ? 'Resp: $correctAnswer'
+                                  : 'Ver Resposta',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isAnswerRevealed
+                                    ? Colors.green[700]
+                                    : Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   if (sourceName.isNotEmpty)
@@ -1010,6 +1045,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   }
 
   void _showQuestionDetails(Map<String, dynamic> question) {
+    bool _showAnswer = false;
+
     final subject = question['subject'] as Map<String, dynamic>?;
     final topic = question['topic'] as Map<String, dynamic>?;
     final source = question['source'] as Map<String, dynamic>?;
@@ -1020,222 +1057,269 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-            'Detalhes da Questão #${question['id']?.substring(0, 8) ?? 'N/A'}'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Matéria
-              if (subject?['name'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.subject, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Matéria: ${subject!['name']}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(
+                'Detalhes da Questão #${question['id']?.substring(0, 8) ?? 'N/A'}'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Matéria
+                  if (subject?['name'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.subject, size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Matéria: ${subject!['name']}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-              // Tópico
-              if (topic?['name'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.category, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Tópico: ${topic!['name']}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
+                  // Tópico
+                  if (topic?['name'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.category, size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Tópico: ${topic!['name']}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-              // Fonte
-              if (source?['name'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.source, size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Fonte: ${source!['name']} ${year?['year'] ?? ''}',
-                          style: const TextStyle(fontSize: 14),
-                        ),
+                  // Fonte
+                  if (source?['name'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.source, size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Fonte: ${source!['name']} ${year?['year'] ?? ''}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-              // Resposta Correta
-              if (question['correct_answer'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, size: 16, color: Colors.green),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Resposta Correta: ${question['correct_answer']}',
-                          style: const TextStyle(
+                  // Resposta Correta
+                  if (question['correct_answer'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle,
+                                  size: 16, color: Colors.grey[600]),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Resposta Correta:',
+                                  style: const TextStyle(
+                                      fontSize: 14, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  _showAnswer
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  size: 16,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _showAnswer = !_showAnswer;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          if (_showAnswer)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 4, left: 24),
+                              child: Text(
+                                question['correct_answer'].toString(),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                  // Dificuldade
+                  if (question['difficulty_level'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.speed, size: 16, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Dificuldade: ${question['difficulty_level']}/5',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Enunciado
+                  if (statement.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Enunciado:',
+                          style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Dificuldade
-              if (question['difficulty_level'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.speed, size: 16, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Dificuldade: ${question['difficulty_level']}/5',
-                          style: const TextStyle(fontSize: 14),
+                        const SizedBox(height: 4),
+                        Text(
+                          statement,
+                          style:
+                              const TextStyle(fontSize: 13, height: 1.5),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
 
-              // Enunciado
-              if (statement.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Enunciado:',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      statement,
-                      style: const TextStyle(fontSize: 13, height: 1.5),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-
-              // Contexto
-              if (contextText.isNotEmpty)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Contexto:',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      contextText,
-                      style: TextStyle(
-                          fontSize: 13,
-                          height: 1.5,
-                          color: const Color(
-                              0xFF616161)), // CORRIGIDO: Substitui Colors.grey[700] por Color(0xFF616161)
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                ),
-
-              // Imagem (se houver)
-              if (imageUrl != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Imagem da Questão:',
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () => _showImageFullScreen(context, imageUrl),
-                      child: Container(
-                        width: double.infinity,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey[300]!),
+                  // Contexto
+                  if (contextText.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Contexto:',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imageUrl,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes !=
-                                          null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.broken_image,
-                                        size: 40, color: Colors.grey[400]),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Erro ao carregar imagem',
-                                      style: TextStyle(color: Colors.grey),
+                        const SizedBox(height: 4),
+                        Text(
+                          contextText,
+                          style: TextStyle(
+                              fontSize: 13,
+                              height: 1.5,
+                              color: const Color(0xFF616161)),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+
+                  // Imagem (se houver)
+                  if (imageUrl != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Imagem da Questão:',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () =>
+                              _showImageFullScreen(context, imageUrl),
+                          child: Container(
+                            width: double.infinity,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(8),
+                              border:
+                                  Border.all(color: Colors.grey[300]!),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress
+                                                  .expectedTotalBytes !=
+                                              null
+                                          ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                          : null,
                                     ),
-                                  ],
-                                ),
-                              );
-                            },
+                                  );
+                                },
+                                errorBuilder:
+                                    (context, error, stackTrace) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.broken_image,
+                                            size: 40,
+                                            color: Colors.grey[400]),
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'Erro ao carregar imagem',
+                                          style:
+                                              TextStyle(color: Colors.grey),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () =>
+                              _showImageFullScreen(context, imageUrl),
+                          icon: const Icon(Icons.fullscreen, size: 16),
+                          label: const Text('Ver em tela cheia'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      onPressed: () => _showImageFullScreen(context, imageUrl),
-                      icon: const Icon(Icons.fullscreen, size: 16),
-                      label: const Text('Ver em tela cheia'),
-                    ),
-                  ],
-                ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Fechar'),
+              ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
