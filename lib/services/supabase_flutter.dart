@@ -12,7 +12,7 @@ class QuestionImageService {
     required int questionNumber,
   }) async {
     try {
-      // Gerar nome Ãºnico
+      // Gerar nome único
       final fileName = 'q${questionNumber.toString().padLeft(3, '0')}.jpg';
       final path = '$source/$year/$fileName';
       

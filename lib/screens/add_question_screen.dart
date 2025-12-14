@@ -188,18 +188,21 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Questão adicionada com sucesso!'),
+          content: Text('✅ Questão adicionada com sucesso!'),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
 
+      // LIMPAR FORMULÁRIO APÓS SALVAR COM SUCESSO
+      await Future.delayed(const Duration(milliseconds: 500));
       _resetForm();
+      
     } catch (e) {
       print('Erro ao salvar questão: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erro: $e'),
+          content: Text('❌ Erro: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -209,7 +212,12 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
   }
 
   void _resetForm() {
-    _formKey.currentState!.reset();
+    print('🧹 Limpando formulário...');
+    
+    // Limpa controladores
+    _correctAnswerController.clear();
+    
+    // Limpa estado
     setState(() {
       _selectedSubjectId = null;
       _selectedTopicId = null;
@@ -218,8 +226,18 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
       _selectedImage = null;
       _difficultyLevel = 3;
       _topics.clear();
+      _loadingTopics = false;
     });
-    _correctAnswerController.clear();
+    
+    // Limpa validação do formulário
+    if (_formKey.currentState != null) {
+      _formKey.currentState!.reset();
+    }
+    
+    // Força reconstrução
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -281,8 +299,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     ),
 
                     const SizedBox(height: 16),
-
-                    // TÓPICO COM MELHOR FEEDBACK
                     Container(
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.grey[300]!),
@@ -610,15 +626,40 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
                     const SizedBox(height: 16),
 
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        side: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      child: const Text('CANCELAR'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _resetForm,
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              side: BorderSide(color: Colors.orange[300]!),
+                              foregroundColor: Colors.orange[700],
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.cleaning_services, size: 20),
+                                SizedBox(width: 8),
+                                Text('LIMPAR FORMULÁRIO'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                            child: const Text('CANCELAR'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

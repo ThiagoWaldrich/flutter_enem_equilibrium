@@ -1332,7 +1332,29 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
-    final filteredQuestions = _getFilteredQuestions();
+    // Criar cópia para evitar modificar a lista original
+    final allQuestions = List<Question>.from(_questions);
+
+    // Aplicar filtros
+    List<Question> filteredQuestions = allQuestions;
+
+    if (_filterSubject != null && _filterSubject!.isNotEmpty) {
+      filteredQuestions =
+          filteredQuestions.where((q) => q.subject == _filterSubject).toList();
+    }
+
+    if (_filterErrorType != null && _filterErrorType!.isNotEmpty) {
+      filteredQuestions = filteredQuestions.where((q) {
+        return q.errors[_filterErrorType] == true;
+      }).toList();
+    }
+
+    // Ordenar por matéria e tópico
+    filteredQuestions.sort((a, b) {
+      final subjectCompare = a.subject.compareTo(b.subject);
+      if (subjectCompare != 0) return subjectCompare;
+      return a.topic.compareTo(b.topic);
+    });
 
     return Column(
       children: [
@@ -1349,60 +1371,110 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               ),
             ],
           ),
-          child: Row(
+          child: Column(
             children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _filterSubject,
-                  decoration: const InputDecoration(
-                    labelText: 'Filtrar por Matéria',
-                    prefixIcon: Icon(Icons.filter_list),
-                    isDense: true,
+              // Dropdown de Matéria
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButton<String?>(
+                    value: _filterSubject,
+                    isExpanded: true,
+                    underline: const SizedBox(), // Remove a linha padrão
+                    hint: const Text('Filtrar por matéria'),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Todas as matérias'),
+                      ),
+                      ..._subjectStats.keys
+                          .map((subject) => DropdownMenuItem<String?>(
+                                value: subject,
+                                child: Text(subject),
+                              ))
+                          .toList(),
+                    ],
+                    onChanged: (String? value) {
+                      setState(() {
+                        _filterSubject = value;
+                      });
+                    },
                   ),
-                  items: [
-                    const DropdownMenuItem(value: null, child: Text('Todas')),
-                    ..._subjectStats.keys.map((subject) => DropdownMenuItem(
-                          value: subject,
-                          child: Text(subject),
-                        )),
-                  ],
-                  onChanged: (value) {
-                    setState(() => _filterSubject = value);
-                  },
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: _filterErrorType,
-                  decoration: const InputDecoration(
-                    labelText: 'Tipo de Erro',
-                    prefixIcon: Icon(Icons.error_outline),
-                    isDense: true,
+
+              const SizedBox(height: 12),
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButton<String>(
+                    value: _filterErrorType,
+                    isExpanded: true,
+                    underline: const SizedBox(), // Remove a linha padrão
+                    hint: const Text('Filtrar por tipo de erro'),
+                    items: const [
+                      DropdownMenuItem<String>(
+                          value: 'all', child: Text('Todos os erros')),
+                      DropdownMenuItem<String>(
+                          value: 'conteudo', child: Text('Erro de conteúdo')),
+                      DropdownMenuItem<String>(
+                          value: 'atencao', child: Text('Erro de atenção')),
+                      DropdownMenuItem<String>(
+                          value: 'tempo', child: Text('Erro de tempo')),
+                    ],
+                    onChanged: (String? value) {
+                      setState(() {
+                        _filterErrorType = value;
+                      });
+                    },
                   ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('Todos')),
-                    DropdownMenuItem(
-                        value: 'conteudo', child: Text('Conteúdo')),
-                    DropdownMenuItem(value: 'atencao', child: Text('Atenção')),
-                    DropdownMenuItem(value: 'tempo', child: Text('Tempo')),
-                  ],
-                  onChanged: (value) {
-                    setState(() => _filterErrorType = value);
-                  },
                 ),
               ),
-              const SizedBox(width: 16),
+
+              // Botão Limpar
               if (_filterSubject != null || _filterErrorType != null)
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    setState(() {
-                      _filterSubject = null;
-                      _filterErrorType = null;
-                    });
-                  },
-                  tooltip: 'Limpar Filtros',
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _filterSubject = null;
+                          _filterErrorType = null;
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8, horizontal: 12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.clear,
+                                size: 16, color: Colors.grey[600]),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Limpar filtros',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -1432,13 +1504,16 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(20),
+              : ListView.separated(
+                  // MUDANÇA: ListView.separated em vez de ListView.builder
+                  padding: const EdgeInsets.all(16),
                   itemCount: filteredQuestions.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final question = filteredQuestions[index];
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
+                      margin: EdgeInsets.zero,
                       child: ListTile(
                         leading: Container(
                           width: 4,
@@ -1487,26 +1562,27 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (question.image != null)
-                              Icon(Icons.image,
-                                  size: 20, color: Colors.grey[600]),
-                            const SizedBox(width: 8),
                             IconButton(
                               icon: const Icon(Icons.edit,
                                   color: AppTheme.infoColor),
                               onPressed: () => _editQuestion(question),
                               tooltip: 'Editar questão',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete,
                                   color: AppTheme.dangerColor),
                               onPressed: () => _deleteQuestion(question),
                               tooltip: 'Excluir questão',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
                           ],
                         ),
-                        onTap: () {
-                          _showQuestionDetails(question);
-                        },
+                        // onTap: () {
+                        //   _showQuestionDetails(question);
+                        // },
                       ),
                     );
                   },

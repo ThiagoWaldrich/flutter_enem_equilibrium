@@ -276,7 +276,7 @@ class _SubjectCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
-              '${subject.sessions} sessão${subject.sessions != 1 ? 'es' : ''} • ${topics.length} tópico${topics.length != 1 ? 's' : ''}',
+              '${subject.sessions} sess${subject.sessions != 1 ? 'ões' : 'ão'} • ${topics.length} tópico${topics.length != 1 ? 's' : ''}',
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -437,7 +437,7 @@ class _AddSubjectDialogState extends State<_AddSubjectDialog> {
                     return Card(
                       child: ListTile(
                         title: Text(topic.topic),
-                        subtitle: Text('${topic.sessions} sessão${topic.sessions != 1 ? 'es' : ''}'),
+                        subtitle: Text('${topic.sessions} sess${topic.sessions != 1 ? 'ões' : 'ão'}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, size: 20),
                           onPressed: () {
@@ -605,7 +605,7 @@ class _EditSubjectDialogState extends State<_EditSubjectDialog> {
                     return Card(
                       child: ListTile(
                         title: Text(topic.topic),
-                        subtitle: Text('${topic.sessions} sessão${topic.sessions != 1 ? 'es' : ''}'),
+                        subtitle: Text('${topic.sessions} sess${topic.sessions != 1 ? 'ões' : 'ão'}'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, size: 20),
                           onPressed: () {

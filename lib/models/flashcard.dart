@@ -4,8 +4,8 @@ class Flashcard {
   final String topic;
   final String front;
   final String back;
-  final int easeFactor; // 0-5
-  final int interval; // dias
+  final int easeFactor; 
+  final int interval; 
   final String? nextReview;
   final int reviewCount;
   final String createdAt;
@@ -17,7 +17,7 @@ class Flashcard {
     required this.topic,
     required this.front,
     required this.back,
-    this.easeFactor = 250, // 2.5 * 100
+    this.easeFactor = 250,
     this.interval = 1,
     this.nextReview,
     this.reviewCount = 0,

@@ -193,7 +193,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(subject.name),
-                  subtitle: Text('${subject.sessions} sessão${subject.sessions != 1 ? 'es' : ''}'),
+                  subtitle: Text('${subject.sessions} sess${subject.sessions != 1 ? 'ões' : 'ão'}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -235,7 +235,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                     items: AppConstants.predefinedSubjects.map((subject) {
                       return DropdownMenuItem(
                         value: subject['name'] as String,
-                        child: Text('${subject['name']} (${subject['sessions']} sessão${subject['sessions'] != 1 ? 'es' : ''})'),
+                        child: Text('${subject['name']}'),
                       );
                     }).toList(),
                     onChanged: (value) {
