@@ -21,6 +21,8 @@ dependencies:
   sqflite_common_ffi: ^2.3.1
   path: ^1.8.3
   
+  #supabase
+  supabase_flutter: ^2.0.0
   
   # Persistência de Dados
   shared_preferences: ^2.2.2
