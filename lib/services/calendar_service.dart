@@ -17,11 +17,38 @@ class CalendarService extends ChangeNotifier {
   }
 
   // -------------------------
-  // Utilitário seguro de Data
+  // Utilitário seguro de Data - CORRIGIDO
   // -------------------------
   DateTime _parseDate(String dateStr) {
-    // dateStr sempre vem no formato yyyy-MM-dd
-    return DateTime.parse(dateStr);
+    try {
+      // Se já for uma data completa yyyy-MM-dd, usar parse normal
+      if (dateStr.length == 10 && dateStr.contains('-')) {
+        return DateTime.parse(dateStr);
+      }
+      
+      // Se for apenas yyyy-MM (como "2025-12"), adicionar dia 01
+      if (dateStr.length == 7 && dateStr.contains('-')) {
+        return DateTime.parse('${dateStr}-01');
+      }
+      
+      // Se não tiver o formato esperado, tentar parse normal
+      return DateTime.parse(dateStr);
+    } catch (e) {
+      // Fallback: se der erro, criar data com dia 1
+      try {
+        final parts = dateStr.split('-');
+        if (parts.length >= 2) {
+          final year = int.tryParse(parts[0]) ?? DateTime.now().year;
+          final month = int.tryParse(parts[1]) ?? DateTime.now().month;
+          return DateTime(year, month, 1);
+        }
+      } catch (_) {
+        // Último fallback
+      }
+      
+      // Retorna data atual como fallback final
+      return DateTime.now();
+    }
   }
 
   // Carregar dados do armazenamento
@@ -159,40 +186,44 @@ class CalendarService extends ChangeNotifier {
   // CÁLCULO DAS METAS MENSAIS
   // -------------------------
   Future<void> updateMonthlyGoals(String dateStr) async {
-    final date = _parseDate(dateStr);
-    final year = date.year;
-    final month = date.month;
+    try {
+      final date = _parseDate(dateStr);
+      final year = date.year;
+      final month = date.month;
 
-    final formattedMonth = DateFormat('yyyy-MM').format(date);
+      final formattedMonth = DateFormat('yyyy-MM').format(date);
 
-    // Resetar
-    _monthlyGoals.updateAll((_, goal) => goal.copyWith(current: 0));
+      // Resetar
+      _monthlyGoals.updateAll((_, goal) => goal.copyWith(current: 0));
 
-    // Último dia do mês
-    final lastDay = DateTime(year, month + 1, 0).day;
+      // Último dia do mês
+      final lastDay = DateTime(year, month + 1, 0).day;
 
-    for (int day = 1; day <= lastDay; day++) {
-      final ds = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
-      final dayData = _daysData[ds];
+      for (int day = 1; day <= lastDay; day++) {
+        final ds = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+        final dayData = _daysData[ds];
 
-      if (dayData != null) {
-        final subjects = getDaySubjects(ds);
+        if (dayData != null) {
+          final subjects = getDaySubjects(ds);
 
-        for (final subject in subjects) {
-          final progress = dayData.studyProgress[subject.id] ?? [];
-          final hoursStudied = progress.length;
+          for (final subject in subjects) {
+            final progress = dayData.studyProgress[subject.id] ?? [];
+            final hoursStudied = progress.length;
 
-          if (_monthlyGoals.containsKey(subject.name)) {
-            final goal = _monthlyGoals[subject.name]!;
-            _monthlyGoals[subject.name] = goal.copyWith(
-              current: goal.current + hoursStudied,
-            );
+            if (_monthlyGoals.containsKey(subject.name)) {
+              final goal = _monthlyGoals[subject.name]!;
+              _monthlyGoals[subject.name] = goal.copyWith(
+                current: goal.current + hoursStudied,
+              );
+            }
           }
         }
       }
-    }
 
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      print('❌ Erro em updateMonthlyGoals: $e');
+    }
   }
 
   // -------------------------

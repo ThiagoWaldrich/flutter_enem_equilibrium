@@ -1,6 +1,7 @@
 import 'package:equilibrium/screens/access_logs_screen.dart';
 import 'package:equilibrium/screens/flashcards_screen.dart';
 import 'package:equilibrium/screens/manage_subjects_screen.dart';
+import 'package:equilibrium/screens/question_bank_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -104,8 +105,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
         });
         final calendarService =
             Provider.of<CalendarService>(context, listen: false);
-        calendarService.updateMonthlyGoals(
-            DateFormat('yyyy-MM').format(DateTime.now()));
+        calendarService
+            .updateMonthlyGoals(DateFormat('yyyy-MM').format(DateTime.now()));
       }
     });
   }
@@ -144,6 +145,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  void _navigateToQuestionBank() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const QuestionBankScreen(),
+      ),
+    );
+  }
+
   void _navigateToAutodiagnostico() {
     Navigator.push(
       context,
@@ -174,7 +184,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               items: List.generate(12, (index) {
                 return DropdownMenuItem(
                   value: index,
-                  child: Text(_months[index], style: const TextStyle(color: Colors.white)),
+                  child: Text(_months[index],
+                      style: const TextStyle(color: Colors.white)),
                 );
               }),
               onChanged: (value) {
@@ -212,7 +223,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ].map((year) {
                 return DropdownMenuItem(
                   value: year,
-                  child: Text(year.toString(), style: const TextStyle(color: Colors.white)),
+                  child: Text(year.toString(),
+                      style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -239,7 +251,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           },
           tooltip: 'Metas Mensais',
         ),
-        
+
         IconButton(
           icon: const Icon(Icons.credit_card, color: Colors.white),
           onPressed: () => Navigator.push(
@@ -250,7 +262,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           tooltip: 'Flashcards',
         ),
-        
+
         IconButton(
           icon: const Icon(Icons.analytics, color: Colors.white),
           onPressed: () => Navigator.push(
@@ -260,6 +272,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           tooltip: 'Logs de Acesso',
+        ),
+        IconButton(
+          icon: const Icon(Icons.library_books, color: Colors.white),
+          onPressed: _navigateToQuestionBank,
+          tooltip: 'Banco de Questões',
         ),
 
         // Botão Hoje
@@ -315,7 +332,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
             child: GlassContainer(
               blur: 4.0,
               opacity: 0.02,
-              margin: const EdgeInsets.only(left: 8, right: 12, top: 12, bottom: 12),
+              margin: const EdgeInsets.only(
+                  left: 8, right: 12, top: 12, bottom: 12),
               child: DayPanel(
                 selectedDate: _selectedDate!,
                 onClose: () {
@@ -497,10 +515,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         title: const Text(
           '🎯Equilibrium',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.white
-          ),
+              fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
         ),
         backgroundColor: const Color(0xFF011B3D),
         iconTheme: const IconThemeData(color: Colors.white),
