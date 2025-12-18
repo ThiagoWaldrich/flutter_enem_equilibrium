@@ -1,7 +1,7 @@
 // lib/screens/question_bank_screen.dart
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
-import 'add_question_screen.dart';
+import 'add_edit_question_screen.dart';
 import '../utils/theme.dart';
 import '../widgets/question_bank_grid.dart';
 
@@ -202,7 +202,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     }
 
     setState(() {
-      _filteredTopics = []; // Limpa para mostrar estado de carregamento
+      _filteredTopics = [];
       _selectedTopicId = null;
     });
 
@@ -218,7 +218,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
         _selectedTopicId = null;
       });
 
-      // Atualiza os filtros após carregar os tópicos
       _applyFilters();
     } catch (e) {
       print('❌ [SCREEN] Erro ao carregar tópicos: $e');
@@ -242,7 +241,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     });
   }
 
-  // Método para alternar visibilidade da resposta
   void _toggleAnswerVisibility(String questionId) {
     setState(() {
       if (_revealedAnswers.contains(questionId)) {
@@ -276,7 +274,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       try {
         await SupabaseService.deleteQuestion(questionId);
 
-        // Remove localmente sem recarregar tudo
         setState(() {
           _questions.removeWhere((q) => q['id'] == questionId);
           _filteredQuestions.removeWhere((q) => q['id'] == questionId);
@@ -483,7 +480,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
 
                       setState(() {
                         _selectedSubjectId = value;
-                        _filteredTopics = []; // Limpa enquanto carrega
+                        _filteredTopics = [];
                         _selectedTopicId = null;
                       });
 
@@ -707,6 +704,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final difficulty = question['difficulty_level'] ?? 3;
     final correctAnswer = question['correct_answer']?.toString() ?? '';
     final imageUrl = _getImageUrl(question['image_url']);
+    final answerImageUrl = _getImageUrl(question['answer_image_url']);
     final displayNumber = index + 1;
 
     final subjectName = subject?['name'] ?? 'Sem matéria';
@@ -897,6 +895,36 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                         ),
                       ),
                     ),
+
+                  // BOTÃO PARA VER IMAGEM DA RESPOSTA (SE EXISTIR)
+                  if (answerImageUrl != null)
+                    GestureDetector(
+                      onTap: () => _showImageFullScreen(context, answerImageUrl,
+                          isAnswerImage: true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.amber.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.lightbulb_outline,
+                                size: 12, color: Colors.amber[700]),
+                            const SizedBox(width: 4),
+                            const Text('Ver Imagem da Resposta',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.amber)),
+                          ],
+                        ),
+                      ),
+                    ),
+
                   if (sourceName.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -921,9 +949,10 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                         ],
                       ),
                     ),
+
                   if (imageUrl != null)
                     GestureDetector(
-                      onTap: () => _showImageFullScreen(context, imageUrl),
+                      onTap: () => _showImageFullScreen(context, imageUrl!),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
@@ -992,8 +1021,17 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
   }
 
   void _editQuestion(Map<String, dynamic> question) {
-    // TODO: Implementar tela de edição
-    print('Editar questão: ${question['id']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddEditQuestionScreen(questionToEdit: question),
+      ),
+    ).then((shouldRefresh) {
+      // Recarregar dados se a questão foi salva
+      if (shouldRefresh == true) {
+        _loadData();
+      }
+    });
   }
 
   Widget _buildListView() {
@@ -1025,10 +1063,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     if (imagePath == null || imagePath.isEmpty) return null;
     if (imagePath.startsWith('http')) return imagePath;
 
-    // Se não começar com http, pode ser um caminho do Supabase Storage
     try {
       final supabase = SupabaseService.supabase;
-      return supabase.storage.from('question-images').getPublicUrl(imagePath);
+      // Tenta primeiro no bucket de questões, depois no de respostas
+      try {
+        return supabase.storage.from('question-images').getPublicUrl(imagePath);
+      } catch (_) {
+        return supabase.storage.from('answer-images').getPublicUrl(imagePath);
+      }
     } catch (e) {
       print('❌ Erro ao obter URL da imagem: $e');
       return null;
@@ -1052,6 +1094,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     final source = question['source'] as Map<String, dynamic>?;
     final year = question['year'] as Map<String, dynamic>?;
     final imageUrl = _getImageUrl(question['image_url']);
+    final answerImageUrl = _getImageUrl(question['answer_image_url']);
     final statement = question['statement']?.toString() ?? '';
     final contextText = question['context']?.toString() ?? '';
 
@@ -1073,7 +1116,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.subject, size: 16, color: Colors.grey[600]),
+                          Icon(Icons.subject,
+                              size: 16, color: Colors.grey[600]),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1091,7 +1135,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.category, size: 16, color: Colors.grey[600]),
+                          Icon(Icons.category,
+                              size: 16, color: Colors.grey[600]),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -1137,7 +1182,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                 child: Text(
                                   'Resposta Correta:',
                                   style: const TextStyle(
-                                      fontSize: 14, fontWeight: FontWeight.w600),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ),
                               IconButton(
@@ -1157,8 +1203,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                           ),
                           if (_showAnswer)
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 4, left: 24),
+                              padding: const EdgeInsets.only(top: 4, left: 24),
                               child: Text(
                                 question['correct_answer'].toString(),
                                 style: TextStyle(
@@ -1203,8 +1248,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                         const SizedBox(height: 4),
                         Text(
                           statement,
-                          style:
-                              const TextStyle(fontSize: 13, height: 1.5),
+                          style: const TextStyle(fontSize: 13, height: 1.5),
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -1232,7 +1276,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                       ],
                     ),
 
-                  // Imagem (se houver)
+                  // Imagem da questão (se houver)
                   if (imageUrl != null)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1244,16 +1288,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                         ),
                         const SizedBox(height: 8),
                         GestureDetector(
-                          onTap: () =>
-                              _showImageFullScreen(context, imageUrl),
+                          onTap: () => _showImageFullScreen(context, imageUrl),
                           child: Container(
                             width: double.infinity,
-                            height: 200,
+                            height: 150,
                             decoration: BoxDecoration(
                               color: Colors.grey[100],
                               borderRadius: BorderRadius.circular(8),
-                              border:
-                                  Border.all(color: Colors.grey[300]!),
+                              border: Border.all(color: Colors.grey[300]!),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
@@ -1265,32 +1307,29 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                                   if (loadingProgress == null) return child;
                                   return Center(
                                     child: CircularProgressIndicator(
-                                      value: loadingProgress
-                                                  .expectedTotalBytes !=
-                                              null
-                                          ? loadingProgress
-                                                  .cumulativeBytesLoaded /
-                                              loadingProgress
-                                                  .expectedTotalBytes!
-                                          : null,
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
                                     ),
                                   );
                                 },
-                                errorBuilder:
-                                    (context, error, stackTrace) {
+                                errorBuilder: (context, error, stackTrace) {
                                   return Center(
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
                                         Icon(Icons.broken_image,
-                                            size: 40,
-                                            color: Colors.grey[400]),
+                                            size: 40, color: Colors.grey[400]),
                                         const SizedBox(height: 8),
                                         const Text(
                                           'Erro ao carregar imagem',
-                                          style:
-                                              TextStyle(color: Colors.grey),
+                                          style: TextStyle(color: Colors.grey),
                                         ),
                                       ],
                                     ),
@@ -1309,6 +1348,56 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
                         ),
                       ],
                     ),
+
+                  // Imagem da resposta (se houver)
+                  if (answerImageUrl != null)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Imagem da Resposta:',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => _showImageFullScreen(
+                              context, answerImageUrl,
+                              isAnswerImage: true),
+                          child: Container(
+                            width: double.infinity,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: Colors.amber.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.lightbulb_outline,
+                                    size: 40, color: Colors.amber[700]),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Clique para ver a imagem da resposta',
+                                  style: TextStyle(color: Colors.amber),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () => _showImageFullScreen(
+                              context, answerImageUrl,
+                              isAnswerImage: true),
+                          icon: const Icon(Icons.lightbulb_outline, size: 16),
+                          label: const Text('Ver Imagem da Resposta'),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -1324,7 +1413,8 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
     );
   }
 
-  void _showImageFullScreen(BuildContext context, String imageUrl) {
+  void _showImageFullScreen(BuildContext context, String imageUrl,
+      {bool isAnswerImage = false}) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1337,11 +1427,14 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
+            title: Text(
+              isAnswerImage ? 'Imagem da Resposta' : 'Imagem da Questão',
+              style: const TextStyle(color: Colors.white),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.download, color: Colors.white),
                 onPressed: () {
-                  // TODO: Implementar download da imagem
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Download em breve...'),
@@ -1353,7 +1446,6 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.white),
                 onPressed: () {
-                  // TODO: Implementar compartilhamento
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Compartilhamento em breve...'),
@@ -1448,7 +1540,7 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
             child: Row(
               children: [
                 Text(
-                  '${_filteredQuestions.length} questão${_filteredQuestions.length != 1 ? 'es' : ''} encontrada${_filteredQuestions.length != 1 ? 's' : ''}',
+                  '${_filteredQuestions.length} quest${_filteredQuestions.length != 1 ? 'ões' : 'ão'} encontrada${_filteredQuestions.length != 1 ? 's' : ''}',
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const Spacer(),
@@ -1483,8 +1575,13 @@ class _QuestionBankScreenState extends State<QuestionBankScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const AddQuestionScreen()),
-        ).then((_) => _loadData()),
+          MaterialPageRoute(
+              builder: (context) => const AddEditQuestionScreen()),
+        ).then((shouldRefresh) {
+          if (shouldRefresh == true) {
+            _loadData();
+          }
+        }),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
