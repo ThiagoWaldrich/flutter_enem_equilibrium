@@ -60,6 +60,7 @@ class SupabaseService {
     required String sourceName,
     required String year,
     required int questionNumber,
+    bool isAnswerImage = false,
   }) async {
     try {
       if (!isAuthenticated) {
@@ -68,20 +69,23 @@ class SupabaseService {
 
       final userId = currentUser!.id;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      final prefix = isAnswerImage ? 'resposta_' : '';
       final fileName =
-          '${sourceName}_${year}_q${questionNumber.toString().padLeft(3, '0')}_${timestamp}_${userId.substring(0, 8)}.jpg';
+          '${prefix}${sourceName}_${year}_q${questionNumber.toString().padLeft(3, '0')}_${timestamp}_${userId.substring(0, 8)}.jpg';
+
+      final folder = isAnswerImage ? 'answer-images' : 'question-images';
       final path = '$sourceName/$year/$fileName';
 
-      print('📤 Fazendo upload para: $path');
+      print('📤 Fazendo upload para: $folder/$path');
 
-      await supabase.storage.from('question-images').upload(path, imageFile,
+      await supabase.storage.from(folder).upload(path, imageFile,
           fileOptions: FileOptions(
             cacheControl: '3600',
             upsert: false,
           ));
 
-      final publicUrl =
-          supabase.storage.from('question-images').getPublicUrl(path);
+      final publicUrl = supabase.storage.from(folder).getPublicUrl(path);
 
       print('✅ Upload concluído: $publicUrl');
       return publicUrl;
@@ -105,21 +109,17 @@ class SupabaseService {
   }
 
   // ========== TOPICS ==========
-  // Adicione ou substitua este método no seu arquivo supabase_service.dart
-
   static Future<List<Map<String, dynamic>>> getTopicsBySubject(
       String subjectId) async {
     try {
       print('🔍 [DEBUG] Buscando tópicos para subjectId: $subjectId');
       print('🔍 [DEBUG] Tipo do subjectId: ${subjectId.runtimeType}');
 
-      // Verifique se o subjectId é válido
       if (subjectId.isEmpty) {
         print('❌ [DEBUG] subjectId está vazio');
         return [];
       }
 
-      // Primeiro, verifique se o subject existe
       final subjectCheck = await supabase
           .from('subjects')
           .select('id, name')
@@ -133,7 +133,6 @@ class SupabaseService {
 
       print('✅ [DEBUG] Matéria encontrada: ${subjectCheck['name']}');
 
-      // Agora busque os tópicos
       final response = await supabase
           .from('topics')
           .select()
@@ -147,7 +146,6 @@ class SupabaseService {
         print(
             'ℹ️ [DEBUG] Nenhum tópico encontrado para subject_id: $subjectId');
 
-        // Vamos verificar se há tópicos na tabela de qualquer forma
         final allTopics = await supabase
             .from('topics')
             .select('id, name, subject_id')
@@ -175,7 +173,6 @@ class SupabaseService {
     }
   }
 
-// Se você também tiver um método getTopics() geral, certifique-se de que ele está assim:
   static Future<List<Map<String, dynamic>>> getTopics() async {
     try {
       final response = await supabase
@@ -191,7 +188,6 @@ class SupabaseService {
     }
   }
 
-// Método auxiliar para debug (opcional - pode remover depois)
   static Future<void> debugSubjectTopicRelation() async {
     try {
       print('\n🔍 === DEBUG: Relação Matérias x Tópicos ===\n');
@@ -258,7 +254,6 @@ class SupabaseService {
     int from = 0,
   }) async {
     try {
-      // Use !fk_subject para especificar qual relação usar
       var query = supabase.from('questions').select('''
       *,
       subject:subjects(id, name, color_hex),
@@ -357,6 +352,7 @@ class SupabaseService {
       print('   - topic_id: ${questionData['topic_id']}');
       print('   - source_id: ${questionData['source_id']}');
       print('   - correct_answer: ${questionData['correct_answer']}');
+      print('   - answer_image_url: ${questionData['answer_image_url']}');
 
       final response =
           await supabase.from('questions').insert(questionData).select();
@@ -369,25 +365,50 @@ class SupabaseService {
     }
   }
 
+  // CORREÇÃO PRINCIPAL AQUI - método updateQuestion
   static Future<void> updateQuestion(
-      String id, Map<String, dynamic> updates) async {
+      String questionId, Map<String, dynamic> data) async {
     try {
-      if (!isAuthenticated) {
-        throw Exception('Usuário não autenticado');
-      }
+      print('🔄 [SUPABASE] Atualizando questão ID: $questionId');
+      print('📝 Dados para atualização: $data');
 
-      updates['updated_at'] = DateTime.now().toIso8601String();
+      // Atualiza a data de atualização
+      data['updated_at'] = DateTime.now().toIso8601String();
+
+      // Executa a atualização
+      await supabase
+          .from('questions')
+          .update(data)
+          .eq('id', questionId);
+
+      print('✅ [SUPABASE] Questão atualizada com sucesso!');
+    } catch (e) {
+      print('❌ [SUPABASE] Erro ao atualizar questão: $e');
+      throw Exception('Falha ao atualizar a questão: ${e.toString()}');
+    }
+  }
+
+  // CORREÇÃO - método updateQuestionImagesBank
+  static Future<void> updateQuestionImagesBank(
+    String questionId,
+    Map<String, dynamic> imageData,
+  ) async {
+    try {
+      print('🔄 [SUPABASE] Atualizando imagens da questão ID: $questionId');
+      print('📝 Dados das imagens: $imageData');
+
+      // Adiciona timestamp de atualização
+      imageData['updated_at'] = DateTime.now().toIso8601String();
 
       await supabase
           .from('questions')
-          .update(updates)
-          .eq('id', id)
-          .eq('user_id', currentUser!.id);
+          .update(imageData)
+          .eq('id', questionId);
 
-      print('✅ Questão atualizada: $id');
+      print('✅ [SUPABASE] Imagens atualizadas com sucesso!');
     } catch (e) {
-      print('❌ Erro ao atualizar questão: $e');
-      rethrow;
+      print('❌ [SUPABASE] Erro ao atualizar imagens: $e');
+      throw Exception('Falha ao atualizar imagens: ${e.toString()}');
     }
   }
 
@@ -586,19 +607,16 @@ class SupabaseService {
     }
   }
 
-  // No SupabaseService, adicione este método:
   static Future<void> debugAllTopicsAndSubjects() async {
     try {
       print('\n🔍 === DEBUG COMPLETO: Matérias e Tópicos ===\n');
 
-      // Busca todas as matérias
       final subjects = await getSubjects();
       print('📚 Total de matérias: ${subjects.length}');
 
       for (var subject in subjects) {
         print('\n📚 Matéria: ${subject['name']} (ID: ${subject['id']})');
 
-        // Busca tópicos usando a query direta
         final topics = await supabase
             .from('topics')
             .select('id, name, subject_id, display_order')
@@ -617,7 +635,6 @@ class SupabaseService {
         }
       }
 
-      // Mostra todos os tópicos sem filtro
       print('\n🔍 Todos os tópicos na tabela:');
       final allTopics = await supabase
           .from('topics')

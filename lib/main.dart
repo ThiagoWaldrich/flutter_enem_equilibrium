@@ -32,7 +32,7 @@ import 'screens/calendar_screen.dart';
 import 'screens/flashcards_screen.dart';
 import 'screens/access_logs_screen.dart';
 import 'screens/question_bank_screen.dart';
-import 'screens/add_question_screen.dart';
+import 'screens/add_edit_question_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/autodiagnostico_screen.dart';
@@ -196,7 +196,7 @@ class EquilibriumApp extends StatelessWidget {
       routes: {
         '/calendar': (context) => const CalendarScreen(),
         '/question-bank': (context) => const QuestionBankScreen(),
-        '/add-question': (context) => const AddQuestionScreen(),
+        '/add-question': (context) => const AddEditQuestionScreen(),
         '/flashcards': (context) => const FlashcardsScreen(),
         '/access-logs': (context) => const AccessLogsScreen(),
         '/goals': (context) => const GoalsScreen(),
