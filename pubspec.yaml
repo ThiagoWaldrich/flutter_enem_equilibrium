@@ -59,3 +59,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/model.ico
+
+flutter_icons:
+  image_path: "assets/model.ico"
+  android: true
+  ios: true
+  windows: true
+  macos: true
+  linux: true
+  web: true
