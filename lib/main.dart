@@ -44,8 +44,8 @@ void main() async {
   
 
   await Supabase.initialize(
-    url: '',
-    anonKey: '',
+    url: 'https://ynxotlrtabypnxwslxry.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlueG90bHJ0YWJ5cG54d3NseHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyOTUwNDksImV4cCI6MjA4MDg3MTA0OX0.alZ1Zxg6mrlUfVyVRKZQptDNqB7K5EC2g4XubNfSXFM',
   );
   
   if (kIsWeb) {
