@@ -305,11 +305,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
           },
           tooltip: 'Metas Mensais',
         ),
-        IconButton(
-          icon: const Icon(Icons.library_books, color: Colors.white),
-          onPressed: _navigateToQuestionBank,
-          tooltip: 'Banco de Questões',
-        ),
+        // IconButton(
+        //   icon: const Icon(Icons.library_books, color: Colors.white),
+        //   onPressed: _navigateToQuestionBank,
+        //   tooltip: 'Banco de Questões',
+        // ),
 
         // Botão Hoje
         IconButton(

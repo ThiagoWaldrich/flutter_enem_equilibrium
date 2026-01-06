@@ -21,11 +21,6 @@ import 'screens/review_screen.dart';
 import 'screens/autodiagnostico_screen.dart';
 import 'screens/login_screen.dart'; 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Supabase.initialize(
-    url: 'https://ynxotlrtabypnxwslxry.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlueG90bHJ0YWJ5cG54d3NseHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyOTUwNDksImV4cCI6MjA4MDg3MTA0OX0.alZ1Zxg6mrlUfVyVRKZQptDNqB7K5EC2g4XubNfSXFM',
-  );
   if (kIsWeb) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
@@ -54,13 +49,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return provider_package.MultiProvider(
       providers: [
-        provider_package.Provider<SupabaseClient>(
-          create: (_) => Supabase.instance.client,
-        ),
+        // provider_package.Provider<SupabaseClient>(
+        //   create: (_) => Supabase.instance.client,
+        // ),
         
-        provider_package.Provider<AuthService>(
-          create: (_) => AuthService(),
-        ),
+        // provider_package.Provider<AuthService>(
+        //   create: (_) => AuthService(),
+        // ),
         
         provider_package.FutureProvider<StorageService?>(
           create: (_) async {
@@ -127,7 +122,7 @@ class EquilibriumApp extends StatelessWidget {
     final storageService = provider_package.Provider.of<StorageService?>(context);
     final databaseService = provider_package.Provider.of<DatabaseService?>(context);
     //final authService = provider_package.Provider.of<AuthService>(context);
-    final isAuthenticated = AuthService.isAuthenticated;
+    //final isAuthenticated = AuthService.isAuthenticated;
     
     if (storageService == null || databaseService == null) {
       return const MaterialApp(
@@ -146,14 +141,14 @@ class EquilibriumApp extends StatelessWidget {
       );
     }
     
-    if (!isAuthenticated) {
-      return MaterialApp(
-        title: 'Equilibrium',
-        theme: AppTheme.lightTheme,
-        home: const LoginScreen(),
-        debugShowCheckedModeBanner: false,
-      );
-    }
+    // if (!isAuthenticated) {
+    //   return MaterialApp(
+    //     title: 'Equilibrium',
+    //     theme: AppTheme.lightTheme,
+    //     home: const LoginScreen(),
+    //     debugShowCheckedModeBanner: false,
+    //   );
+    // }
     
     return MaterialApp(
       title: 'Equilibrium',
@@ -164,7 +159,7 @@ class EquilibriumApp extends StatelessWidget {
       
       routes: {
         '/calendar': (context) => const CalendarScreen(),
-        '/question-bank': (context) => const QuestionBankScreen(),
+        //'/question-bank': (context) => const QuestionBankScreen(),
         '/add-question': (context) => const AddEditQuestionScreen(),
         '/goals': (context) => const GoalsScreen(),
         '/review': (context) => const ReviewScreen(),
