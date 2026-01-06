@@ -2,9 +2,6 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-3.22-blue?logo=flutter" alt="Flutter">
-  <img src="https://img.shields.io/badge/Supabase-PostgreSQL-green?logo=supabase" alt="Supabase">
-  <img src="https://img.shields.io/badge/Status-Produção-brightgreen" alt="Status">
-  <img src="https://img.shields.io/badge/Platform-Android%20%7C%20iOS-blueviolet" alt="Plataformas">
 </div>
 
 Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar questões de forma eficiente. Ideal para estudantes, professores e concurseiros.
