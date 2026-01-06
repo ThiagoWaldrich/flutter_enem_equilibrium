@@ -3,6 +3,9 @@
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-3.22-blue?logo=flutter" alt="Flutter">
 </div>
+<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&size=28&pause=1000&color=00FF00&center=true&vCenter=true&width=500&lines=VERS%C3%83O+BETA+1.0.0" />
+</p>
 
 Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar questões de forma eficiente. Ideal para estudantes, professores e concurseiros.
 
