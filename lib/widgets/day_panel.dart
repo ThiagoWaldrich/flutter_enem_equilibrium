@@ -1,3 +1,4 @@
+import 'package:equilibrium/models/day_data.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -22,20 +23,84 @@ class DayPanel extends StatefulWidget {
 }
 
 class _DayPanelState extends State<DayPanel> {
-  late TextEditingController _notesController;
+  // Mapa para armazenar controllers por data
+  final Map<String, TextEditingController> _notesControllers = {};
+  
+  // Data atual sendo exibida
+  String _currentDateKey = '';
 
   @override
   void initState() {
     super.initState();
-    final calendarService = context.read<CalendarService>();
+    _initializeForDate();
+  }
+
+  void _initializeForDate() {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-    final dayData = calendarService.getDayData(dateStr);
-    _notesController = TextEditingController(text: dayData?.notes ?? '');
+    _currentDateKey = dateStr;
+    
+    // Garantir que temos um controller para esta data
+    if (!_notesControllers.containsKey(dateStr)) {
+      final calendarService = context.read<CalendarService>();
+      final dayData = calendarService.getDayData(dateStr);
+      _notesControllers[dateStr] = TextEditingController(
+        text: dayData?.notes ?? '',
+      );
+    }
+  }
+
+  TextEditingController _getCurrentNotesController() {
+    final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
+    
+    // Se mudou de data, atualizar o controller
+    if (dateStr != _currentDateKey) {
+      _currentDateKey = dateStr;
+      
+      // Criar novo controller se não existir para esta data
+      if (!_notesControllers.containsKey(dateStr)) {
+        final calendarService = context.read<CalendarService>();
+        final dayData = calendarService.getDayData(dateStr);
+        _notesControllers[dateStr] = TextEditingController(
+          text: dayData?.notes ?? '',
+        );
+      }
+    }
+    
+    return _notesControllers[dateStr]!;
+  }
+
+  @override
+  void didUpdateWidget(DayPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Se a data mudou, garantir que temos o controller correto
+    if (widget.selectedDate != oldWidget.selectedDate) {
+      final newDateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
+      final oldDateStr = DateFormat('yyyy-MM-dd').format(oldWidget.selectedDate);
+      
+      // Se não temos controller para a nova data, criar
+      if (!_notesControllers.containsKey(newDateStr)) {
+        final calendarService = context.read<CalendarService>();
+        final dayData = calendarService.getDayData(newDateStr);
+        _notesControllers[newDateStr] = TextEditingController(
+          text: dayData?.notes ?? '',
+        );
+      }
+      
+      // Forçar rebuild para mostrar as anotações corretas
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   @override
   void dispose() {
-    _notesController.dispose();
+    // Descarta todos os controllers
+    for (final controller in _notesControllers.values) {
+      controller.dispose();
+    }
+    _notesControllers.clear();
     super.dispose();
   }
 
@@ -52,7 +117,17 @@ class _DayPanelState extends State<DayPanel> {
     final dayData = calendarService.getDayData(dateStr);
     final subjects = calendarService.getDaySubjects(dateStr);
 
-    // Formatar data corretamente
+    // Verificar se as notas no service estão sincronizadas com o controller
+    final controller = _getCurrentNotesController();
+    final serviceNotes = dayData?.notes ?? '';
+    
+    // Sincronizar se necessário (após carregar dados do service)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (controller.text != serviceNotes) {
+        controller.text = serviceNotes;
+      }
+    });
+
     final formattedDate =
         DateFormat("d 'de' MMMM, EEEE", 'pt_BR').format(widget.selectedDate);
 
@@ -61,12 +136,12 @@ class _DayPanelState extends State<DayPanel> {
         color: const Color(0xFF042044),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
       ),
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(10),
       child: Column(
         children: [
           // Cabeçalho
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFF042044),
               borderRadius: const BorderRadius.only(
@@ -92,7 +167,7 @@ class _DayPanelState extends State<DayPanel> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: const Icon(Icons.close, size: 10),
                     onPressed: widget.onClose,
                     color: Colors.black,
                     padding: const EdgeInsets.all(8),
@@ -107,7 +182,7 @@ class _DayPanelState extends State<DayPanel> {
           Expanded(
             child: ListView(
               controller: widget.scrollController,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(10),
               children: [
                 // Humor
                 const Text(
@@ -124,7 +199,7 @@ class _DayPanelState extends State<DayPanel> {
                   currentMood: dayData?.mood,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Energia
                 const Text(
@@ -141,7 +216,7 @@ class _DayPanelState extends State<DayPanel> {
                   currentEnergy: dayData?.energy,
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
                 // Anotações
                 const Text(
@@ -152,10 +227,11 @@ class _DayPanelState extends State<DayPanel> {
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 TextField(
-                  controller: _notesController,
-                  maxLines: 4,
+                  key: ValueKey('notes_$dateStr'), // Key única por data
+                  controller: controller,
+                  maxLines: 8,
                   style: const TextStyle(fontSize: 14, color: Colors.white),
                   decoration: InputDecoration(
                     fillColor: const Color(0xFF021328),
@@ -164,7 +240,7 @@ class _DayPanelState extends State<DayPanel> {
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
                     ),
-                    hintText: 'Adicione suas anotações aqui...',
+                    hintText: 'Horário de início / Horário de término - Lista/Livro - Pág...',
                     hintStyle:
                         const TextStyle(fontSize: 14, color: Colors.white54),
                   ),
@@ -251,8 +327,8 @@ class _DayPanelState extends State<DayPanel> {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _SubjectCard(
                         subject: subject,
-                        completedSessions: subjectProgress.length,
                         dateStr: dateStr,
+                        completedSessions: subjectProgress,
                       ),
                     );
                   }),
@@ -308,7 +384,6 @@ class _MoodSelector extends StatelessWidget {
         final value = index + 1;
         final isActive = currentMood == value;
         return Flexible(
-          // ← ADICIONE AQUI
           child: _EmojiButton(
             emoji: ['😞', '😕', '😊', '😄', '🤩'][index],
             isActive: isActive,
@@ -340,7 +415,7 @@ class _EnergySelector extends StatelessWidget {
       children: List.generate(5, (index) {
         final value = index + 1;
         final isActive = currentEnergy == value;
-        return Flexible( // ← ADICIONE AQUI
+        return Flexible(
           child: _EmojiButton(
             emoji: ['🪫', '🔋', '🔋', '🔋', '⚡'][index],
             isActive: isActive,
@@ -399,13 +474,13 @@ class _EmojiButton extends StatelessWidget {
 
 class _SubjectCard extends StatelessWidget {
   final dynamic subject;
-  final int completedSessions;
   final String dateStr;
+  final List<StudySession> completedSessions;
 
   const _SubjectCard({
     required this.subject,
-    required this.completedSessions,
     required this.dateStr,
+    required this.completedSessions,
   });
 
   @override
@@ -413,8 +488,14 @@ class _SubjectCard extends StatelessWidget {
     final calendarService = context.watch<CalendarService>();
     final color = AppTheme.getSubjectColor(subject.name);
     final totalSessions = subject.sessions;
-    final progress =
-        totalSessions > 0 ? completedSessions / totalSessions : 0.0;
+    
+    // Calcular sessões completadas e questões
+    final completedCount = completedSessions.length;
+    final totalQuestions = completedSessions.fold(
+      0, (sum, session) => sum + session.questionCount
+    );
+    
+    final progress = totalSessions > 0 ? completedCount / totalSessions : 0.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -425,6 +506,7 @@ class _SubjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Cabeçalho da matéria
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -439,21 +521,26 @@ class _SubjectCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    subject.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Text(
-                  '$completedSessions/$totalSessions',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sessões: $completedCount/$totalSessions • Questões: $totalQuestions',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -474,55 +561,146 @@ class _SubjectCard extends StatelessWidget {
             ),
           ),
 
-          // Sessões
+          // Sessões com contador de questões
           Padding(
             padding: const EdgeInsets.all(16),
             child: Wrap(
               spacing: 8,
-              runSpacing: 8,
+              runSpacing: 12,
               children: List.generate(totalSessions, (index) {
                 final sessionNumber = index + 1;
-                final isCompleted = completedSessions >= sessionNumber;
+                final session = completedSessions.firstWhere(
+                  (s) => s.sessionNumber == sessionNumber,
+                  orElse: () => StudySession(sessionNumber, questionCount: 0),
+                );
+                
+                final isCompleted = completedSessions
+                    .any((s) => s.sessionNumber == sessionNumber);
 
-                return InkWell(
-                  onTap: () {
+                return _SessionWidget(
+                  sessionNumber: sessionNumber,
+                  isCompleted: isCompleted,
+                  questionCount: session.questionCount,
+                  color: color,
+                  onToggleSession: () {
                     calendarService.toggleStudySession(
                       dateStr,
                       subject.id,
                       sessionNumber,
                     );
                   },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isCompleted ? color : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isCompleted ? color : AppTheme.lightGray,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$sessionNumber',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isCompleted
-                              ? Colors.white
-                              : AppTheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ),
+                  onUpdateQuestionCount: (change) {
+                    final newCount = (session.questionCount + change).clamp(0, 999);
+                    calendarService.updateQuestionCount(
+                      dateStr,
+                      subject.id,
+                      sessionNumber,
+                      newCount,
+                    );
+                  },
                 );
               }),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SessionWidget extends StatelessWidget {
+  final int sessionNumber;
+  final bool isCompleted;
+  final int questionCount;
+  final Color color;
+  final VoidCallback onToggleSession;
+  final Function(int) onUpdateQuestionCount;
+
+  const _SessionWidget({
+    required this.sessionNumber,
+    required this.isCompleted,
+    required this.questionCount,
+    required this.color,
+    required this.onToggleSession,
+    required this.onUpdateQuestionCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Botão da sessão
+        InkWell(
+          onTap: onToggleSession,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isCompleted ? color : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isCompleted ? color : AppTheme.lightGray,
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '$sessionNumber',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isCompleted
+                      ? Colors.white
+                      : AppTheme.textSecondary,
+                ),
+              ),
+            ),
+          ),
+        ),
+        
+        // Contador de questões (apenas se sessão completada)
+        if (isCompleted) ...[
+          const SizedBox(height: 4),
+          Container(
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.remove, size: 14, color: color),
+                  onPressed: () => onUpdateQuestionCount(-1),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
+                ),
+                Text(
+                  '$questionCount',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add, size: 14, color: color),
+                  onPressed: () => onUpdateQuestionCount(1),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 24,
+                    minHeight: 24,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

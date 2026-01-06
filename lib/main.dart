@@ -1,59 +1,36 @@
-// main.dart
-// ignore_for_file: prefer_const_constructors
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider_package;
 import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-// Configurar FFI para Windows/Linux/Mac
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
-// IMPORTANTE: Adicionar para inicializar formatos de data
 import 'package:intl/date_symbol_data_local.dart';
-//import 'package:intl/intl.dart';
-
-// Importar serviços
 import 'services/storage_service.dart';
 import 'services/database_service.dart';
 import 'services/calendar_service.dart';
 import 'services/mind_map_service.dart';
 import 'services/monthly_goals_service.dart';
 import 'services/enhanced_database_service.dart';
-//import 'services/supabase_service.dart';
-import 'services/auth_service.dart'; // ← Adicionado
-
-// Importar utils
+import 'services/auth_service.dart'; 
 import 'utils/theme.dart';
-
-// Importar telas
 import 'screens/calendar_screen.dart';
-import 'screens/flashcards_screen.dart';
-import 'screens/access_logs_screen.dart';
 import 'screens/question_bank_screen.dart';
 import 'screens/add_edit_question_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/autodiagnostico_screen.dart';
-//import 'screens/manage_subjects_screen.dart';
-import 'screens/login_screen.dart'; // ← Adicionado
-
+import 'screens/login_screen.dart'; 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-
   await Supabase.initialize(
     url: 'https://ynxotlrtabypnxwslxry.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlueG90bHJ0YWJ5cG54d3NseHJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyOTUwNDksImV4cCI6MjA4MDg3MTA0OX0.alZ1Zxg6mrlUfVyVRKZQptDNqB7K5EC2g4XubNfSXFM',
   );
-  
   if (kIsWeb) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
   }
-  
+
   await initializeDateFormatting();
-  
 
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     sqfliteFfiInit();
@@ -64,8 +41,6 @@ void main() async {
   final db = EnhancedDatabaseService();
   await db.init();
   
- 
-  await db.registerAccess();
   
   runApp(MyApp(db: db));
 }
@@ -105,10 +80,8 @@ class MyApp extends StatelessWidget {
           initialData: null,
         ),
         
-        // Banco de dados aperfeiçoado (já inicializado)
+
         provider_package.Provider<EnhancedDatabaseService>.value(value: db),
-        
-        // Serviços dependentes (usam ProxyProvider)
         provider_package.ChangeNotifierProxyProvider<StorageService, CalendarService>(
           create: (context) {
             final storage = context.read<StorageService>();
@@ -156,14 +129,13 @@ class EquilibriumApp extends StatelessWidget {
     //final authService = provider_package.Provider.of<AuthService>(context);
     final isAuthenticated = AuthService.isAuthenticated;
     
-    // Mostrar tela de carregamento se serviços não estiverem prontos
     if (storageService == null || databaseService == null) {
-      return MaterialApp(
+      return const MaterialApp(
         home: Scaffold(
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
+              children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
                 Text('Inicializando serviços...'),
@@ -174,7 +146,6 @@ class EquilibriumApp extends StatelessWidget {
       );
     }
     
-    // Se não estiver autenticado, mostrar tela de login
     if (!isAuthenticated) {
       return MaterialApp(
         title: 'Equilibrium',
@@ -184,7 +155,6 @@ class EquilibriumApp extends StatelessWidget {
       );
     }
     
-    // Se autenticado, mostrar app normal
     return MaterialApp(
       title: 'Equilibrium',
       theme: AppTheme.lightTheme,
@@ -192,13 +162,10 @@ class EquilibriumApp extends StatelessWidget {
       home: const CalendarScreen(),
       debugShowCheckedModeBanner: false,
       
-      // Rotas nomeadas para facilitar navegação
       routes: {
         '/calendar': (context) => const CalendarScreen(),
         '/question-bank': (context) => const QuestionBankScreen(),
         '/add-question': (context) => const AddEditQuestionScreen(),
-        '/flashcards': (context) => const FlashcardsScreen(),
-        '/access-logs': (context) => const AccessLogsScreen(),
         '/goals': (context) => const GoalsScreen(),
         '/review': (context) => const ReviewScreen(),
         '/autodiagnostico': (context) => const AutodiagnosticoScreen(),

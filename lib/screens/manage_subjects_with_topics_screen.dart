@@ -1,7 +1,7 @@
+import 'package:equilibrium/services/enhanced_database_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../services/enhanced_database_service.dart';
 import '../models/subject.dart';
 import '../models/study_topic.dart';
 import '../utils/constants.dart';

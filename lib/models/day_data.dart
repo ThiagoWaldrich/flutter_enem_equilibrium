@@ -1,12 +1,43 @@
 import 'subject.dart';
 
+class StudySession {
+  final int sessionNumber;
+  int questionCount;
+
+  StudySession(this.sessionNumber, {this.questionCount = 0});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'sessionNumber': sessionNumber,
+      'questionCount': questionCount,
+    };
+  }
+
+  factory StudySession.fromJson(Map<String, dynamic> json) {
+    return StudySession(
+      json['sessionNumber'] as int,
+      questionCount: json['questionCount'] as int? ?? 0,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is StudySession &&
+          runtimeType == other.runtimeType &&
+          sessionNumber == other.sessionNumber;
+
+  @override
+  int get hashCode => sessionNumber.hashCode;
+}
+
 class DayData {
   final String date;
   int? mood;
   int? energy;
   String? notes;
   List<Subject>? customSubjects;
-  Map<String, List<int>> studyProgress;
+  Map<String, List<StudySession>> studyProgress;
 
   DayData({
     required this.date,
@@ -14,7 +45,7 @@ class DayData {
     this.energy,
     this.notes,
     this.customSubjects,
-    Map<String, List<int>>? studyProgress,
+    Map<String, List<StudySession>>? studyProgress,
   }) : studyProgress = studyProgress ?? {};
 
   Map<String, dynamic> toJson() {
@@ -25,12 +56,37 @@ class DayData {
       'notes': notes,
       'customSubjects': customSubjects?.map((s) => s.toJson()).toList(),
       'studyProgress': studyProgress.map(
-        (key, value) => MapEntry(key, value),
+        (key, value) => MapEntry(
+          key,
+          value.map((session) => session.toJson()).toList(),
+        ),
       ),
     };
   }
 
   factory DayData.fromJson(Map<String, dynamic> json) {
+    Map<String, List<StudySession>> studyProgress = {};
+
+    if (json['studyProgress'] != null) {
+      final progressData = json['studyProgress'] as Map<String, dynamic>;
+      progressData.forEach((subjectId, sessions) {
+        if (sessions is List) {
+          if (sessions.isNotEmpty && sessions.first is int) {
+            // Versão antiga: List<int> - converter para StudySession
+            studyProgress[subjectId] = (sessions as List<int>)
+                .map((sessionNumber) => StudySession(sessionNumber))
+                .toList();
+          } else if (sessions.isNotEmpty && sessions.first is Map) {
+            // Versão nova: List<StudySession>
+            studyProgress[subjectId] = (sessions)
+                .map((sessionJson) =>
+                    StudySession.fromJson(sessionJson as Map<String, dynamic>))
+                .toList();
+          }
+        }
+      });
+    }
+
     return DayData(
       date: json['date'] ?? '',
       mood: json['mood'],
@@ -41,14 +97,7 @@ class DayData {
               .map((s) => Subject.fromJson(s))
               .toList()
           : null,
-      studyProgress: json['studyProgress'] != null
-          ? (json['studyProgress'] as Map<String, dynamic>).map(
-              (key, value) => MapEntry(
-                key,
-                (value as List).map((e) => e as int).toList(),
-              ),
-            )
-          : {},
+      studyProgress: studyProgress,
     );
   }
 
@@ -58,7 +107,7 @@ class DayData {
     int? energy,
     String? notes,
     List<Subject>? customSubjects,
-    Map<String, List<int>>? studyProgress,
+    Map<String, List<StudySession>>? studyProgress,
   }) {
     return DayData(
       date: date ?? this.date,
@@ -68,5 +117,18 @@ class DayData {
       customSubjects: customSubjects ?? this.customSubjects,
       studyProgress: studyProgress ?? this.studyProgress,
     );
+  }
+
+  int getTotalQuestionsForSubject(String subjectId) {
+    final sessions = studyProgress[subjectId] ?? [];
+    return sessions.fold(0, (sum, session) => sum + session.questionCount);
+  }
+
+  int getTotalQuestionsForDay() {
+    int total = 0;
+    studyProgress.forEach((subjectId, sessions) {
+      total += sessions.fold(0, (sum, session) => sum + session.questionCount);
+    });
+    return total;
   }
 }

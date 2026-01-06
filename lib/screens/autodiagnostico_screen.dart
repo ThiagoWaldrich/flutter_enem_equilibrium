@@ -8,6 +8,7 @@ import '../services/database_service.dart';
 import '../models/question.dart';
 import '../utils/theme.dart';
 import '../utils/constants.dart';
+import 'package:flutter/services.dart';
 import '../widgets/questions_grid_view.dart';
 import 'mind_maps_screen.dart';
 
@@ -23,10 +24,19 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   late TabController _tabController;
 
   String? _selectedSubject;
+  String? _selectedTopic;
+  String? _selectedSubtopic;
+  String? _selectedYear;
+  String? _selectedSource;
+
+  final List<String> _availableTopics = [];
+  final List<String> _availableSubtopics = [];
+
   final _topicController = TextEditingController();
   final _subtopicController = TextEditingController();
-  final _descriptionController = TextEditingController();
   final _errorDescriptionController = TextEditingController();
+  final _yearController = TextEditingController();
+  final _sourceController = TextEditingController();
 
   bool _contentError = false;
   bool _attentionError = false;
@@ -37,15 +47,533 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
   List<Question> _questions = [];
   Map<String, int> _subjectStats = {};
+  Map<String, int> _yearStats = {};
+  Map<String, int> _sourceStats = {};
   Map<String, Map<String, dynamic>> _errorStats = {};
   int _totalQuestions = 0;
   bool _isLoading = false;
 
   String? _filterSubject;
+  String? _filterYear;
+  String? _filterSource;
   String? _filterErrorType;
 
   Question? _questionToEdit;
   bool _isEditing = false;
+
+  // Lista de anos (de 2027 até 1980)
+  final List<String> _years =
+      List.generate(48, (index) => (2027 - index).toString());
+
+  // Lista de fontes (provas e vestibulares)
+  final List<String> _sources = [
+    'ENEM',
+    'ENEM PPL',
+    'ENEM 2ª Aplicação',
+    'ENEM Digital',
+    'ENEM Reaplicação',
+    'ENEM 1ª Aplicação',
+    'ENEM 2ª Aplicação (PPL)',
+    'ENEM Libras',
+    'ENEM para adultos privados de liberdade',
+    'FUVEST',
+    'UNICAMP',
+    'UNESP',
+    'UERJ',
+    'UFPR',
+    'UFRGS',
+    'UFRJ',
+    'UFMG',
+    'UFSM',
+    'UFC',
+    'UFBA',
+    'UNIFESP',
+    'ITA',
+    'IME',
+    'AFA',
+    'EFOMM',
+    'EsPCEx',
+    'Colégio Naval',
+    'ESA',
+    'EsSA',
+    'CN',
+    'EPCAR',
+    'Fuvest - USP',
+    'Vunesp',
+    'Comvest - Unicamp',
+    'UPE',
+    'UEMA',
+    'UFPI',
+    'UFSC',
+    'UFT',
+    'UNIR',
+    'UFPA',
+    'UFMT',
+    'UFMS',
+    'UFG',
+    'UFSCar',
+    'UFF',
+    'UFV',
+    'UFRN',
+    'UFCG',
+    'UFPB',
+    'UFRPE',
+    'IF - Instituto Federal',
+    'IFSP',
+    'IFRJ',
+    'IFCE',
+    'IFMG',
+    'IFSUL',
+    'IF Goiano',
+    'Cefet',
+    'Cefet-MG',
+    'Cefet-RJ',
+    'Colégio Pedro II',
+    'Obmep',
+    'OBA',
+    'OBF',
+    'Simulado Positivo',
+    'Simulado Anglo',
+    'Simulado Bernoulli',
+    'Simulado Poliedro',
+    'Simulado Etapa',
+    'Simulado Farias Brito',
+    'Simulado SAS',
+    'Simulado Somos',
+    'Prova particular',
+    'Livro didático',
+    'Apostila',
+    'Curso preparatório',
+    'Plataforma online',
+    'App de estudo',
+    'Site educativo',
+    'YouTube',
+    'Outro'
+  ];
+  final Map<String, Map<String, List<String>>> _subjectData = {
+    'Física': {
+      'Mecânica': [
+        'Vetores',
+        'Cinemática',
+        'Dinâmica',
+        'Estática',
+        'Hidrostática',
+        'Trabalho e Energia',
+        'Gravitação',
+        'Movimento Circular',
+        'Impulso e Quantidade de Movimento'
+      ],
+      'Termologia': [
+        'Calorimetria',
+        'Termodinâmica',
+        'Dilatação Térmica',
+        'Gases Ideais',
+        'Termometria',
+        'Transmissão de Calor'
+      ],
+      'Óptica': [
+        'Reflexão',
+        'Refração',
+        'Lentes',
+        'Espelhos',
+        'Óptica da Visão',
+        'Instrumentos Ópticos'
+      ],
+      'Ondulatória': [
+        'Efeito Doppler',
+        'Ondas Mecânicas',
+        'Acústica',
+        'Fenômenos Ondulatórios',
+        'Cordas Vibrantes',
+        'Tubos Sonoros',
+        'Espectro Eletromagnético'
+      ],
+      'Eletricidade': [
+        'Eletrostática',
+        'Circuitos Elétricos',
+        'Eletromagnetismo',
+        'Potência Elétrica',
+        'Lei de Ohm',
+        'Capacitores',
+        'Geradores'
+      ],
+      'Física Moderna': [
+        'Relatividade',
+        'Física Quântica',
+        'Radioatividade',
+        'Física Nuclear',
+        'Partículas Elementares'
+      ]
+    },
+    'Literatura': {
+        'Escolas Literárias Brasileiras':[
+          'Modernismo',
+          'Realismo/Naturalismo',
+          'Romantismo',
+          'Barroco',
+          'Arcadismo(Neoclassicismo)',
+          'Simbolismo',
+          'Pré-Modernismo',
+          'Parnasianismo'
+        ],
+        'Vanguardas Europeias':[
+          'Futurismo',
+          'Cubismo',
+          'Expressionismo',
+          'Dadaísmo'
+        ]
+    },
+    'Química': {
+      'Química Geral': [
+        'Estrutura Atômica',
+        'Tabela Periódica',
+        'Ligações Químicas',
+        'Estequiometria',
+        'Soluções',
+        'Funções Inorgânicas'
+      ],
+      'Físico-Química': [
+        'Termoquímica',
+        'Cinética Química',
+        'Equilíbrio Químico',
+        'Eletroquímica',
+        'Propriedades Coligativas'
+      ],
+      'Química Orgânica': [
+        'Funções Orgânicas',
+        'Reações Orgânicas',
+        'Isomeria',
+        'Polímeros',
+        'Petróleo e Combustíveis',
+        'Bioquímica'
+      ],
+      'Química Inorgânica': [
+        'Funções Inorgânicas',
+        'Reações Inorgânicas',
+        'Química dos Minerais',
+        'Metais e Não-Metais'
+      ],
+      'Química Ambiental': [
+        'Poluição Ambiental',
+        'Tratamento de Água',
+        'Chuva Ácida',
+        'Efeito Estufa',
+        'Camada de Ozônio'
+      ]
+    },
+    'Biologia': {
+      'Citologia':[
+        'Organelas'
+      ],
+      'Biologia Celular': [
+        'Células Procariontes e Eucariontes',
+        'Metabolismo Energético',
+        'Divisão Celular',
+        'Síntese Proteica',
+        'Membrana Celular',
+        'Organelas Celulares'
+      ],
+      'Genética': [
+        'Leis de Mendel',
+        'DNA e RNA',
+        'Engenharia Genética',
+        'Mutações',
+        'Herança Genética',
+        'Genética de Populações'
+      ],
+      'Ecologia': [
+        'Cadeias Alimentares',
+        'Ciclos Biogeoquímicos',
+        'Conservação Ambiental',
+        'Biomas',
+        'Relações Ecológicas',
+        'Sucessão Ecológica'
+      ],
+      'Fisiologia Humana': [
+        'Sistema Digestório',
+        'Sistema Circulatório',
+        'Sistema Respiratório',
+        'Sistema Nervoso',
+        'Sistema Endócrino',
+        'Sistema Excretor',
+        'Sistema Reprodutor',
+        'Sistema Locomotor'
+      ],
+      'Evolução': [
+        'Teorias Evolutivas',
+        'Evidências da Evolução',
+        'Seleção Natural',
+        'Especiação',
+        'Evolução Humana'
+      ],
+      'Botânica': [
+        'Fisiologia Vegetal',
+        'Classificação Vegetal',
+        'Reprodução Vegetal',
+        'Fotossíntese'
+      ],
+      'Zoologia': [
+        'Classificação Animal',
+        'Invertebrados',
+        'Vertebrados',
+        'Fisiologia Animal',
+        'Características Gerais'
+      ]
+    },
+    'Matemática': {
+      'Básica':[
+        'Porcentagem',
+        'Razão e Proporção',
+        'Potenciação e Radiciação',
+        'Regra de Três',
+        'Análise de Gráficos e Tabelas'
+      ],
+      'Álgebra': [
+        'Equações e Inequações',
+        'Funções Afim',
+        'Funções Quadráticas',
+        'Funções Exponenciais',
+        'Funções Logarítmicas',
+        'Funções Trigonométricas',
+        'Sistemas Lineares',
+        'Polinômios',
+        'Números Complexos',
+        'Matrizes e Determinantes',
+        'Trigonometría',
+        'Logaritmo'
+      ],
+      'Geometria': [
+        'Geometria Plana',
+        'Geometria Espacial',
+        'Geometria Analítica',
+        'Trigonometria',
+        'Áreas e Volumes',
+        'Geometria Métrica',
+        'Sólidos de Revolução',
+        'Projeção Ortonogonal'
+      ],
+      'Aritmética': [
+        'Números Naturais e Inteiros',
+        'Números Racionais',
+        'Números Reais',
+        'Sequências e Progressões',
+        'PA',
+        'PG'
+      ],
+      'Probabilidade e Estatística': [
+        'Estatística Descritiva',
+        'Probabilidade',
+        'Distribuição Normal',
+        'Análise Combinatória',
+        'Medidas de Tendência Central',
+      ],
+      'Matemática Financeira': [
+        'Juros Simples',
+        'Juros Compostos',
+        'Porcentagem',
+        'Descontos',
+        'Financiamentos'
+      ]
+    },
+    'História': {
+      'História Geral': [
+        'Pré-História',
+        'Antiguidade',
+        'Idade Média',
+        'Idade Moderna',
+        'Idade Contemporânea',
+        'Guerras Mundiais',
+        'Guerra Fria',
+        'Revolução Industrial'
+      ],
+      'História do Brasil': [
+        'Período Colonial',
+        'Período Imperial',
+        'República Velha',
+        'Era Vargas',
+        'Ditadura Militar',
+        'Redemocratização',
+        'Brasil Contemporâneo'
+      ],
+      'História da América': [
+        'América Pré-Colombiana',
+        'Colonização da América',
+        'Independências Americanas',
+        'América Contemporânea'
+      ]
+    },
+    'Geografia': {
+      'Geografia Ambiental':[
+        'Impactos Ambientais'
+      ],
+      'Geografia Política':[
+        'Globalização',
+        'Política'
+      ],
+      'Geografia Física': [
+        'Climatologia',
+        'Geomorfologia',
+        'Biomas',
+        'Hidrografia',
+        'Domínios Morfoclimáticos',
+        'Geografia dos Solos',
+        'Recursos Naturais'
+      ],
+      'Geografia Humana': [
+        'Demografia',
+        'Urbanização',
+        'Industrialização',
+        'Agricultura',
+        'Globalização',
+        'Demografia Brasileira'
+      ],
+      'Geografia do Brasil': [
+        'Regiões Brasileiras',
+        'População Brasileira',
+        'Indústria Brasileira',
+        'Agropecuária Brasileira',
+        'Transportes no Brasil',
+        'Energia no Brasil'
+      ],
+      'Geopolítica': [
+        'Organizações Internacionais',
+        'Conflitos Mundiais',
+        'Relacionamentos Internacionais',
+        'Geopolítica do Brasil'
+      ]
+    },
+    'Língua Portuguesa': {
+      'Gramática': [
+        'Morfologia',
+        'Sintaxe',
+        'Fonologia',
+        'Semântica',
+        'Pontuação',
+        'Crase',
+        'Regência',
+        'Concordância'
+      ],
+      'Interpretação e Análise Textual': [
+        'Gêneros Textuais',
+        'Estratégias Argumentativas',
+        'Coesão e Coerência',
+        'Funções da Linguagem',
+        'Textos Literários',
+        'Textos Não-Literários',
+        'Variação Linguística'
+      ],
+    },
+    'Inglês': {
+      'Interpretação de Textos': [
+        'Textos Jornalísticos',
+        'Textos Literários',
+        'Textos Acadêmicos',
+        'Textos Publicitários',
+        'Compreensão de Texto'
+      ],
+      'Gramática': [
+        'Tempos Verbais',
+        'Preposições',
+        'Artigos',
+        'Pronomes',
+        'Estruturas Sintáticas',
+        'Phrasal Verbs'
+      ],
+      'Vocabulário': [
+        'Sinônimos e Antônimos',
+        'Falsos Cognatos',
+        'Expressões Idiomáticas',
+        'Vocabulário Técnico'
+      ]
+    },
+    'Filosofia': {
+      'Temática':[
+        'Pensar Filosófico'
+      ],
+      'Filosofia Clássica': [
+        'Pré-Socráticos',
+        'Sócrates, Platão, Aristóteles',
+        'Helenismo',
+        'Filosofia Grega'
+      ],
+      'Filosofia Medieval': [
+        'Patrística',
+        'Escolástica',
+        'Santo Agostinho',
+        'São Tomás de Aquino'
+      ],
+      'Filosofia Moderna': [
+        'Racionalismo (Descartes)',
+        'Empirismo (Locke, Hume)',
+        'Iluminismo',
+        'Utilitarismo',
+        'Kant',
+        'Idealismo Alemão'
+      ],
+      'Filosofia Contemporânea': [
+        'Marxismo',
+        'Existencialismo',
+        'Fenomenologia',
+        'Filosofia Analítica'
+      ],
+      'Ética e Filosofia Política': [
+        'Teorias Éticas',
+        'Justiça Social',
+        'Democracia',
+        'Direitos Humanos'
+      ]
+    },
+    'Sociologia': {
+      'Política, Poder e Estado':[
+        'Política'
+      ],
+      'Trabalho e Estratificação Social':[
+        'Trabalho e Produção'
+      ],
+      'Teorias Sociológicas Clássicas': [
+        'Durkheim (Fatos Sociais)',
+        'Marx (Luta de Classes)',
+        'Weber (Ação Social)',
+        'Sociologia Compreensiva'
+      ],
+      'Sociologia Brasileira': [
+        'Formação da Sociedade Brasileira',
+        'Desigualdades Sociais',
+        'Identidade Nacional'
+      ],
+      'Cultura e Sociedade': [
+        'Diversidade Cultural',
+        'Globalização Cultural',
+        'Indústria Cultural'
+      ],
+      'Movimentos Sociais': [
+        'Movimentos Urbanos',
+        'Movimentos Rurais (MST)',
+        'Movimentos Feministas',
+        'Movimentos Negros',
+        'Movimentos LGBTQIA+',
+        'Movimentos Ambientalistas'
+      ]
+    },
+    'Redação': {
+      'Redação ENEM': [
+        'Competências do ENEM',
+        'Estrutura da Dissertação-Argumentativa',
+        'Temas Recorrentes',
+        'Estratégias Argumentativas',
+        'Proposta de Intervenção',
+        'Coesão e Coerência',
+        'Norma Culta'
+      ],
+      'Técnicas de Redação': [
+        'Introdução',
+        'Desenvolvimento',
+        'Conclusão',
+        'Argumentação',
+        'Repertório Sociocultural'
+      ]
+    }
+  };
 
   @override
   void initState() {
@@ -59,9 +587,39 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     _tabController.dispose();
     _topicController.dispose();
     _subtopicController.dispose();
-    _descriptionController.dispose();
     _errorDescriptionController.dispose();
+    _yearController.dispose();
+    _sourceController.dispose();
     super.dispose();
+  }
+
+  void _updateTopics() {
+    setState(() {
+      _availableTopics.clear();
+      _selectedTopic = null;
+      _availableSubtopics.clear();
+      _selectedSubtopic = null;
+
+      if (_selectedSubject != null &&
+          _subjectData.containsKey(_selectedSubject)) {
+        _availableTopics.addAll(_subjectData[_selectedSubject]!.keys.toList());
+      }
+    });
+  }
+
+  void _updateSubtopics() {
+    setState(() {
+      _availableSubtopics.clear();
+      _selectedSubtopic = null;
+
+      if (_selectedSubject != null &&
+          _selectedTopic != null &&
+          _subjectData.containsKey(_selectedSubject) &&
+          _subjectData[_selectedSubject]!.containsKey(_selectedTopic)) {
+        _availableSubtopics
+            .addAll(_subjectData[_selectedSubject]![_selectedTopic]!);
+      }
+    });
   }
 
   Future<void> _loadData() async {
@@ -71,6 +629,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
     final questions = await databaseService.getQuestions(limit: 1000);
     final stats = await databaseService.getSubjectStats();
+    final yearStats = await databaseService.getYearStats();
+    final sourceStats = await databaseService.getSourceStats();
     final count = await databaseService.getQuestionCount();
 
     final errorStats = <String, Map<String, dynamic>>{};
@@ -99,6 +659,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     setState(() {
       _questions = questions;
       _subjectStats = stats;
+      _yearStats = yearStats;
+      _sourceStats = sourceStats;
       _errorStats = errorStats;
       _totalQuestions = count;
       _isLoading = false;
@@ -127,48 +689,99 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
+    try {
+      final ImagePicker picker = ImagePicker();
 
-    final source = await showDialog<ImageSource>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Selecionar Imagem'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galeria'),
-              onTap: () => Navigator.pop(context, ImageSource.gallery),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Câmera'),
-              onTap: () => Navigator.pop(context, ImageSource.camera),
-            ),
-          ],
+      final source = await showDialog<ImageSource>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Selecionar Imagem'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galeria'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Câmera'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
 
-    if (source == null) return;
+      if (source == null) return;
 
-    final XFile? image = await picker.pickImage(source: source);
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
 
-    if (image != null) {
-      final bytes = await image.readAsBytes();
-      setState(() {
-        _imageFile = File(image.path);
-        _imageData = base64Encode(bytes);
-      });
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+
+        // Verificar o tamanho da imagem (limitar para evitar problemas de memória)
+        if (bytes.length > 10 * 1024 * 1024) {
+          // 10MB
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'A imagem é muito grande. Por favor, selecione uma imagem menor.'),
+                backgroundColor: AppTheme.dangerColor,
+              ),
+            );
+          }
+          return;
+        }
+
+        setState(() {
+          _imageFile = File(image.path);
+          _imageData = base64Encode(bytes);
+        });
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao acessar a imagem: ${e.message}'),
+            backgroundColor: AppTheme.dangerColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao selecionar imagem: $e'),
+            backgroundColor: AppTheme.dangerColor,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _saveQuestion() async {
-    if (_selectedSubject == null || _topicController.text.isEmpty) {
+    if (_selectedSubject == null || _selectedTopic == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Preencha Matéria e Tópico!'),
+          backgroundColor: AppTheme.dangerColor,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedYear == null || _selectedYear!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Informe o ano da prova!'),
           backgroundColor: AppTheme.dangerColor,
         ),
       );
@@ -180,12 +793,10 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
           ? _questionToEdit!.id
           : 'q_${DateTime.now().millisecondsSinceEpoch}',
       subject: _selectedSubject!,
-      topic: _topicController.text,
-      subtopic:
-          _subtopicController.text.isEmpty ? null : _subtopicController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
+      topic: _selectedTopic!,
+      subtopic: _selectedSubtopic,
+      year: _selectedYear,
+      source: _selectedSource,
       errorDescription: _errorDescriptionController.text.isEmpty
           ? null
           : _errorDescriptionController.text,
@@ -233,10 +844,17 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       _questionToEdit = null;
       _isEditing = false;
       _selectedSubject = null;
+      _selectedTopic = null;
+      _selectedSubtopic = null;
+      _selectedYear = null;
+      _selectedSource = null;
+      _availableTopics.clear();
+      _availableSubtopics.clear();
       _topicController.clear();
       _subtopicController.clear();
-      _descriptionController.clear();
       _errorDescriptionController.clear();
+      _yearController.clear();
+      _sourceController.clear();
       _contentError = false;
       _attentionError = false;
       _timeError = false;
@@ -251,9 +869,10 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       _isEditing = true;
 
       _selectedSubject = question.subject;
-      _topicController.text = question.topic;
-      _subtopicController.text = question.subtopic ?? '';
-      _descriptionController.text = question.description ?? '';
+      _selectedTopic = question.topic;
+      _selectedSubtopic = question.subtopic;
+      _selectedYear = question.year;
+      _selectedSource = question.source;
       _errorDescriptionController.text = question.errorDescription ?? '';
       _contentError = question.errors['conteudo'] ?? false;
       _attentionError = question.errors['atencao'] ?? false;
@@ -263,6 +882,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         _imageData = question.image!.data.split(',').last;
       }
     });
+
+    _updateTopics();
+    _updateSubtopics();
 
     _tabController.animateTo(0);
   }
@@ -309,7 +931,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               'materia': q.subject,
               'topico': q.topic,
               'subtopico': q.subtopic ?? '',
-              'descricao': q.description ?? '',
+              'ano': q.year ?? '',
+              'fonte': q.source ?? '',
               'erro_descricao': q.errorDescription ?? '',
               'erro_conteudo': q.errors['conteudo'] ?? false,
               'erro_atencao': q.errors['atencao'] ?? false,
@@ -359,11 +982,19 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   List<Question> _getFilteredQuestions() {
     var filtered = _questions;
 
-    if (_filterSubject != null) {
+    if (_filterSubject != null && _filterSubject!.isNotEmpty) {
       filtered = filtered.where((q) => q.subject == _filterSubject).toList();
     }
 
-    if (_filterErrorType != null) {
+    if (_filterYear != null && _filterYear!.isNotEmpty) {
+      filtered = filtered.where((q) => q.year == _filterYear).toList();
+    }
+
+    if (_filterSource != null && _filterSource!.isNotEmpty) {
+      filtered = filtered.where((q) => q.source == _filterSource).toList();
+    }
+
+    if (_filterErrorType != null && _filterErrorType!.isNotEmpty) {
       filtered = filtered.where((q) {
         return q.errors[_filterErrorType] == true;
       }).toList();
@@ -388,15 +1019,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               ),
               if (question.subtopic != null)
                 Text('Subtópico: ${question.subtopic}'),
+              if (question.year != null) Text('Ano: ${question.year}'),
+              if (question.source != null) Text('Fonte: ${question.source}'),
               const SizedBox(height: 16),
-              if (question.description != null) ...[
-                const Text(
-                  'Descrição:',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Text(question.description!),
-                const SizedBox(height: 16),
-              ],
               if (question.errorDescription != null) ...[
                 const Text(
                   'Análise do Erro:',
@@ -557,7 +1182,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black,
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -613,60 +1238,123 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               const Divider(),
               const SizedBox(height: 24),
 
+              // Campo Matéria
               DropdownButtonFormField<String>(
                 value: _selectedSubject,
                 decoration: const InputDecoration(
                   labelText: 'Matéria *',
                   prefixIcon: Icon(Icons.book),
+                  border: OutlineInputBorder(),
                 ),
-                items: AppConstants.predefinedSubjects
-                    .map((s) => s['name'] as String)
-                    .toSet()
+                items: _subjectData.keys
                     .map((name) => DropdownMenuItem(
                           value: name,
                           child: Text(name),
                         ))
                     .toList(),
-                onChanged: (value) => setState(() => _selectedSubject = value),
+                onChanged: (value) {
+                  setState(() => _selectedSubject = value);
+                  _updateTopics();
+                },
               ),
 
               const SizedBox(height: 16),
 
-              TextField(
-                controller: _topicController,
+              // Campo Tópico
+              DropdownButtonFormField<String>(
+                value: _selectedTopic,
                 decoration: const InputDecoration(
                   labelText: 'Tópico *',
                   prefixIcon: Icon(Icons.topic),
-                  hintText: 'Ex: Termodinâmica, Revolução Industrial...',
+                  border: OutlineInputBorder(),
+                  hintText: 'Selecione um tópico...',
                 ),
+                items: _availableTopics
+                    .map((topic) => DropdownMenuItem(
+                          value: topic,
+                          child: Text(topic),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() => _selectedTopic = value);
+                  _updateSubtopics();
+                },
               ),
 
               const SizedBox(height: 16),
 
-              TextField(
-                controller: _subtopicController,
+              // Campo Subtopic
+              DropdownButtonFormField<String>(
+                value: _selectedSubtopic,
                 decoration: const InputDecoration(
                   labelText: 'Subtópico',
                   prefixIcon: Icon(Icons.subdirectory_arrow_right),
-                  hintText: 'Ex: Primeira Lei, Era Vargas...',
+                  border: OutlineInputBorder(),
+                  hintText: 'Selecione um subtópico...',
                 ),
+                items: _availableSubtopics
+                    .map((subtopic) => DropdownMenuItem(
+                          value: subtopic,
+                          child: Text(subtopic),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() => _selectedSubtopic = value);
+                },
               ),
 
               const SizedBox(height: 16),
 
-              TextField(
-                controller: _descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição da Questão',
-                  hintText: 'Resuma o enunciado ou cite a fonte...',
-                  prefixIcon: Icon(Icons.description),
-                  alignLabelWithHint: true,
-                ),
+              // Campos Ano e Fonte lado a lado
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedYear,
+                      decoration: const InputDecoration(
+                        labelText: 'Ano *',
+                        prefixIcon: Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(),
+                        hintText: 'Selecione o ano',
+                      ),
+                      items: _years
+                          .map((year) => DropdownMenuItem(
+                                value: year,
+                                child: Text(year),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedYear = value);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedSource,
+                      decoration: const InputDecoration(
+                        labelText: 'Fonte',
+                        prefixIcon: Icon(Icons.source),
+                        border: OutlineInputBorder(),
+                        hintText: 'Selecione a fonte',
+                      ),
+                      items: _sources
+                          .map((source) => DropdownMenuItem(
+                                value: source,
+                                child: Text(source),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedSource = value);
+                      },
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),
 
+              // Campo Análise do Erro
               TextField(
                 controller: _errorDescriptionController,
                 maxLines: 4,
@@ -675,6 +1363,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   hintText: 'Explique POR QUE você errou e o que aprendeu...',
                   prefixIcon: Icon(Icons.psychology),
                   alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
                 ),
               ),
 
@@ -876,10 +1565,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     final sortedStats = _subjectStats.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    // Calcular estatísticas de tópicos por matéria
     final topicStats = _loadTopicStats();
 
-    // Obter a matéria selecionada para o gráfico
     String? selectedChartSubject;
     if (_selectedSubject != null && topicStats.containsKey(_selectedSubject)) {
       selectedChartSubject = _selectedSubject;
@@ -1074,7 +1761,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
             // Gráfico de Barras (Tópicos por Matéria) - CORRIGIDO
             if (selectedChartSubject != null &&
-                topicStats.containsKey(selectedChartSubject))
+                topicStats.containsKey(selectedChartSubject) &&
+                topicStats[selectedChartSubject]!.isNotEmpty)
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -1104,39 +1792,35 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                           ),
                         ),
                         if (topicStats.length > 1)
-                          StatefulBuilder(
-                            builder: (context, setLocalState) {
-                              return DropdownButton<String>(
-                                value: selectedChartSubject,
-                                items: topicStats.keys.map((subject) {
-                                  return DropdownMenuItem(
-                                    value: subject,
-                                    child: Text(
-                                      subject,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (value) {
-                                  // CORREÇÃO: Usar Future.delayed para evitar o erro do mouse_tracker
-                                  Future.delayed(Duration.zero, () {
-                                    if (mounted && value != null) {
-                                      setState(() {
-                                        _selectedSubject = value;
-                                      });
-                                    }
-                                  });
-                                },
-                                underline: Container(),
+                          DropdownButton<String>(
+                            value: selectedChartSubject,
+                            items: topicStats.keys.map((subject) {
+                              return DropdownMenuItem(
+                                value: subject,
+                                child: Text(
+                                  subject,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
                               );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() {
+                                  _selectedSubject = value;
+                                });
+                              }
                             },
+                            underline: Container(),
                           ),
                       ],
                     ),
                     const SizedBox(height: 24),
                     if (topicStats[selectedChartSubject]!.isNotEmpty)
-                      _buildTopicsBarChart(selectedChartSubject!,
-                          topicStats[selectedChartSubject]!)
+                      SizedBox(
+                        height: 350,
+                        child: _buildTopicsBarChart(selectedChartSubject!,
+                            topicStats[selectedChartSubject]!),
+                      )
                     else
                       const Center(
                         child: Padding(
@@ -1151,6 +1835,80 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   ],
                 ),
               ),
+
+            const SizedBox(height: 24),
+
+            // Gráfico de anos
+            if (_yearStats.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Distribuição por Ano',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 300,
+                      child: _buildYearBarChart(),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 24),
+
+            // Gráfico de fontes
+            if (_sourceStats.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Fontes mais frequentes',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      height: 300,
+                      child: _buildSourceBarChart(),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -1161,24 +1919,194 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     final topicsEntries = topicsData.entries.toList();
     topicsEntries.sort((a, b) => b.value.compareTo(a.value));
 
-    // CORREÇÃO: Verificar se há dados suficientes
-    if (topicsEntries.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: Text('Nenhum dado disponível para o gráfico'),
+    // Limita a 10 tópicos para melhor visualização
+    final topTopics = topicsEntries.take(10).toList();
+
+    // Se não houver dados, mostra mensagem
+    if (topTopics.isEmpty) {
+      return Center(
+        child: Text(
+          'Nenhum dado disponível para $subject',
+          style: const TextStyle(color: Colors.grey),
         ),
       );
     }
 
-    final barGroups = topicsEntries.asMap().entries.map((entry) {
+    // Cria grupos de barras
+    final barGroups = topTopics.asMap().entries.map((entry) {
+      final index = entry.key;
+      final topic = entry.value.key;
+      final value = entry.value.value;
       final color = AppTheme.getSubjectColor(subject);
+
+      return BarChartGroupData(
+        x: index,
+        barRods: [
+          BarChartRodData(
+            toY: value.toDouble(),
+            color: color,
+            width: 22,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ],
+        showingTooltipIndicators: [0],
+      );
+    }).toList();
+
+    // Calcula o valor máximo para o eixo Y
+    final maxValue = topTopics
+        .map((e) => e.value)
+        .reduce((a, b) => a > b ? a : b)
+        .toDouble();
+
+    // Aumenta um pouco para dar espaço no topo
+    final adjustedMaxValue = maxValue + (maxValue * 0.1);
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceBetween,
+        maxY: adjustedMaxValue,
+        minY: 0,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+            tooltipPadding: const EdgeInsets.all(8),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              if (groupIndex >= 0 && groupIndex < topTopics.length) {
+                final topic = topTopics[groupIndex].key;
+                final value = topTopics[groupIndex].value;
+                return BarTooltipItem(
+                  '$topic\n$value questão${value != 1 ? 's' : ''}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }
+              return null;
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          // Configuração do eixo X (bottom)
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < topTopics.length) {
+                  final topic = topTopics[index].key;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: SizedBox(
+                      width: 80,
+                      child: Text(
+                        _truncateText(topic, 20),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              reservedSize: 60,
+              interval: 1,
+            ),
+          ),
+          // Configuração do eixo Y (left)
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                if (value % 1 == 0) {
+                  // Mostra apenas valores inteiros
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              interval: _calculateInterval(maxValue),
+            ),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          drawHorizontalLine: true,
+          horizontalInterval: _calculateInterval(maxValue),
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withOpacity(0.2),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            );
+          },
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+        barGroups: barGroups,
+      ),
+    );
+  }
+
+// Função auxiliar para truncar texto longo
+  String _truncateText(String text, int maxLength) {
+    if (text.length <= maxLength) return text;
+    return '${text.substring(0, maxLength)}...';
+  }
+
+// Função auxiliar para calcular intervalo do eixo Y
+  double _calculateInterval(double maxValue) {
+    if (maxValue <= 5) return 1;
+    if (maxValue <= 10) return 2;
+    if (maxValue <= 20) return 5;
+    if (maxValue <= 50) return 10;
+    if (maxValue <= 100) return 20;
+    return 50;
+  }
+
+  Widget _buildYearBarChart() {
+    final yearEntries = _yearStats.entries.toList();
+    yearEntries.sort((a, b) => a.key.compareTo(b.key));
+
+    final recentYears = yearEntries.take(10).toList();
+
+    final barGroups = recentYears.asMap().entries.map((entry) {
       return BarChartGroupData(
         x: entry.key,
         barRods: [
           BarChartRodData(
             toY: entry.value.value.toDouble(),
-            color: color,
+            color: Colors.blue,
             width: 20,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(6),
@@ -1189,105 +2117,192 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       );
     }).toList();
 
-    final maxValue = topicsEntries.isNotEmpty
-        ? topicsEntries
+    final double maxValue = recentYears.isNotEmpty
+        ? recentYears
                 .map((e) => e.value)
                 .reduce((a, b) => a > b ? a : b)
                 .toDouble() *
-            1.2
-        : 0;
+            1.1
+        : 10.0;
 
-    return SizedBox(
-      height: 400,
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: maxValue.toDouble(),
-          // CORREÇÃO: Configurar barTouchData para evitar RangeError
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
-              tooltipPadding: const EdgeInsets.all(8),
-              tooltipMargin: 8,
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                // CORREÇÃO: Verificar se o índice está dentro dos limites
-                if (groupIndex < 0 || groupIndex >= topicsEntries.length) {
-                  return null;
-                }
-                final topic = topicsEntries[groupIndex].key;
-                final value = topicsEntries[groupIndex].value;
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxValue,
+        minY: 0,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+            tooltipPadding: const EdgeInsets.all(8),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              if (groupIndex >= 0 && groupIndex < recentYears.length) {
+                final year = recentYears[groupIndex].key;
+                final value = recentYears[groupIndex].value;
                 return BarTooltipItem(
-                  '$topic\n$value questão${value != 1 ? 's' : ''}',
+                  '$year\n$value questão${value != 1 ? 's' : ''}',
                   const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                   ),
                 );
-              },
-            ),
-            touchCallback: (event, response) {
-              // CORREÇÃO: Verificar se response não é null
-              if (response != null && response.spot != null) {
-                final spot = response.spot!;
-                if (spot.touchedBarGroupIndex >= 0 &&
-                    spot.touchedBarGroupIndex < topicsEntries.length) {
-                  // Interação válida
-                }
               }
+              return null;
             },
           ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  // CORREÇÃO: Verificar se o índice está dentro dos limites
-                  final index = value.toInt();
-                  if (index >= 0 && index < topicsEntries.length) {
-                    final topic = topicsEntries[index].key;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: RotatedBox(
-                        quarterTurns: 3,
-                        child: Text(
-                          topic.length > 15
-                              ? '${topic.substring(0, 15)}...'
-                              : topic,
-                          style: const TextStyle(fontSize: 10),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
-                reservedSize: 60,
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                getTitlesWidget: (value, meta) {
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < recentYears.length) {
+                  final year = recentYears[index].key;
                   return Text(
-                    value.toInt().toString(),
+                    year,
                     style: const TextStyle(fontSize: 11),
                   );
-                },
-              ),
+                }
+                return const SizedBox.shrink();
+              },
+              reservedSize: 30,
             ),
-            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 11),
+                );
+              },
+            ),
           ),
-          borderData: FlBorderData(show: false),
-          barGroups: barGroups,
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+        ),
+        borderData: FlBorderData(show: true),
+        barGroups: barGroups,
+      ),
+    );
+  }
+
+  Widget _buildSourceBarChart() {
+    final sourceEntries = _sourceStats.entries.toList();
+    sourceEntries.sort((a, b) => b.value.compareTo(a.value));
+
+    final topSources = sourceEntries.take(10).toList();
+
+    final barGroups = topSources.asMap().entries.map((entry) {
+      return BarChartGroupData(
+        x: entry.key,
+        barRods: [
+          BarChartRodData(
+            toY: entry.value.value.toDouble(),
+            color: Colors.green,
+            width: 20,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(6),
+              topRight: Radius.circular(6),
+            ),
+          ),
+        ],
+      );
+    }).toList();
+
+    final double maxValue = topSources.isNotEmpty
+        ? topSources
+                .map((e) => e.value)
+                .reduce((a, b) => a > b ? a : b)
+                .toDouble() *
+            1.1
+        : 10.0;
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxValue,
+        minY: 0,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+            tooltipPadding: const EdgeInsets.all(8),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              if (groupIndex >= 0 && groupIndex < topSources.length) {
+                final source = topSources[groupIndex].key;
+                final value = topSources[groupIndex].value;
+                return BarTooltipItem(
+                  '$source\n$value questão${value != 1 ? 's' : ''}',
+                  const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                );
+              }
+              return null;
+            },
+          ),
+        ),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < topSources.length) {
+                  final source = topSources[index].key;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: SizedBox(
+                      width: 80,
+                      child: Text(
+                        source.length > 15
+                            ? '${source.substring(0, 15)}...'
+                            : source,
+                        style: const TextStyle(fontSize: 10),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+              reservedSize: 60,
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 11),
+                );
+              },
+            ),
+          ),
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+        ),
+        borderData: FlBorderData(show: true),
+        barGroups: barGroups,
       ),
     );
   }
@@ -1299,27 +2314,28 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
         const Text(
-          'Legenda de Tópicos:',
+          'Top Tópicos:',
           style: TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 14,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: topicsEntries.take(10).map((entry) {
+          spacing: 8,
+          runSpacing: 4,
+          children: topicsEntries.take(15).map((entry) {
             return Chip(
               label: Text(
                 '${entry.key} (${entry.value})',
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 11),
               ),
               backgroundColor:
                   AppTheme.getSubjectColor(subject).withOpacity(0.1),
               side: BorderSide.none,
+              visualDensity: VisualDensity.compact,
             );
           }).toList(),
         ),
@@ -1332,15 +2348,23 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Criar cópia para evitar modificar a lista original
     final allQuestions = List<Question>.from(_questions);
 
-    // Aplicar filtros
     List<Question> filteredQuestions = allQuestions;
 
     if (_filterSubject != null && _filterSubject!.isNotEmpty) {
       filteredQuestions =
           filteredQuestions.where((q) => q.subject == _filterSubject).toList();
+    }
+
+    if (_filterYear != null && _filterYear!.isNotEmpty) {
+      filteredQuestions =
+          filteredQuestions.where((q) => q.year == _filterYear).toList();
+    }
+
+    if (_filterSource != null && _filterSource!.isNotEmpty) {
+      filteredQuestions =
+          filteredQuestions.where((q) => q.source == _filterSource).toList();
     }
 
     if (_filterErrorType != null && _filterErrorType!.isNotEmpty) {
@@ -1349,7 +2373,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       }).toList();
     }
 
-    // Ordenar por matéria e tópico
     filteredQuestions.sort((a, b) {
       final subjectCompare = a.subject.compareTo(b.subject);
       if (subjectCompare != 0) return subjectCompare;
@@ -1385,7 +2408,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   child: DropdownButton<String?>(
                     value: _filterSubject,
                     isExpanded: true,
-                    underline: const SizedBox(), // Remove a linha padrão
+                    underline: const SizedBox(),
                     hint: const Text('Filtrar por matéria'),
                     items: [
                       const DropdownMenuItem<String?>(
@@ -1408,7 +2431,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
+
+              // Dropdown de Ano
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -1417,20 +2442,105 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: DropdownButton<String>(
+                  child: DropdownButton<String?>(
+                    value: _filterYear,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Filtrar por ano'),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Todos os anos'),
+                      ),
+                      ..._years
+                          .where((year) => _yearStats.containsKey(year))
+                          .map((year) => DropdownMenuItem<String?>(
+                                value: year,
+                                child: Text('$year (${_yearStats[year]})'),
+                              ))
+                          .toList(),
+                    ],
+                    onChanged: (String? value) {
+                      setState(() {
+                        _filterYear = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Dropdown de Fonte
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButton<String?>(
+                    value: _filterSource,
+                    isExpanded: true,
+                    underline: const SizedBox(),
+                    hint: const Text('Filtrar por fonte'),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Todas as fontes'),
+                      ),
+                      ..._sources
+                          .where((source) => _sourceStats.containsKey(source))
+                          .map((source) => DropdownMenuItem<String?>(
+                                value: source,
+                                child:
+                                    Text('$source (${_sourceStats[source]})'),
+                              ))
+                          .toList(),
+                    ],
+                    onChanged: (String? value) {
+                      setState(() {
+                        _filterSource = value;
+                      });
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Dropdown de Tipo de Erro
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButton<String?>(
                     value: _filterErrorType,
                     isExpanded: true,
-                    underline: const SizedBox(), // Remove a linha padrão
+                    underline: const SizedBox(),
                     hint: const Text('Filtrar por tipo de erro'),
                     items: const [
-                      DropdownMenuItem<String>(
-                          value: 'all', child: Text('Todos os erros')),
-                      DropdownMenuItem<String>(
-                          value: 'conteudo', child: Text('Erro de conteúdo')),
-                      DropdownMenuItem<String>(
-                          value: 'atencao', child: Text('Erro de atenção')),
-                      DropdownMenuItem<String>(
-                          value: 'tempo', child: Text('Erro de tempo')),
+                      DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Todos os erros'),
+                      ),
+                      DropdownMenuItem<String?>(
+                        value: 'conteudo',
+                        child: Text('Erro de conteúdo'),
+                      ),
+                      DropdownMenuItem<String?>(
+                        value: 'atencao',
+                        child: Text('Erro de atenção'),
+                      ),
+                      DropdownMenuItem<String?>(
+                        value: 'tempo',
+                        child: Text('Erro de tempo'),
+                      ),
                     ],
                     onChanged: (String? value) {
                       setState(() {
@@ -1442,7 +2552,10 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               ),
 
               // Botão Limpar
-              if (_filterSubject != null || _filterErrorType != null)
+              if (_filterSubject != null ||
+                  _filterYear != null ||
+                  _filterSource != null ||
+                  _filterErrorType != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Align(
@@ -1451,6 +2564,8 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                       onTap: () {
                         setState(() {
                           _filterSubject = null;
+                          _filterYear = null;
+                          _filterSource = null;
                           _filterErrorType = null;
                         });
                       },
@@ -1501,11 +2616,21 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                      if (_filterSubject != null ||
+                          _filterYear != null ||
+                          _filterSource != null ||
+                          _filterErrorType != null)
+                        Text(
+                          'Tente alterar os filtros',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
                     ],
                   ),
                 )
               : ListView.separated(
-                  // MUDANÇA: ListView.separated em vez de ListView.builder
                   padding: const EdgeInsets.all(16),
                   itemCount: filteredQuestions.length,
                   separatorBuilder: (context, index) =>
@@ -1533,16 +2658,29 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                             Text(
                               '${question.topic}${question.subtopic != null ? " - ${question.subtopic}" : ""}',
                             ),
-                            if (question.description != null) ...[
+                            if (question.year != null ||
+                                question.source != null) ...[
                               const SizedBox(height: 2),
-                              Text(
-                                question.description!,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppTheme.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  if (question.year != null)
+                                    Chip(
+                                      label: Text(question.year!),
+                                      backgroundColor:
+                                          Colors.blue.withOpacity(0.1),
+                                      side: BorderSide.none,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  if (question.source != null)
+                                    Chip(
+                                      label: Text(question.source!),
+                                      backgroundColor:
+                                          Colors.green.withOpacity(0.1),
+                                      side: BorderSide.none,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                ],
                               ),
                             ],
                             const SizedBox(height: 4),
@@ -1561,7 +2699,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (question.image != null)
                             IconButton(
                               icon: const Icon(Icons.edit,
                                   color: AppTheme.infoColor),
@@ -1580,9 +2717,9 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                             ),
                           ],
                         ),
-                        // onTap: () {
-                        //   _showQuestionDetails(question);
-                        // },
+                        onTap: () {
+                          _showQuestionDetails(question);
+                        },
                       ),
                     );
                   },
@@ -1628,18 +2765,15 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         ),
       );
     }
+
     final sortedQuestions = List<Question>.from(_questions);
     sortedQuestions.sort((a, b) {
-      // Primeiro ordena por matéria
       final subjectComparison = a.subject.compareTo(b.subject);
       if (subjectComparison != 0) return subjectComparison;
-
-      // Depois ordena por tópico dentro da mesma matéria
       return a.topic.compareTo(b.topic);
     });
 
-    return QuestionsGridView(
-        questions: sortedQuestions); // ← Use sortedQuestions
+    return QuestionsGridView(questions: sortedQuestions);
   }
 
   Widget _buildStatCard(
