@@ -98,7 +98,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   final String _marqueeText = 
     '🚀 Sempre começar o dia com as questões do livro dos assuntos que viu no dia • '
     '📚 Após concluir o capítulo do livro estudado no dia, resolver as listas físicas recebidas • '
-    '🎯 Depois do Livro Plurall + Listas físicas, é hora de aprofundar nas listas pdf e livros• '
+    '🎯 Livro, PDFs e Listas físicas devem ser organizadas por prioridade• '
     '⏰ Estude até o limite(se existir), descanse 20 minutos e repita o processo... • '
     '🧠 Questão é diagnóstico, não julgamento • '
     '📊 Meta de 90 questões por dia • '
