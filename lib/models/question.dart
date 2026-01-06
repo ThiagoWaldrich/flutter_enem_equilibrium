@@ -54,8 +54,6 @@ class Question {
       timestamp: json['timestamp'] ?? DateTime.now().toIso8601String(),
     );
   }
-
-  // Adicione um método para migrar questões antigas (opcional)
   Question copyWith({
     String? id,
     String? subject,
