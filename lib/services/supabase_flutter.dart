@@ -3,11 +3,10 @@ import 'dart:io';
 
 class QuestionImageService {
   final supabase = Supabase.instance.client;
-  
-  /// Upload de imagem de questÃ£o
+
   Future<String?> uploadQuestionImage({
     required File imageFile,
-    required String source, // 'enem', 'vestibular', etc.
+    required String source, 
     required String year,
     required int questionNumber,
   }) async {
@@ -39,8 +38,7 @@ class QuestionImageService {
       return null;
     }
   }
-  
-  /// Upload de mÃºltiplas imagens
+
   Future<List<String>> uploadMultipleImages(
     List<File> images,
     String prefix,

@@ -1,4 +1,3 @@
-// lib/screens/add_edit_question_screen.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -6,7 +5,7 @@ import '../services/supabase_service.dart';
 
 class AddEditQuestionScreen extends StatefulWidget {
   final Map<String, dynamic>? questionToEdit;
-  
+
   const AddEditQuestionScreen({
     super.key,
     this.questionToEdit,
@@ -18,11 +17,9 @@ class AddEditQuestionScreen extends StatefulWidget {
 
 class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
   final _formKey = GlobalKey<FormState>();
-  
-  // Controllers
   final _correctAnswerController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
-  // Estado
   String? _selectedSubjectId;
   String? _selectedTopicId;
   String? _selectedSourceId;
@@ -30,16 +27,11 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
   File? _selectedImage;
   File? _selectedAnswerImage;
   int _difficultyLevel = 3;
-  
-  // Para rastrear se estamos editando
   bool _isEditing = false;
   String? _editingQuestionId;
-  
-  // URLs das imagens existentes
   String? _existingImageUrl;
   String? _existingAnswerImageUrl;
-  
-  // Listas
+
   List<Map<String, dynamic>> _subjects = [];
   List<Map<String, dynamic>> _topics = [];
   List<Map<String, dynamic>> _sources = [];
@@ -49,7 +41,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
   bool _loadingTopics = false;
   bool _isSaving = false;
 
-  final ImagePicker _picker = ImagePicker();
+  final Map<String, List<Map<String, dynamic>>> _topicsCache = {};
 
   @override
   void initState() {
@@ -72,7 +64,6 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
         _years = years;
       });
 
-      // Se estiver editando, carregar dados da questão
       if (_isEditing && widget.questionToEdit != null) {
         await _loadQuestionData(widget.questionToEdit!);
       } else {
@@ -87,22 +78,18 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
   Future<void> _loadQuestionData(Map<String, dynamic> question) async {
     try {
       _editingQuestionId = question['id'];
-      
-      // Preencher campos
+
       _correctAnswerController.text = question['correct_answer']?.toString() ?? '';
-      
-      // Preencher IDs
+
       _selectedSubjectId = question['subject_id'];
       _selectedSourceId = question['source_id'];
       _selectedYearId = question['year_id'];
       _selectedTopicId = question['topic_id'];
       _difficultyLevel = question['difficulty_level'] ?? 3;
-      
-      // Salvar URLs das imagens existentes
+
       _existingImageUrl = question['image_url'];
       _existingAnswerImageUrl = question['answer_image_url'];
-      
-      // Carregar tópicos da matéria selecionada
+
       if (_selectedSubjectId != null) {
         await _loadTopics(_selectedSubjectId!);
       }
@@ -114,11 +101,11 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
     }
   }
 
-  Future<void> _loadTopics(String? subjectId) async {
-    if (subjectId == null) {
+  Future<void> _loadTopics(String subjectId) async {
+    // Verificar cache
+    if (_topicsCache.containsKey(subjectId)) {
       setState(() {
-        _topics.clear();
-        _selectedTopicId = null;
+        _topics = _topicsCache[subjectId]!;
         _loadingTopics = false;
       });
       return;
@@ -127,7 +114,9 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
     try {
       setState(() => _loadingTopics = true);
       final topics = await SupabaseService.getTopicsBySubject(subjectId);
-      
+
+      _topicsCache[subjectId] = topics;
+
       setState(() {
         _topics = topics;
         _loadingTopics = false;
@@ -152,8 +141,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
 
       if (pickedFile != null && mounted) {
         final file = File(pickedFile.path);
-        
-        // Verifica se o arquivo existe
+
         if (await file.exists()) {
           setState(() {
             if (isAnswerImage) {
@@ -194,6 +182,41 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
     );
   }
 
+  Future<String?> _uploadImage(File? imageFile, bool isAnswerImage) async {
+    if (imageFile == null) return null;
+
+    String sourceName = 'custom';
+    String year = DateTime.now().year.toString();
+
+    if (_selectedSourceId != null) {
+      final selectedSource = _sources.firstWhere(
+        (s) => s['id'] == _selectedSourceId,
+        orElse: () => {},
+      );
+      if (selectedSource.isNotEmpty) {
+        sourceName = selectedSource['name']?.toString().replaceAll(' ', '_') ?? 'custom';
+      }
+    }
+
+    if (_selectedYearId != null) {
+      final selectedYear = _years.firstWhere(
+        (y) => y['id'] == _selectedYearId,
+        orElse: () => {},
+      );
+      if (selectedYear.isNotEmpty) {
+        year = selectedYear['year']?.toString() ?? year;
+      }
+    }
+
+    return await SupabaseService.uploadQuestionImage(
+      imageFile: imageFile,
+      sourceName: sourceName,
+      year: year,
+      questionNumber: 1,
+      isAnswerImage: isAnswerImage,
+    );
+  }
+
   Future<void> _saveQuestion() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -205,88 +228,8 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
     setState(() => _isSaving = true);
 
     try {
-      String? imageUrl;
-      String? answerImageUrl;
-
-      // Upload da imagem principal (se houver)
-      if (_selectedImage != null) {
-        print('📤 Fazendo upload de nova imagem...');
-        String sourceName = 'custom';
-        String year = DateTime.now().year.toString();
-
-        if (_selectedSourceId != null) {
-          final selectedSource = _sources.firstWhere(
-            (s) => s['id'] == _selectedSourceId,
-            orElse: () => {},
-          );
-          if (selectedSource.isNotEmpty) {
-            sourceName = selectedSource['name']?.toString().replaceAll(' ', '_') ?? 'custom';
-          }
-        }
-
-        if (_selectedYearId != null) {
-          final selectedYear = _years.firstWhere(
-            (y) => y['id'] == _selectedYearId,
-            orElse: () => {},
-          );
-          if (selectedYear.isNotEmpty) {
-            year = selectedYear['year']?.toString() ?? year;
-          }
-        }
-
-        imageUrl = await SupabaseService.uploadQuestionImage(
-          imageFile: _selectedImage!,
-          sourceName: sourceName,
-          year: year,
-          questionNumber: 1,
-          isAnswerImage: false,
-        );
-        print('✅ Nova imagem carregada: $imageUrl');
-      } else if (_existingImageUrl != null) {
-        // Se não há nova imagem mas há imagem existente, mantém
-        imageUrl = _existingImageUrl;
-        print('🔄 Mantendo imagem existente: $imageUrl');
-      }
-
-      // Upload da imagem da resposta (se houver)
-      if (_selectedAnswerImage != null) {
-        print('📤 Fazendo upload de nova imagem da resposta...');
-        String sourceName = 'custom';
-        String year = DateTime.now().year.toString();
-
-        if (_selectedSourceId != null) {
-          final selectedSource = _sources.firstWhere(
-            (s) => s['id'] == _selectedSourceId,
-            orElse: () => {},
-          );
-          if (selectedSource.isNotEmpty) {
-            sourceName = selectedSource['name']?.toString().replaceAll(' ', '_') ?? 'custom';
-          }
-        }
-
-        if (_selectedYearId != null) {
-          final selectedYear = _years.firstWhere(
-            (y) => y['id'] == _selectedYearId,
-            orElse: () => {},
-          );
-          if (selectedYear.isNotEmpty) {
-            year = selectedYear['year']?.toString() ?? year;
-          }
-        }
-
-        answerImageUrl = await SupabaseService.uploadQuestionImage(
-          imageFile: _selectedAnswerImage!,
-          sourceName: sourceName,
-          year: year,
-          questionNumber: 1,
-          isAnswerImage: true,
-        );
-        print('✅ Nova imagem da resposta carregada: $answerImageUrl');
-      } else if (_existingAnswerImageUrl != null) {
-        // Se não há nova imagem da resposta mas há imagem existente, mantém
-        answerImageUrl = _existingAnswerImageUrl;
-        print('🔄 Mantendo imagem da resposta existente: $answerImageUrl');
-      }
+      final imageUrl = await _uploadImage(_selectedImage, false);
+      final answerImageUrl = await _uploadImage(_selectedAnswerImage, true);
 
       final questionData = {
         'subject_id': _selectedSubjectId,
@@ -298,39 +241,34 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      // Adicionar URLs das imagens apenas se não forem nulas
       if (imageUrl != null && imageUrl.isNotEmpty) {
         questionData['image_url'] = imageUrl;
+      } else if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
+        questionData['image_url'] = _existingImageUrl;
       }
+
       if (answerImageUrl != null && answerImageUrl.isNotEmpty) {
         questionData['answer_image_url'] = answerImageUrl;
+      } else if (_existingAnswerImageUrl != null && _existingAnswerImageUrl!.isNotEmpty) {
+        questionData['answer_image_url'] = _existingAnswerImageUrl;
       }
 
-      print('🎯 Dados finais: $questionData');
-
       if (_isEditing && _editingQuestionId != null) {
-        // Atualizar questão existente
-        print('✏️ Atualizando questão ID: $_editingQuestionId');
         await SupabaseService.updateQuestion(_editingQuestionId!, questionData);
         _showSuccessSnackBar('✅ Questão atualizada com sucesso!');
       } else {
-        // Adicionar nova questão
-        print('➕ Adicionando nova questão');
         await SupabaseService.addQuestion(questionData);
         _showSuccessSnackBar('✅ Questão adicionada com sucesso!');
       }
 
-      // Aguardar um pouco para mostrar o feedback
       await Future.delayed(const Duration(milliseconds: 800));
-      
-      // Retornar à tela anterior
+
       if (mounted) {
         Navigator.pop(context, true);
       }
-      
     } catch (e) {
       print('❌ ERRO ao salvar questão: $e');
-      
+
       String errorMessage = 'Erro ao salvar questão';
       if (e.toString().contains('connection')) {
         errorMessage = 'Sem conexão com o servidor. Verifique sua internet.';
@@ -341,7 +279,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
       } else {
         errorMessage = 'Erro: ${e.toString().split('\n')[0]}';
       }
-      
+
       _showErrorSnackBar(errorMessage);
     } finally {
       if (mounted) {
@@ -352,7 +290,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
 
   void _resetForm() {
     _correctAnswerController.clear();
-    
+
     setState(() {
       _selectedSubjectId = null;
       _selectedTopicId = null;
@@ -366,13 +304,94 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
       _existingImageUrl = null;
       _existingAnswerImageUrl = null;
     });
-    
-    if (_formKey.currentState != null) {
-      _formKey.currentState!.reset();
-    }
+
+    _formKey.currentState?.reset();
   }
 
-  Widget _buildImageSection(String title, File? image, String? existingImageUrl, VoidCallback onPick, VoidCallback? onRemove, {bool isAnswerImage = false}) {
+  Widget _buildImagePreview(File? image, String? existingImageUrl, VoidCallback? onRemove) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: image != null
+              ? Image.file(
+                  image,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildErrorPlaceholder();
+                  },
+                )
+              : Image.network(
+                  existingImageUrl!,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return _buildErrorPlaceholder();
+                  },
+                ),
+        ),
+        if (onRemove != null)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.close, size: 18, color: Colors.white),
+                onPressed: onRemove,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildErrorPlaceholder() {
+    return Container(
+      height: 150,
+      width: double.infinity,
+      color: Colors.grey[200],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.broken_image,
+            size: 40,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Erro ao carregar imagem',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageSection(String title, File? image, String? existingImageUrl, VoidCallback onPick, VoidCallback? onRemove,
+      {bool isAnswerImage = false}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -397,112 +416,15 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              isAnswerImage 
-                ? 'Imagem com a solução/resposta (opcional)'
-                : 'Imagem do enunciado da questão (opcional)',
+              isAnswerImage
+                  ? 'Imagem com a solução/resposta (opcional)'
+                  : 'Imagem do enunciado da questão (opcional)',
               style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 16),
 
-            // Mostrar imagem selecionada ou existente
             if (image != null || (existingImageUrl != null && existingImageUrl!.isNotEmpty))
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: image != null
-                        ? Image.file(
-                            image,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 150,
-                                width: double.infinity,
-                                color: Colors.grey[200],
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.broken_image,
-                                      size: 40,
-                                      color: Colors.grey[400],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Erro ao carregar imagem',
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          )
-                        : Image.network(
-                            existingImageUrl!,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              );
-                            },
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                height: 150,
-                                width: double.infinity,
-                                color: Colors.grey[200],
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.broken_image,
-                                      size: 40,
-                                      color: Colors.grey[400],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Erro ao carregar imagem',
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                  ),
-                  if (onRemove != null)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.close, size: 18, color: Colors.white),
-                          onPressed: onRemove,
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              _buildImagePreview(image, existingImageUrl, onRemove),
 
             const SizedBox(height: 16),
 
@@ -513,13 +435,13 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
                 color: isAnswerImage ? Colors.amber[700] : Colors.blue[700],
               ),
               label: Text(
-                isAnswerImage 
-                  ? image != null || (existingImageUrl != null && existingImageUrl!.isNotEmpty)
-                    ? 'Alterar Imagem da Resposta'
-                    : 'Adicionar Imagem da Resposta'
-                  : image != null || (existingImageUrl != null && existingImageUrl!.isNotEmpty)
-                    ? 'Alterar Imagem do Enunciado'
-                    : 'Selecionar Imagem do Enunciado',
+                isAnswerImage
+                    ? image != null || (existingImageUrl != null && existingImageUrl!.isNotEmpty)
+                        ? 'Alterar Imagem da Resposta'
+                        : 'Adicionar Imagem da Resposta'
+                    : image != null || (existingImageUrl != null && existingImageUrl!.isNotEmpty)
+                        ? 'Alterar Imagem do Enunciado'
+                        : 'Selecionar Imagem do Enunciado',
                 style: TextStyle(color: isAnswerImage ? Colors.amber[700] : Colors.blue[700]),
               ),
               style: ElevatedButton.styleFrom(
@@ -646,7 +568,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedSourceId,
+                            initialValue: _selectedSourceId,
                             decoration: const InputDecoration(
                               labelText: 'Fonte (opcional)',
                               border: OutlineInputBorder(),
@@ -673,7 +595,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _selectedYearId,
+                            initialValue: _selectedYearId,
                             decoration: const InputDecoration(
                               labelText: 'Ano (opcional)',
                               border: OutlineInputBorder(),
@@ -728,7 +650,7 @@ class _AddEditQuestionScreenState extends State<AddEditQuestionScreen> {
 
                     // Dificuldade
                     DropdownButtonFormField<int>(
-                      value: _difficultyLevel,
+                      initialValue: _difficultyLevel,
                       decoration: const InputDecoration(
                         labelText: 'Dificuldade',
                         border: OutlineInputBorder(),

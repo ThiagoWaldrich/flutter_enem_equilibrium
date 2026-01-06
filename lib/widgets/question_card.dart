@@ -77,8 +77,7 @@ class QuestionCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (question.description != null && 
-                              question.description!.isNotEmpty)
+          
                             Container(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Column(
@@ -93,14 +92,6 @@ class QuestionCard extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text(
-                                    question.description!,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      height: 1.5,
-                                      color: Colors.grey[800],
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),

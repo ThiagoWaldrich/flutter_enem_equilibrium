@@ -147,19 +147,25 @@ class CalendarService extends ChangeNotifier {
     int session,
   ) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
-    final progress = Map<String, List<int>>.from(dayData.studyProgress);
+    final progress = Map<String, List<StudySession>>.from(dayData.studyProgress);
 
     if (!progress.containsKey(subjectId)) {
       progress[subjectId] = [];
     }
 
-    final subjectProgress = List<int>.from(progress[subjectId]!);
+    final subjectProgress = List<StudySession>.from(progress[subjectId]!);
 
-    if (subjectProgress.contains(session)) {
-      subjectProgress.remove(session);
+    // Verificar se a sessão já existe
+    final existingIndex = subjectProgress.indexWhere((s) => s.sessionNumber == session);
+    
+    if (existingIndex != -1) {
+      // Remover sessão existente
+      subjectProgress.removeAt(existingIndex);
     } else {
-      subjectProgress.add(session);
-      subjectProgress.sort();
+      // Adicionar nova sessão com 0 questões
+      subjectProgress.add(StudySession(session));
+      // Ordenar por número de sessão
+      subjectProgress.sort((a, b) => a.sessionNumber.compareTo(b.sessionNumber));
     }
 
     progress[subjectId] = subjectProgress;
@@ -168,6 +174,41 @@ class CalendarService extends ChangeNotifier {
     await _saveData();
 
     await updateMonthlyGoals(dateStr);
+    notifyListeners();
+  }
+
+  // NOVO: Atualizar contagem de questões para uma sessão
+  Future<void> updateQuestionCount(
+    String dateStr,
+    String subjectId,
+    int session,
+    int questionCount,
+  ) async {
+    final dayData = _daysData[dateStr];
+    if (dayData == null) return;
+
+    final progress = Map<String, List<StudySession>>.from(dayData.studyProgress);
+    if (!progress.containsKey(subjectId)) {
+      // Se não houver sessão, criar uma
+      progress[subjectId] = [StudySession(session, questionCount: questionCount)];
+    } else {
+      final subjectProgress = List<StudySession>.from(progress[subjectId]!);
+      final sessionIndex = subjectProgress.indexWhere((s) => s.sessionNumber == session);
+      
+      if (sessionIndex != -1) {
+        // Atualizar questão existente
+        subjectProgress[sessionIndex].questionCount = questionCount;
+      } else {
+        // Adicionar nova sessão com questões
+        subjectProgress.add(StudySession(session, questionCount: questionCount));
+        subjectProgress.sort((a, b) => a.sessionNumber.compareTo(b.sessionNumber));
+      }
+      
+      progress[subjectId] = subjectProgress;
+    }
+
+    _daysData[dateStr] = dayData.copyWith(studyProgress: progress);
+    await _saveData();
     notifyListeners();
   }
 
@@ -227,23 +268,82 @@ class CalendarService extends ChangeNotifier {
   }
 
   // -------------------------
-  // PROGRESSO DIÁRIO
+  // QUESTÕES MENSAIS
   // -------------------------
-  Map<String, int> getDayProgress(String dateStr) {
+
+  // NOVO: Obter questões mensais por matéria
+  Map<String, int> getMonthlyQuestions(String monthStr) {
+    final date = _parseDate(monthStr);
+    final year = date.year;
+    final month = date.month;
+    final lastDay = DateTime(year, month + 1, 0).day;
+
+    final monthlyQuestions = <String, int>{};
+
+    for (int day = 1; day <= lastDay; day++) {
+      final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+      final dayData = _daysData[dateStr];
+
+      if (dayData != null) {
+        // Para cada matéria do dia
+        final subjects = getDaySubjects(dateStr);
+        for (final subject in subjects) {
+          final sessions = dayData.studyProgress[subject.id] ?? [];
+          final totalQuestions = sessions.fold(0, (sum, session) => sum + session.questionCount);
+          
+          // Acumular por nome da matéria
+          monthlyQuestions[subject.name] = 
+              (monthlyQuestions[subject.name] ?? 0) + totalQuestions;
+        }
+      }
+    }
+
+    return monthlyQuestions;
+  }
+
+  // NOVO: Obter questões do dia
+  Map<String, int> getDayQuestions(String dateStr) {
+    final dayData = _daysData[dateStr];
+    final dayQuestions = <String, int>{};
+    
+    if (dayData != null) {
+      final subjects = getDaySubjects(dateStr);
+      for (final subject in subjects) {
+        dayQuestions[subject.name] = dayData.getTotalQuestionsForSubject(subject.id);
+      }
+    }
+    
+    return dayQuestions;
+  }
+
+  // NOVO: Obter total de questões do mês
+  int getTotalMonthlyQuestions(String monthStr) {
+    final questions = getMonthlyQuestions(monthStr);
+    return questions.values.fold(0, (sum, count) => sum + count);
+  }
+
+  // -------------------------
+  // PROGRESSO DIÁRIO (ATUALIZADO)
+  // -------------------------
+  Map<String, dynamic> getDayProgress(String dateStr) {
     final subjects = getDaySubjects(dateStr);
     final dayData = _daysData[dateStr];
 
     int completed = 0;
     int total = 0;
+    int totalQuestions = 0;
 
     for (final s in subjects) {
       total += s.sessions;
-      completed += (dayData?.studyProgress[s.id] ?? []).length;
+      final sessions = dayData?.studyProgress[s.id] ?? [];
+      completed += sessions.length;
+      totalQuestions += sessions.fold(0, (sum, session) => sum + session.questionCount);
     }
 
     return {
       'completed': completed,
       'total': total,
+      'questions': totalQuestions,
       'percentage': total == 0 ? 0 : ((completed / total) * 100).round(),
     };
   }

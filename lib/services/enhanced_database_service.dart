@@ -5,8 +5,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/question.dart';
-import '../models/flashcard.dart';
-import '../models/access_log.dart';
 import '../models/study_topic.dart';
 import '../models/subject.dart';
 import '../models/day_data.dart';
@@ -69,34 +67,6 @@ class EnhancedDatabaseService {
       )
     ''');
 
-    // Tabela de flashcards
-    await db.execute('''
-      CREATE TABLE flashcards (
-        id TEXT PRIMARY KEY,
-        subject TEXT NOT NULL,
-        topic TEXT NOT NULL,
-        front TEXT NOT NULL,
-        back TEXT NOT NULL,
-        ease_factor INTEGER DEFAULT 250,
-        interval INTEGER DEFAULT 1,
-        next_review TEXT,
-        review_count INTEGER DEFAULT 0,
-        created_at TEXT NOT NULL,
-        last_reviewed_at TEXT
-      )
-    ''');
-
-    // Tabela de logs de acesso
-    await db.execute('''
-      CREATE TABLE access_logs (
-        id TEXT PRIMARY KEY,
-        date TEXT NOT NULL UNIQUE,
-        access_count INTEGER DEFAULT 1,
-        first_access_time TEXT NOT NULL,
-        last_access_time TEXT NOT NULL
-      )
-    ''');
-
     // Tabela de dados do dia
     await db.execute('''
       CREATE TABLE day_data (
@@ -145,9 +115,6 @@ class EnhancedDatabaseService {
     await db.execute('CREATE INDEX idx_questions_subject ON questions(subject)');
     await db.execute('CREATE INDEX idx_questions_topic ON questions(topic)');
     await db.execute('CREATE INDEX idx_questions_timestamp ON questions(timestamp)');
-    await db.execute('CREATE INDEX idx_flashcards_subject ON flashcards(subject)');
-    await db.execute('CREATE INDEX idx_flashcards_next_review ON flashcards(next_review)');
-    await db.execute('CREATE INDEX idx_access_logs_date ON access_logs(date)');
     await db.execute('CREATE INDEX idx_day_subjects_date ON day_subjects(date)');
   }
 
@@ -166,7 +133,6 @@ class EnhancedDatabaseService {
       'subject': question.subject,
       'topic': question.topic,
       'subtopic': question.subtopic,
-      'description': question.description,
       'error_description': question.errorDescription,
       'content_error': question.errors['conteudo'] == true ? 1 : 0,
       'attention_error': question.errors['atencao'] == true ? 1 : 0,
@@ -207,122 +173,29 @@ class EnhancedDatabaseService {
     return maps.map((map) => _questionFromMap(map)).toList();
   }
 
-  // ========== FLASHCARDS ==========
-  Future<int> insertFlashcard(Flashcard flashcard) async {
+  Future<int> updateQuestion(Question question) async {
     final db = await database;
-    return await db.insert('flashcards', flashcard.toJson(), conflictAlgorithm: ConflictAlgorithm.replace);
+    
+    final map = {
+      'subject': question.subject,
+      'topic': question.topic,
+      'subtopic': question.subtopic,
+      'error_description': question.errorDescription,
+      'content_error': question.errors['conteudo'] == true ? 1 : 0,
+      'attention_error': question.errors['atencao'] == true ? 1 : 0,
+      'time_error': question.errors['tempo'] == true ? 1 : 0,
+      'image_data': question.image?.data,
+      'image_name': question.image?.name,
+      'image_type': question.image?.type,
+      'timestamp': question.timestamp,
+    };
+
+    return await db.update('questions', map, where: 'id = ?', whereArgs: [question.id]);
   }
 
-  Future<int> updateFlashcard(Flashcard flashcard) async {
+  Future<int> deleteQuestion(String id) async {
     final db = await database;
-    return await db.update(
-      'flashcards',
-      flashcard.toJson(),
-      where: 'id = ?',
-      whereArgs: [flashcard.id],
-    );
-  }
-
-  Future<List<Flashcard>> getFlashcards({String? subject, String? topic}) async {
-    final db = await database;
-    
-    String query = 'SELECT * FROM flashcards WHERE 1=1';
-    List<dynamic> args = [];
-    
-    if (subject != null) {
-      query += ' AND subject = ?';
-      args.add(subject);
-    }
-    
-    if (topic != null) {
-      query += ' AND topic = ?';
-      args.add(topic);
-    }
-    
-    query += ' ORDER BY next_review ASC, created_at DESC';
-    
-    final maps = await db.rawQuery(query, args);
-    return maps.map((map) => Flashcard.fromJson(map)).toList();
-  }
-
-  Future<List<Flashcard>> getDueFlashcards() async {
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
-    
-    final maps = await db.query(
-      'flashcards',
-      where: 'next_review IS NULL OR next_review <= ?',
-      whereArgs: [now],
-      orderBy: 'next_review ASC',
-    );
-    
-    return maps.map((map) => Flashcard.fromJson(map)).toList();
-  }
-
-  Future<int> deleteFlashcard(String id) async {
-    final db = await database;
-    return await db.delete('flashcards', where: 'id = ?', whereArgs: [id]);
-  }
-
-  // ========== LOGS DE ACESSO ==========
-  Future<void> registerAccess() async {
-    final db = await database;
-    final now = DateTime.now();
-    final dateStr = now.toIso8601String().split('T')[0];
-    final timeStr = now.toIso8601String();
-
-    final existing = await db.query(
-      'access_logs',
-      where: 'date = ?',
-      whereArgs: [dateStr],
-    );
-
-    if (existing.isEmpty) {
-      await db.insert('access_logs', {
-        'id': 'log_$dateStr',
-        'date': dateStr,
-        'access_count': 1,
-        'first_access_time': timeStr,
-        'last_access_time': timeStr,
-      });
-    } else {
-      final current = AccessLog.fromJson(existing.first);
-      await db.update(
-        'access_logs',
-        {
-          'access_count': current.accessCount + 1,
-          'last_access_time': timeStr,
-        },
-        where: 'date = ?',
-        whereArgs: [dateStr],
-      );
-    }
-  }
-
-  Future<List<AccessLog>> getAccessLogs({int? limit}) async {
-    final db = await database;
-    
-    String query = 'SELECT * FROM access_logs ORDER BY date DESC';
-    if (limit != null) {
-      query += ' LIMIT ?';
-    }
-    
-    final maps = await db.rawQuery(query, limit != null ? [limit] : []);
-    return maps.map((map) => AccessLog.fromJson(map)).toList();
-  }
-
-  Future<AccessLog?> getTodayAccess() async {
-    final db = await database;
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    
-    final maps = await db.query(
-      'access_logs',
-      where: 'date = ?',
-      whereArgs: [today],
-    );
-    
-    if (maps.isEmpty) return null;
-    return AccessLog.fromJson(maps.first);
+    return await db.delete('questions', where: 'id = ?', whereArgs: [id]);
   }
 
   // ========== DADOS DO DIA ==========
@@ -476,22 +349,6 @@ class EnhancedDatabaseService {
     return _firstIntValue(result) ?? 0;
   }
 
-  Future<int> getFlashcardCount() async {
-    final db = await database;
-    final result = await db.rawQuery('SELECT COUNT(*) as count FROM flashcards');
-    return _firstIntValue(result) ?? 0;
-  }
-
-  Future<int> getDueFlashcardCount() async {
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
-    final result = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM flashcards WHERE next_review IS NULL OR next_review <= ?',
-      [now],
-    );
-    return _firstIntValue(result) ?? 0;
-  }
-
   // ========== HELPERS ==========
   Question _questionFromMap(Map<String, dynamic> map) {
     return Question(
@@ -499,7 +356,6 @@ class EnhancedDatabaseService {
       subject: map['subject'],
       topic: map['topic'],
       subtopic: map['subtopic'],
-      description: map['description'],
       errorDescription: map['error_description'],
       errors: {
         'conteudo': map['content_error'] == 1,

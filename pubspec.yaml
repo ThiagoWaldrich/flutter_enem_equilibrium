@@ -1,4 +1,4 @@
-name: equilibrium
+name:  equilibrium
 description: Calendário de Estudos e Autodiagnóstico ENEM
 
 publish_to: 'none'
@@ -14,6 +14,7 @@ dependencies:
   
   # Gerenciamento de Estado
   provider: ^6.1.1
+  marquee: ^2.2.3
   
   # Banco de Dados Local
   sqflite: ^2.3.0
@@ -49,6 +50,7 @@ dependencies:
   
   # File Picker
   file_picker: ^6.1.1
+  msix: ^3.16.12
 
 dev_dependencies:
   flutter_test:
