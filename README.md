@@ -1,4 +1,4 @@
-# 📚 Equilirium - Método de estudo inteligente
+# 📚 Equilibrium - Método de estudo inteligente
 
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-3.22-blue?logo=flutter" alt="Flutter">
