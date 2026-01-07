@@ -64,3 +64,6 @@ Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar
 - Implementar um sistema de meta de questões atreladas às horas
 - Adicionar um roadmap do que estudar durante um ano de preparação para o enem, a partir do dia 2 de janeiro
 - Implementar a escolha entre inglês ou espanhol na distribuição das horas das matérias durante o mês
+- Implementar Checklist dos assuntos e matérias
+- Implementar lista de prioridades para o enem
+- Implementar sessão de repertórios para temas diversos
