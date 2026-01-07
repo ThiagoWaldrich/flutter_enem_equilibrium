@@ -70,3 +70,13 @@ Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar
 - Implementar Checklist dos assuntos e matérias
 - Implementar lista de prioridades para o enem
 - Implementar sessão de repertórios para temas diversos
+
+## 🌟 Como Apoiar?
+
+### 1. Estrela no Repositório ⭐
+### 2. Compartilhe com 3 amigos 📢
+### 3. Reporte bugs/issues 🐛
+### 4. Contribua com código 💻
+### 5. Dê feedback/sugestões 💬
+
+*Este projeto é mantido com 💙 em tempo livre*
