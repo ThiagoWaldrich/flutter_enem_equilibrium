@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Flutter-3.22-blue?logo=flutter" alt="Flutter">
 </div>
 <div align="center">
-  <img src="https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
+  <img src="https://img.shields.io/badge/✅_Windows_Compatible-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows Compatible">
 </div>
 <p align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Orbitron&size=28&pause=1000&color=00FF00&center=true&vCenter=true&width=500&lines=VERS%C3%83O+BETA+1.0.0" />
