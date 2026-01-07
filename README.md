@@ -53,3 +53,14 @@ Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar
 - Criar novas funcionalidades
 - Contribuir com melhorias
 - Pull requests e sugestões são bem-vindos.
+
+## Sugestões
+- Sinalizar os feriados e datas comemorativas no calendário
+- Considerar ou desonsiderar os feriados nos cálculos de estudos mensais
+- Corrigir a responsavidade do layout para todas as telas
+- Construir a versão Mobile da aplicação
+- Corrigir opacidade dos botões que selecionam os meses e os anos
+- Corrigir condição que descarta os dados salvos no dia quando uma alteração diária é feita em "Adicionar + matérias"
+- Implementar um sistema de meta de questões atreladas às horas
+- Adicionar um roadmap do que estudar durante um ano de preparação para o enem, a partir do dia 2 de janeiro
+- Implementar a escolha entre inglês ou espanhol na distribuição das horas das matérias durante o mês
