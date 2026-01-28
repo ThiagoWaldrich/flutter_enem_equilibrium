@@ -80,7 +80,8 @@ Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar
 ### 5. Dê feedback/sugestões 💬
 
 ### Tela principal da aplicação
-<img width="1918" height="1021" alt="image" src="https://github.com/ThiagoWaldrich/flutter_enem_equilibrium" />
+<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/3325b63d-891d-43cd-a750-8eb937387007" />
+
 
 
 *Este projeto é mantido com 💙 em tempo livre*
