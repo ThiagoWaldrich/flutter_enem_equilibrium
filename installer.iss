@@ -1,6 +1,6 @@
 [Setup]
 AppName=Equilibrium
-AppVersion=v1.0-Preview
+AppVersion=v1.0.0-Preview
 AppPublisher=Equilibrium Team
 DefaultDirName={autopf}\Equilibrium
 DefaultGroupName=Equilibrium
