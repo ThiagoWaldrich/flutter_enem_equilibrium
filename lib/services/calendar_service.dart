@@ -177,7 +177,7 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // NOVO: Atualizar contagem de questões para uma sessão
+  // Atualizar contagem de questões para uma sessão
   Future<void> updateQuestionCount(
     String dateStr,
     String subjectId,
@@ -268,10 +268,10 @@ class CalendarService extends ChangeNotifier {
   }
 
   // -------------------------
-  // QUESTÕES MENSAIS
+  // QUESTÕES MENSAIS (NOVO)
   // -------------------------
 
-  // NOVO: Obter questões mensais por matéria
+  // Obter questões mensais por matéria
   Map<String, int> getMonthlyQuestions(String monthStr) {
     final date = _parseDate(monthStr);
     final year = date.year;
@@ -301,25 +301,69 @@ class CalendarService extends ChangeNotifier {
     return monthlyQuestions;
   }
 
-  // NOVO: Obter questões do dia
-  Map<String, int> getDayQuestions(String dateStr) {
-    final dayData = _daysData[dateStr];
-    final dayQuestions = <String, int>{};
-    
-    if (dayData != null) {
-      final subjects = getDaySubjects(dateStr);
-      for (final subject in subjects) {
-        dayQuestions[subject.name] = dayData.getTotalQuestionsForSubject(subject.id);
-      }
-    }
-    
-    return dayQuestions;
+  // Obter questões do mês atual
+  Map<String, int> getCurrentMonthQuestions() {
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+    return getMonthlyQuestions(currentMonth);
   }
 
-  // NOVO: Obter total de questões do mês
+  // Obter total de questões do mês
   int getTotalMonthlyQuestions(String monthStr) {
     final questions = getMonthlyQuestions(monthStr);
     return questions.values.fold(0, (sum, count) => sum + count);
+  }
+
+  // Método auxiliar para obter todos os dias do mês
+  List<DateTime> getAllDaysInMonth(int year, int month) {
+    final firstDay = DateTime(year, month, 1);
+    final lastDay = DateTime(year, month + 1, 0);
+    
+    final days = <DateTime>[];
+    for (var i = 0; i <= lastDay.difference(firstDay).inDays; i++) {
+      days.add(firstDay.add(Duration(days: i)));
+    }
+    
+    return days;
+  }
+
+  // Obter resumo mensal com questões
+  Map<String, Map<String, dynamic>> getMonthlySummary(DateTime date) {
+    final month = DateFormat('yyyy-MM').format(date);
+    final days = getAllDaysInMonth(date.year, date.month);
+    
+    final result = <String, Map<String, dynamic>>{};
+    final subjectsSummary = <String, Map<String, dynamic>>{};
+    
+    for (final day in days) {
+      final dateStr = DateFormat('yyyy-MM-dd').format(day);
+      final dayData = getDayData(dateStr);
+      
+      if (dayData != null) {
+        // Obter as matérias deste dia específico
+        final daySubjects = getDaySubjects(dateStr);
+        
+        for (final subject in daySubjects) {
+          final progress = dayData.studyProgress[subject.id] ?? [];
+          final hoursStudied = progress.length;
+          final questions = progress.fold(0, (sum, session) => sum + session.questionCount);
+          
+          if (!subjectsSummary.containsKey(subject.name)) {
+            subjectsSummary[subject.name] = {
+              'hours': 0.0,
+              'questions': 0,
+              'sessions': 0,
+            };
+          }
+          
+          subjectsSummary[subject.name]!['hours'] = subjectsSummary[subject.name]!['hours'] + hoursStudied;
+          subjectsSummary[subject.name]!['questions'] = subjectsSummary[subject.name]!['questions'] + questions;
+          subjectsSummary[subject.name]!['sessions'] = subjectsSummary[subject.name]!['sessions'] + progress.length;
+        }
+      }
+    }
+    
+    result[month] = subjectsSummary;
+    return result;
   }
 
   // -------------------------

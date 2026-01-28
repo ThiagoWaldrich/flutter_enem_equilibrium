@@ -36,4 +36,13 @@ class Subject {
       sessions: sessions ?? this.sessions,
     );
   }
+
+  // No arquivo Subject.dart
+  factory Subject.fromMap(Map<String, dynamic> map) {
+    return Subject(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      sessions: map['sessions'] as int,
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:equilibrium/models/day_data.dart';
+import 'package:equilibrium/services/monthly_goals_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -486,6 +487,7 @@ class _SubjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final calendarService = context.watch<CalendarService>();
+    final goalsService = context.read<MonthlyGoalsService>();
     final color = AppTheme.getSubjectColor(subject.name);
     final totalSessions = subject.sessions;
     
@@ -597,6 +599,11 @@ class _SubjectCard extends StatelessWidget {
                       sessionNumber,
                       newCount,
                     );
+                    
+                    // Atualizar questões mensais
+                    if (change != 0) {
+                      goalsService.updateSubjectQuestions(subject.name, change);
+                    }
                   },
                 );
               }),

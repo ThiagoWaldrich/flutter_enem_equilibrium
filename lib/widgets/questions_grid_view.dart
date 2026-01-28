@@ -7,9 +7,9 @@ class QuestionsGridView extends StatefulWidget {
   final List<Question> questions;
 
   const QuestionsGridView({
-    super.key,
+    Key? key, // MODIFICADO: Key opcional
     required this.questions,
-  });
+  }) : super(key: key);
 
   @override
   State<QuestionsGridView> createState() => _QuestionsGridViewState();
@@ -41,6 +41,7 @@ class _QuestionsGridViewState extends State<QuestionsGridView> {
         final subjectColor = AppTheme.getSubjectColor(subject);
 
         return Container(
+          key: ValueKey(subject), // ADICIONADO: Key única
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -161,6 +162,7 @@ class _QuestionsGridViewState extends State<QuestionsGridView> {
                         itemCount: questions.length,
                         itemBuilder: (context, index) {
                           return QuestionCard(
+                            key: ValueKey(questions[index].id), // ADICIONADO: Key única
                             question: questions[index],
                           );
                         },

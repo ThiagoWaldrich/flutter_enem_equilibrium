@@ -28,6 +28,14 @@ class StudyTopic {
       sessions: json['sessions'] ?? 1,
     );
   }
+    factory StudyTopic.fromMap(Map<String, dynamic> map) {
+    return StudyTopic(
+      id: map['id'] as String,
+      subjectId: map['subject_id'] as String,
+      topic: map['topic'] as String,
+      sessions: map['sessions'] as int,
+    );  
+}
 
   StudyTopic copyWith({
     String? id,

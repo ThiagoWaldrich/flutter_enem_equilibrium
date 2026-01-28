@@ -85,14 +85,14 @@ class AppTheme {
       ),
       
       // Cards
-      cardTheme: CardThemeData(
-        elevation: cardElevation,
-        color: cardBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 6),
-      ),
+      // cardTheme: const CardTheme(
+      //   elevation: cardElevation,
+      //   color: cardBackground,
+      //   shape: RoundedRectangleBorder(
+      //     borderRadius: BorderRadius.circular(borderRadius),
+      //   ),
+      //   margin: EdgeInsets.symmetric(vertical: 6),
+      // ),
       
       // Input
       inputDecorationTheme: InputDecorationTheme(
@@ -100,18 +100,18 @@ class AppTheme {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: BorderSide(color: lightGray),
+          borderSide: const BorderSide(color: Color(0xFFE8ECF0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: BorderSide(color: lightGray),
+          borderSide: const BorderSide(color: Color(0xFFE8ECF0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: TextStyle(color: textSecondary),
+        hintStyle: const TextStyle(color: Color(0xFF64748B)),
       ),
       
       // Texto
@@ -119,40 +119,40 @@ class AppTheme {
         headlineLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         titleLarge: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         titleMedium: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
-          color: textPrimary,
+          color: Color(0xFF1E293B),
         ),
         bodySmall: TextStyle(
           fontSize: 12,
-          color: textSecondary,
+          color: Color(0xFF64748B),
         ),
       ),
       
       // Divider
-      dividerTheme: DividerThemeData(
-        color: lightGray,
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE8ECF0),
         thickness: 1,
         space: 24,
       ),
@@ -173,12 +173,89 @@ class AppTheme {
       'Português': const Color(0xFF22C55E),
       'Literatura': const Color(0xFFEC4899),
       'Redação': const Color(0xFFF97316),
-      'Artes': const Color(0xFFFFFF55),
+      'Artes': const Color(0xFFFFD700),
       'Inglês': const Color(0xFF0EA5E9),
       'Espanhol': const Color(0xFFF43F5E),
       'Simulado': const Color(0xFF78716C),
+      'Língua Portuguesa': const Color(0xFF22C55E),
     };
     
     return colors[subjectName] ?? darkGray;
+  }
+
+  // Método para cores de tópicos (baseado no hash do nome)
+  static Color getTopicColor(String topicName) {
+    final hash = topicName.hashCode;
+    final colors = [
+      const Color(0xFFEF4444), // Vermelho
+      const Color(0xFF3B82F6), // Azul
+      const Color(0xFF10B981), // Verde
+      const Color(0xFFF59E0B), // Laranja
+      const Color(0xFF8B5CF6), // Roxo
+      const Color(0xFFEC4899), // Rosa
+      const Color(0xFF06B6D4), // Ciano
+      const Color(0xFFF97316), // Laranja escuro
+      const Color(0xFF84CC16), // Verde limão
+      const Color(0xFF6366F1), // Índigo
+    ];
+    return colors[hash.abs() % colors.length];
+  }
+
+  // Método para cores de subtópicos (tons mais claros)
+  static Color getSubtopicColor(String subtopicName) {
+    final hash = subtopicName.hashCode;
+    final colors = [
+      const Color(0xFFFEE2E2), // Vermelho claro
+      const Color(0xFFDBEAFE), // Azul claro
+      const Color(0xFFD1FAE5), // Verde claro
+      const Color(0xFFFEF3C7), // Amarelo claro
+      const Color(0xFFEDE9FE), // Roxo claro
+      const Color(0xFFFCE7F3), // Rosa claro
+      const Color(0xFFCFFAFE), // Ciano claro
+      const Color(0xFFFFEDD5), // Laranja claro
+      const Color(0xFFD9F99D), // Verde limão claro
+      const Color(0xFFE0E7FF), // Índigo claro
+    ];
+    return colors[hash.abs() % colors.length];
+  }
+
+  // Método para gerar gradiente baseado no tema
+  static Gradient getSubjectGradient(String subjectName) {
+    final baseColor = getSubjectColor(subjectName);
+    return LinearGradient(
+      colors: [
+        baseColor,
+        Color.lerp(baseColor, Colors.white, 0.3) ?? baseColor,
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+  
+  // Método para cores de texto sobre gradiente
+  static Color getTextOnGradient(Color backgroundColor) {
+    // Calcula o brilho relativo da cor de fundo
+    final luminance = backgroundColor.computeLuminance();
+    // Se o brilho for baixo (cor escura), usa texto branco, senão preto
+    return luminance < 0.5 ? Colors.white : Colors.black;
+  }
+  
+  // Método para cores de erros
+  static Map<String, Color> getErrorColors() {
+    return {
+      'conteudo': dangerColor,
+      'atencao': warningColor,
+      'tempo': infoColor,
+    };
+  }
+  
+  // Método para cores de status
+  static Map<String, Color> getStatusColors() {
+    return {
+      'success': successColor,
+      'warning': warningColor,
+      'error': dangerColor,
+      'info': infoColor,
+    };
   }
 }

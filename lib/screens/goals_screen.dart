@@ -617,7 +617,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
               value: _weights[key]!.toDouble(),
               min: 0,
               max: 10,
-              divisions: 10,
+              divisions: 20,
               label: _weights[key].toString(),
               onChanged: (value) {
                 setState(() {

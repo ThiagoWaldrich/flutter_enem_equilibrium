@@ -12,66 +12,81 @@ class MonthlyGoalsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final calendarService = context.watch<CalendarService>();
     final goalsService = context.watch<MonthlyGoalsService>();
-    
+
     // Verificar se existem metas geradas
     final hasGeneratedGoals = goalsService.hasGoalsForCurrentMonth();
-    
+
     if (!hasGeneratedGoals) {
       return _buildEmptyState(context);
     }
-    
+
     // Pegar as metas geradas
     final generatedGoals = goalsService.getAllSubjectGoals();
-    
+
     // Calcular horas estudadas no mês atual
-    final studiedHours = _calculateStudiedHours(calendarService, generatedGoals.keys.toList());
-    
+    final studiedHours =
+        _calculateStudiedHours(calendarService, generatedGoals.keys.toList());
+
+    // Obter questões do calendário
+    final calendarQuestions = calendarService.getCurrentMonthQuestions();
+
+    // Sincronizar questões com o goals service
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      goalsService.syncWithCalendar(calendarQuestions);
+    });
+
+    // Obter questões do goals service
+    final goalsQuestions = goalsService.getAllSubjectQuestions();
+
     // Preparar dados para exibição
     final goalsList = generatedGoals.entries.map((entry) {
       final subject = entry.key;
       final target = entry.value;
       final current = studiedHours[subject] ?? 0.0;
-      
+      final questions =
+          calendarQuestions[subject] ?? goalsQuestions[subject] ?? 0;
+
       return {
         'subject': subject,
         'target': target,
         'current': current,
+        'questions': questions,
         'percentage': target > 0 ? (current / target * 100).clamp(0, 100) : 0.0,
       };
     }).toList();
-    
-  
-   goalsList.sort((a, b) => (b['percentage'] as double).compareTo(a['percentage'] as double));
 
-    
+    goalsList.sort((a, b) =>
+        (b['percentage'] as double).compareTo(a['percentage'] as double));
+
     // Calcular totais
     double totalHours = 0;
     double totalTarget = 0;
+    int totalQuestions = 0;
     int completedGoals = 0;
-    
+
     for (final goal in goalsList) {
       totalHours += goal['current'] as double;
       totalTarget += goal['target'] as double;
+      totalQuestions += goal['questions'] as int;
       if ((goal['current'] as double) >= (goal['target'] as double)) {
         completedGoals++;
       }
     }
-    
-    final overallPercentage = totalTarget > 0
-        ? (totalHours / totalTarget * 100).round()
-        : 0;
+
+    final overallPercentage =
+        totalTarget > 0 ? (totalHours / totalTarget * 100).round() : 0;
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF042044),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
       ),
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(6),
       child: Column(
         children: [
           // Cabeçalho
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
               color: Color(0xFF042044),
               borderRadius: BorderRadius.only(
@@ -81,7 +96,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
             ),
             child: const Row(
               children: [
-                SizedBox(width: 12),
+                SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     '📊 Progresso Mensal/Meta',
@@ -95,7 +110,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Lista de metas
           Expanded(
             child: ListView.builder(
@@ -106,9 +121,10 @@ class MonthlyGoalsPanel extends StatelessWidget {
                 final subject = goal['subject'] as String;
                 final current = goal['current'] as double;
                 final target = goal['target'] as double;
+                final questions = goal['questions'] as int;
                 final percentage = goal['percentage'] as double;
                 final color = AppTheme.getSubjectColor(subject);
-                
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
@@ -133,43 +149,49 @@ class MonthlyGoalsPanel extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '${current.toStringAsFixed(1)}h/${target.toStringAsFixed(1)}h',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: color,
-                                fontWeight: FontWeight.w600,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  '${current.toStringAsFixed(1)}h/${target.toStringAsFixed(1)}h',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 4),
+                            ],
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 10),
-                      
-                      // Barra de progresso
+
+                      // Barra de progresso de horas
                       Stack(
                         children: [
                           Container(
-                            height: 8,
+                            height: 6,
                             decoration: BoxDecoration(
                               color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                           ),
                           FractionallySizedBox(
                             widthFactor: (percentage / 100).clamp(0.0, 1.0),
                             child: Container(
-                              height: 8,
+                              height: 6,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -177,30 +199,36 @@ class MonthlyGoalsPanel extends StatelessWidget {
                                     color.withOpacity(0.7),
                                   ],
                                 ),
-                                borderRadius: BorderRadius.circular(4),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: color.withOpacity(0.3),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                                borderRadius: BorderRadius.circular(3),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      
-                      const SizedBox(height: 6),
-                      
-                      // Percentual
-                      Text(
-                        '${percentage.round()}%',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
+
+                      const SizedBox(height: 8),
+
+                      // Percentual e estatísticas
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${percentage.round()}% concluído',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '${questions} questões resolvidas',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: color,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -208,18 +236,19 @@ class MonthlyGoalsPanel extends StatelessWidget {
               },
             ),
           ),
-          
-          // Resumo
+
+          // Resumo - MODIFICADO PARA CENTRALIZAR
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(12),
             decoration: const BoxDecoration(
               color: Color(0xFF042044),
               border: Border(
-                top: BorderSide(color: Color(0xFF042044)),
+                top: BorderSide(color: Color(0xFF1A2F4F), width: 1),
               ),
             ),
             child: Column(
               children: [
+                // Primeira linha - 4 cards
                 Row(
                   children: [
                     Expanded(
@@ -230,20 +259,16 @@ class MonthlyGoalsPanel extends StatelessWidget {
                         color: AppTheme.infoColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _SummaryCard(
                         icon: Icons.pie_chart,
                         value: '$overallPercentage%',
-                        label: 'Progresso',
+                        label: 'Progresso Geral',
                         color: AppTheme.successColor,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _SummaryCard(
                         icon: Icons.track_changes,
@@ -252,25 +277,41 @@ class MonthlyGoalsPanel extends StatelessWidget {
                         color: AppTheme.warningColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: _SummaryCard(
-                        icon: Icons.check_circle,
-                        value: '$completedGoals/${goalsList.length}',
-                        label: 'Concluídas',
-                        color: AppTheme.primaryColor,
+                        icon: Icons.question_answer,
+                        value: '$totalQuestions',
+                        label: 'Resolvidas',
+                        color: AppTheme.secondaryColor,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 10),
+
+                // Segunda linha - 1 card centralizado
+                
               ],
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Segundo card - Matérias Concluídas
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.3,
+            child: _SummaryCard(
+              icon: Icons.check_circle,
+              value: '$completedGoals/${goalsList.length}',
+              label: 'Matérias Concluídas',
+              color: AppTheme.primaryColor,
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildEmptyState(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
@@ -285,7 +326,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
           children: [
             Icon(
               Icons.flag_outlined,
-              size: 64,
+              size: 44,
               color: Colors.white.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
@@ -312,40 +353,43 @@ class MonthlyGoalsPanel extends StatelessWidget {
       ),
     );
   }
-  
-  Map<String, double> _calculateStudiedHours(CalendarService calendarService, List<String> subjects) {
+
+  Map<String, double> _calculateStudiedHours(
+      CalendarService calendarService, List<String> subjects) {
     final now = DateTime.now();
     final year = now.year;
     final month = now.month;
     final lastDay = DateTime(year, month + 1, 0).day;
-    
+
     final studiedHours = <String, double>{};
-    
+
     // Inicializar todos os subjects com 0
     for (final subject in subjects) {
       studiedHours[subject] = 0.0;
     }
-    
+
     // Contar horas estudadas no mês
     for (int day = 1; day <= lastDay; day++) {
-      final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+      final dateStr =
+          '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
       final dayData = calendarService.getDayData(dateStr);
-      
+
       if (dayData?.studyProgress != null) {
         final daySubjects = calendarService.getDaySubjects(dateStr);
-        
+
         for (final subject in daySubjects) {
           final progress = dayData!.studyProgress[subject.id] ?? [];
           final hoursStudied = progress.length.toDouble();
-          
+
           // Adicionar às horas estudadas se o subject estiver nas metas
           if (studiedHours.containsKey(subject.name)) {
-            studiedHours[subject.name] = studiedHours[subject.name]! + hoursStudied;
+            studiedHours[subject.name] =
+                studiedHours[subject.name]! + hoursStudied;
           }
         }
       }
     }
-    
+
     return studiedHours;
   }
 }
@@ -366,38 +410,39 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppTheme.lightGray),
-        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.lightGray, width: 0.5),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             icon,
-            size: 22,
+            size: 14,
             color: color.withOpacity(0.3),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           Text(
             value,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 1),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 9,
               color: AppTheme.textSecondary,
               fontWeight: FontWeight.w500,
             ),
             textAlign: TextAlign.center,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
