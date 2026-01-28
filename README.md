@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/✅_Windows_Compatible-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows Compatible">
 </div>
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&size=28&pause=1000&color=00FF00&center=true&vCenter=true&width=500&lines=VERS%C3%83O+BETA+1.0.0" />
+  <img src="https://readme-typing-svg.demolab.com?font=Orbitron&size=28&pause=1000&color=00FF00&center=true&vCenter=true&width=500&lines=VERS%C3%83O+v1.0-Preview" />
 </p>
 
 Um aplicativo completo desenvolvido em Flutter para organizar, filtrar e estudar questões de forma eficiente. Ideal para estudantes, professores e concurseiros.
