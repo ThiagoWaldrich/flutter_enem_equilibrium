@@ -3,8 +3,8 @@ class Question {
   final String subject;
   final String topic;
   final String? subtopic;
-  final String? year;           // NOVO CAMPO
-  final String? source;         // NOVO CAMPO
+  final String? year; // NOVO CAMPO
+  final String? source; // NOVO CAMPO
   final String? errorDescription;
   final Map<String, bool> errors;
   final QuestionImage? image;
@@ -15,8 +15,8 @@ class Question {
     required this.subject,
     required this.topic,
     this.subtopic,
-    this.year,                  // NOVO
-    this.source,                // NOVO
+    this.year, // NOVO
+    this.source, // NOVO
     this.errorDescription,
     Map<String, bool>? errors,
     this.image,
@@ -29,8 +29,8 @@ class Question {
       'subject': subject,
       'topic': topic,
       'subtopic': subtopic,
-      'year': year,            // NOVO
-      'source': source,        // NOVO
+      'year': year, // NOVO
+      'source': source, // NOVO
       'errorDescription': errorDescription,
       'erros': errors,
       'image': image?.toJson(),
@@ -44,13 +44,14 @@ class Question {
       subject: json['subject'] ?? '',
       topic: json['topic'] ?? '',
       subtopic: json['subtopic'],
-      year: json['year'],      // NOVO
-      source: json['source'],  // NOVO
+      year: json['year'], // NOVO
+      source: json['source'], // NOVO
       errorDescription: json['errorDescription'],
       errors: json['erros'] != null
           ? Map<String, bool>.from(json['erros'])
           : {'conteudo': false, 'atencao': false, 'tempo': false},
-      image: json['image'] != null ? QuestionImage.fromJson(json['image']) : null,
+      image:
+          json['image'] != null ? QuestionImage.fromJson(json['image']) : null,
       timestamp: json['timestamp'] ?? DateTime.now().toIso8601String(),
     );
   }
@@ -75,7 +76,7 @@ class Question {
       source: source ?? this.source,
       errorDescription: errorDescription ?? this.errorDescription,
       errors: errors ?? this.errors,
-      image: image ?? this.image,
+      image: image, // Permite null
       timestamp: timestamp ?? this.timestamp,
     );
   }

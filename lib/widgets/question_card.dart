@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'; // ADICIONADO
 import 'dart:convert';
 import '../models/question.dart';
 import '../utils/theme.dart';
@@ -8,10 +9,10 @@ class QuestionCard extends StatelessWidget {
   final bool showImage;
 
   const QuestionCard({
-    super.key,
+    Key? key, // MODIFICADO: Key opcional
     required this.question,
     this.showImage = true,
-  });
+  }) : super(key: key); // MODIFICADO: super(key: key)
 
   @override
   Widget build(BuildContext context) {
@@ -233,31 +234,17 @@ class QuestionCard extends StatelessWidget {
       }
       
       final bytes = base64Decode(base64String);
-      return Image.memory(
-        bytes,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[200],
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.broken_image, size: 40, color: Colors.grey[400]),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Erro ao carregar imagem',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      );
+      return kIsWeb // ADICIONADO: Condicional para web
+          ? Image.memory(
+              bytes,
+              fit: BoxFit.cover,
+            )
+          : Image.memory(
+              bytes,
+              cacheWidth: 300, // ADICIONADO: Cache otimizado
+              cacheHeight: 300, // ADICIONADO: Cache otimizado
+              fit: BoxFit.cover,
+            );
     } catch (e) {
       return Container(
         color: Colors.grey[200],
@@ -339,10 +326,17 @@ class QuestionCard extends StatelessWidget {
       }
       
       final bytes = base64Decode(base64String);
-      return Image.memory(
-        bytes,
-        fit: BoxFit.contain,
-      );
+      return kIsWeb // ADICIONADO: Condicional para web
+          ? Image.memory(
+              bytes,
+              fit: BoxFit.contain,
+            )
+          : Image.memory(
+              bytes,
+              cacheWidth: 800, // ADICIONADO: Cache otimizado para tela cheia
+              cacheHeight: 800, // ADICIONADO: Cache otimizado para tela cheia
+              fit: BoxFit.contain,
+            );
     } catch (e) {
       return Container(
         width: 300,

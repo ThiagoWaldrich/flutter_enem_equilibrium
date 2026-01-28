@@ -1,388 +1,529 @@
-import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/question.dart';
-import '../models/study_topic.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'dart:async';
+import 'dart:convert';
 import '../models/subject.dart';
-import '../models/day_data.dart';
+import '../models/study_topic.dart';
+import '../utils/constants.dart';
+import '../models/schedule_cell.dart';
 
 class EnhancedDatabaseService {
-  static Database? _database;
-
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
-  }
-
+  static const String _databaseName = 'equilibrium_enhanced.db';
+  static const int _databaseVersion = 4;
+  
+  static bool _isInitialized = false;
+  late Database _database;
+  
+  // Cache para day_subjects por data
+  final _daySubjectsCache = <String, List<Subject>>{};
+  // Cache para study_topics por subjectId
+  final _studyTopicsCache = <String, List<StudyTopic>>{};
+  
   Future<void> init() async {
-    await database;
-  }
-
-  Future<Database> _initDatabase() async {
-    if (!kIsWeb) {
+    if (!_isInitialized) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-    }
-
-    String databasesPath;
-    
-    if (kIsWeb) {
-      databasesPath = '';
-    } else {
-      final appDir = await getApplicationDocumentsDirectory();
-      databasesPath = appDir.path;
+      _isInitialized = true;
     }
     
-    final path = join(databasesPath, 'equilibrium_complete.db');
-
-    return await openDatabase(
+    final documentsDirectory = await getApplicationDocumentsDirectory();
+    final path = join(documentsDirectory.path, _databaseName);
+    
+    _database = await openDatabase(
       path,
-      version: 2,
-      onCreate: _onCreate,
-      onUpgrade: _onUpgrade,
+      version: _databaseVersion,
+      onCreate: _createTables,
+      onUpgrade: _upgradeDatabase,
+      singleInstance: true,
     );
   }
 
-  Future<void> _onCreate(Database db, int version) async {
-    // Tabela de questões
-    await db.execute('''
-      CREATE TABLE questions (
-        id TEXT PRIMARY KEY,
-        subject TEXT NOT NULL,
-        topic TEXT NOT NULL,
-        subtopic TEXT,
-        description TEXT,
-        error_description TEXT,
-        content_error INTEGER DEFAULT 0,
-        attention_error INTEGER DEFAULT 0,
-        time_error INTEGER DEFAULT 0,
-        image_data TEXT,
-        image_name TEXT,
-        image_type TEXT,
-        timestamp TEXT NOT NULL
-      )
-    ''');
+  Database get db => _database;
 
-    // Tabela de dados do dia
+  Future<void> _createTables(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE day_data (
-        date TEXT PRIMARY KEY,
-        mood INTEGER,
-        energy INTEGER,
-        notes TEXT
-      )
-    ''');
-
-    // Tabela de matérias do dia
-    await db.execute('''
-      CREATE TABLE day_subjects (
+      CREATE TABLE IF NOT EXISTS day_subjects (
         id TEXT PRIMARY KEY,
         date TEXT NOT NULL,
-        subject_name TEXT NOT NULL,
-        sessions INTEGER DEFAULT 1,
-        FOREIGN KEY (date) REFERENCES day_data(date)
+        name TEXT NOT NULL,
+        sessions INTEGER NOT NULL,
+        created_at TEXT
       )
     ''');
 
-    // Tabela de tópicos de estudo do dia
     await db.execute('''
-      CREATE TABLE day_study_topics (
+      CREATE TABLE IF NOT EXISTS study_topics (
         id TEXT PRIMARY KEY,
-        day_subject_id TEXT NOT NULL,
-        topic TEXT NOT NULL,
-        sessions INTEGER DEFAULT 1,
-        FOREIGN KEY (day_subject_id) REFERENCES day_subjects(id)
-      )
-    ''');
-
-    // Tabela de progresso de estudo
-    await db.execute('''
-      CREATE TABLE study_progress (
-        id TEXT PRIMARY KEY,
-        date TEXT NOT NULL,
         subject_id TEXT NOT NULL,
-        topic_id TEXT,
-        session_number INTEGER NOT NULL,
-        completed_at TEXT NOT NULL
+        topic TEXT NOT NULL,
+        sessions INTEGER NOT NULL,
+        FOREIGN KEY (subject_id) REFERENCES day_subjects (id) ON DELETE CASCADE
       )
     ''');
 
-    // Índices
-    await db.execute('CREATE INDEX idx_questions_subject ON questions(subject)');
-    await db.execute('CREATE INDEX idx_questions_topic ON questions(topic)');
-    await db.execute('CREATE INDEX idx_questions_timestamp ON questions(timestamp)');
-    await db.execute('CREATE INDEX idx_day_subjects_date ON day_subjects(date)');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS weekly_schedule (
+        id INTEGER PRIMARY KEY,
+        time_slots TEXT,
+        schedule_data TEXT,
+        updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_day_subjects_date 
+      ON day_subjects(date)
+    ''');
+    
+    await db.execute('''
+      CREATE INDEX IF NOT EXISTS idx_study_topics_subject_id 
+      ON study_topics(subject_id)
+    ''');
   }
 
-  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  Future<void> _upgradeDatabase(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await _onCreate(db, newVersion);
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS weekly_schedule (
+          id INTEGER PRIMARY KEY,
+          time_slots TEXT,
+          schedule_data TEXT,
+          updated_at TEXT
+        )
+      ''');
+    }
+    
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS weekly_schedule (
+          id INTEGER PRIMARY KEY,
+          time_slots TEXT,
+          schedule_data TEXT,
+          updated_at TEXT
+        )
+      ''');
     }
   }
 
-  // ========== QUESTÕES ==========
-  Future<int> insertQuestion(Question question) async {
-    final db = await database;
-    
-    final map = {
-      'id': question.id,
-      'subject': question.subject,
-      'topic': question.topic,
-      'subtopic': question.subtopic,
-      'error_description': question.errorDescription,
-      'content_error': question.errors['conteudo'] == true ? 1 : 0,
-      'attention_error': question.errors['atencao'] == true ? 1 : 0,
-      'time_error': question.errors['tempo'] == true ? 1 : 0,
-      'image_data': question.image?.data,
-      'image_name': question.image?.name,
-      'image_type': question.image?.type,
-      'timestamp': question.timestamp,
-    };
-
-    return await db.insert('questions', map, conflictAlgorithm: ConflictAlgorithm.replace);
-  }
-
-  Future<List<Question>> getQuestions({
-    int? limit,
-    int offset = 0,
-    String? subject,
-  }) async {
-    final db = await database;
-    
-    String query = 'SELECT * FROM questions';
-    List<dynamic> args = [];
-    
-    if (subject != null) {
-      query += ' WHERE subject = ?';
-      args.add(subject);
+  // ========== MÉTODOS PARA MATÉRIAS ==========
+  
+  Future<List<Subject>> getDaySubjects(String date) async {
+    // Verificar cache
+    if (_daySubjectsCache.containsKey(date)) {
+      return _daySubjectsCache[date]!;
     }
     
-    query += ' ORDER BY timestamp DESC';
+    final results = await _database.query(
+      'day_subjects',
+      where: 'date = ?',
+      whereArgs: [date],
+      orderBy: 'created_at ASC',
+    );
     
-    if (limit != null) {
-      query += ' LIMIT ? OFFSET ?';
-      args.addAll([limit, offset]);
+    final subjects = results.map((row) => Subject(
+      id: row['id'] as String,
+      name: row['name'] as String,
+      sessions: row['sessions'] as int,
+    )).toList();
+    
+    // Atualizar cache
+    _daySubjectsCache[date] = subjects;
+    
+    return subjects;
+  }
+
+  Future<Subject?> getSubject(String id) async {
+    final results = await _database.query(
+      'day_subjects',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    
+    if (results.isNotEmpty) {
+      final row = results.first;
+      return Subject(
+        id: row['id'] as String,
+        name: row['name'] as String,
+        sessions: row['sessions'] as int,
+      );
     }
     
-    final List<Map<String, dynamic>> maps = await db.rawQuery(query, args);
-    
-    return maps.map((map) => _questionFromMap(map)).toList();
+    return null;
   }
 
-  Future<int> updateQuestion(Question question) async {
-    final db = await database;
+  Future<int> saveSubject(Subject subject, String date) async {
+    // Invalida cache para esta data
+    _daySubjectsCache.remove(date);
     
-    final map = {
-      'subject': question.subject,
-      'topic': question.topic,
-      'subtopic': question.subtopic,
-      'error_description': question.errorDescription,
-      'content_error': question.errors['conteudo'] == true ? 1 : 0,
-      'attention_error': question.errors['atencao'] == true ? 1 : 0,
-      'time_error': question.errors['tempo'] == true ? 1 : 0,
-      'image_data': question.image?.data,
-      'image_name': question.image?.name,
-      'image_type': question.image?.type,
-      'timestamp': question.timestamp,
-    };
-
-    return await db.update('questions', map, where: 'id = ?', whereArgs: [question.id]);
-  }
-
-  Future<int> deleteQuestion(String id) async {
-    final db = await database;
-    return await db.delete('questions', where: 'id = ?', whereArgs: [id]);
-  }
-
-  // ========== DADOS DO DIA ==========
-  Future<void> saveDayData(String date, DayData dayData) async {
-    final db = await database;
-    
-    await db.insert(
-      'day_data',
+    return await _database.insert(
+      'day_subjects',
       {
+        'id': subject.id,
         'date': date,
-        'mood': dayData.mood,
-        'energy': dayData.energy,
-        'notes': dayData.notes,
+        'name': subject.name,
+        'sessions': subject.sessions,
+        'created_at': DateTime.now().toIso8601String(),
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  Future<DayData?> getDayData(String date) async {
-    final db = await database;
+  Future<int> deleteSubject(String id) async {
+    // Precisamos saber a data para invalidar o cache
+    final subject = await getSubject(id);
+    if (subject != null) {
+      // Nota: não temos a data aqui, então não podemos invalidar o cache facilmente.
+      // Podemos optar por limpar todo o cache ou mudar a abordagem.
+      // Por simplicidade, vamos limpar todo o cache de day_subjects.
+      _daySubjectsCache.clear();
+    }
     
-    final maps = await db.query('day_data', where: 'date = ?', whereArgs: [date]);
+    await _database.delete(
+      'study_topics',
+      where: 'subject_id = ?',
+      whereArgs: [id],
+    );
     
-    if (maps.isEmpty) return null;
-    
-    final map = maps.first;
-    return DayData(
-      date: map['date'] as String,
-      mood: map['mood'] as int?,
-      energy: map['energy'] as int?,
-      notes: map['notes'] as String?,
+    return await _database.delete(
+      'day_subjects',
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 
-  // ========== MATÉRIAS E TÓPICOS DO DIA ==========
-  Future<void> saveDaySubjectsWithTopics(String date, List<Subject> subjects, Map<String, List<StudyTopic>> topicsBySubject) async {
-    final db = await database;
+  Future<int> deleteDaySubjects(String date) async {
+    // Invalida cache para esta data
+    _daySubjectsCache.remove(date);
     
-    await db.delete('day_subjects', where: 'date = ?', whereArgs: [date]);
+    final subjects = await _database.query(
+      'day_subjects',
+      where: 'date = ?',
+      whereArgs: [date],
+      columns: ['id'],
+    );
     
     for (final subject in subjects) {
-      await db.insert('day_subjects', {
-        'id': subject.id,
-        'date': date,
-        'subject_name': subject.name,
-        'sessions': subject.sessions,
-      });
-      
-      final topics = topicsBySubject[subject.id] ?? [];
-      for (final topic in topics) {
-        await db.insert('day_study_topics', topic.toJson());
-      }
-    }
-  }
-
-  Future<List<Subject>> getDaySubjects(String date) async {
-    final db = await database;
-    
-    final maps = await db.query('day_subjects', where: 'date = ?', whereArgs: [date]);
-    
-    return maps.map((map) => Subject(
-      id: map['id'] as String,
-      name: map['subject_name'] as String,
-      sessions: map['sessions'] as int,
-    )).toList();
-  }
-
-  Future<List<StudyTopic>> getSubjectTopics(String subjectId) async {
-    final db = await database;
-    
-    final maps = await db.query(
-      'day_study_topics',
-      where: 'day_subject_id = ?',
-      whereArgs: [subjectId],
-    );
-    
-    return maps.map((map) => StudyTopic.fromJson(map)).toList();
-  }
-
-  // ========== PROGRESSO DE ESTUDO ==========
-  Future<void> toggleStudySession(String date, String subjectId, String? topicId, int sessionNumber) async {
-    final db = await database;
-    
-    final existing = await db.query(
-      'study_progress',
-      where: 'date = ? AND subject_id = ? AND session_number = ? AND (topic_id = ? OR (topic_id IS NULL AND ? IS NULL))',
-      whereArgs: [date, subjectId, sessionNumber, topicId, topicId],
-    );
-    
-    if (existing.isEmpty) {
-      await db.insert('study_progress', {
-        'id': 'progress_${DateTime.now().millisecondsSinceEpoch}',
-        'date': date,
-        'subject_id': subjectId,
-        'topic_id': topicId,
-        'session_number': sessionNumber,
-        'completed_at': DateTime.now().toIso8601String(),
-      });
-    } else {
-      await db.delete(
-        'study_progress',
-        where: 'id = ?',
-        whereArgs: [existing.first['id']],
+      await _database.delete(
+        'study_topics',
+        where: 'subject_id = ?',
+        whereArgs: [subject['id']],
       );
     }
+    
+    return await _database.delete(
+      'day_subjects',
+      where: 'date = ?',
+      whereArgs: [date],
+    );
   }
 
-  Future<List<int>> getCompletedSessions(String date, String subjectId, String? topicId) async {
-    final db = await database;
+  Future<void> saveDaySubjectsWithTopics(
+    String date,
+    List<Subject> subjects,
+    Map<String, List<StudyTopic>> topicsBySubject,
+  ) async {
+    // Invalida cache para esta data
+    _daySubjectsCache.remove(date);
+    // Invalida cache de tópicos para os subjectIds envolvidos
+    for (final subject in subjects) {
+      _studyTopicsCache.remove(subject.id);
+    }
     
-    final maps = await db.query(
-      'study_progress',
-      where: 'date = ? AND subject_id = ? AND (topic_id = ? OR (topic_id IS NULL AND ? IS NULL))',
-      whereArgs: [date, subjectId, topicId, topicId],
+    await _database.transaction((txn) async {
+      await txn.delete(
+        'day_subjects',
+        where: 'date = ?',
+        whereArgs: [date],
+      );
+      
+      for (final subject in subjects) {
+        await txn.insert(
+          'day_subjects',
+          {
+            'id': subject.id,
+            'date': date,
+            'name': subject.name,
+            'sessions': subject.sessions,
+            'created_at': DateTime.now().toIso8601String(),
+          },
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        
+        final topics = topicsBySubject[subject.id] ?? [];
+        for (final topic in topics) {
+          await txn.insert(
+            'study_topics',
+            {
+              'id': topic.id,
+              'subject_id': topic.subjectId,
+              'topic': topic.topic,
+              'sessions': topic.sessions,
+            },
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+      }
+    });
+  }
+
+  // ========== MÉTODOS PARA TÓPICOS ==========
+  
+  Future<List<StudyTopic>> getSubjectTopics(String subjectId) async {
+    // Verificar cache
+    if (_studyTopicsCache.containsKey(subjectId)) {
+      return _studyTopicsCache[subjectId]!;
+    }
+    
+    final results = await _database.query(
+      'study_topics',
+      where: 'subject_id = ?',
+      whereArgs: [subjectId],
+      orderBy: 'topic ASC',
     );
     
-    return maps.map((map) => map['session_number'] as int).toList();
+    final topics = results.map((row) => StudyTopic(
+      id: row['id'] as String,
+      subjectId: row['subject_id'] as String,
+      topic: row['topic'] as String,
+      sessions: row['sessions'] as int,
+    )).toList();
+    
+    // Atualizar cache
+    _studyTopicsCache[subjectId] = topics;
+    
+    return topics;
   }
 
-  // ========== ESTATÍSTICAS ==========
-  Future<Map<String, int>> getSubjectStats() async {
-    final db = await database;
+  Future<int> saveStudyTopic(StudyTopic topic) async {
+    // Invalida cache para este subjectId
+    _studyTopicsCache.remove(topic.subjectId);
     
-    final result = await db.rawQuery('''
-      SELECT subject, COUNT(*) as count
-      FROM questions
-      GROUP BY subject
-      ORDER BY count DESC
-    ''');
-    
-    final stats = <String, int>{};
-    for (final row in result) {
-      stats[row['subject'] as String] = row['count'] as int;
-    }
-    
-    return stats;
-  }
-
-  Future<int> getQuestionCount({String? subject}) async {
-    final db = await database;
-    
-    String query = 'SELECT COUNT(*) as count FROM questions';
-    List<dynamic> args = [];
-    
-    if (subject != null) {
-      query += ' WHERE subject = ?';
-      args.add(subject);
-    }
-    
-    final result = await db.rawQuery(query, args);
-    return _firstIntValue(result) ?? 0;
-  }
-
-  // ========== HELPERS ==========
-  Question _questionFromMap(Map<String, dynamic> map) {
-    return Question(
-      id: map['id'],
-      subject: map['subject'],
-      topic: map['topic'],
-      subtopic: map['subtopic'],
-      errorDescription: map['error_description'],
-      errors: {
-        'conteudo': map['content_error'] == 1,
-        'atencao': map['attention_error'] == 1,
-        'tempo': map['time_error'] == 1,
+    return await _database.insert(
+      'study_topics',
+      {
+        'id': topic.id,
+        'subject_id': topic.subjectId,
+        'topic': topic.topic,
+        'sessions': topic.sessions,
       },
-      image: map['image_data'] != null
-          ? QuestionImage(
-              data: map['image_data'],
-              name: map['image_name'] ?? '',
-              type: map['image_type'] ?? '',
-            )
-          : null,
-      timestamp: map['timestamp'],
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
-  int? _firstIntValue(List<Map<String, dynamic>> list) {
-    if (list.isEmpty) return null;
-    final value = list.first.values.first;
-    return value is int ? value : int.tryParse(value.toString());
+  Future<int> deleteStudyTopic(String id) async {
+    // Precisamos do subjectId para invalidar o cache
+    final topic = await _database.query(
+      'study_topics',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    
+    if (topic.isNotEmpty) {
+      final subjectId = topic.first['subject_id'] as String;
+      _studyTopicsCache.remove(subjectId);
+    }
+    
+    return await _database.delete(
+      'study_topics',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<Map<String, dynamic>> getWeeklySchedule() async {
+    final results = await _database.query('weekly_schedule');
+
+    if (results.isNotEmpty) {
+      try {
+        final first = results.first;
+        final timeSlotsJson = first['time_slots'] as String? ?? '[]';
+        final scheduleJson = first['schedule_data'] as String? ?? '[]';
+        
+        final timeSlots = List<String>.from(jsonDecode(timeSlotsJson));
+        final scheduleData = List<List<dynamic>>.from(jsonDecode(scheduleJson));
+        
+        return {
+          'timeSlots': timeSlots,
+          'schedule': scheduleData,
+        };
+      } catch (e) {
+        print('Erro no parse do weekly schedule: $e');
+        return {};
+      }
+    }
+
+    return {};
+  }
+
+  Future<void> saveWeeklySchedule({
+    required List<String> timeSlots,
+    required List<List<Map<String, dynamic>>> schedule,
+  }) async {
+    await _database.insert(
+      'weekly_schedule',
+      {
+        'id': 1,
+        'time_slots': jsonEncode(timeSlots),
+        'schedule_data': jsonEncode(schedule),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> saveWeeklyScheduleWithCells({
+    required List<String> timeSlots,
+    required List<List<ScheduleCell>> schedule,
+  }) async {
+    try {
+      final scheduleData = schedule.map((day) => 
+        day.map((cell) => cell.toMap()).toList()
+      ).toList();
+      
+      await _database.insert(
+        'weekly_schedule',
+        {
+          'id': 1,
+          'time_slots': jsonEncode(timeSlots),
+          'schedule_data': jsonEncode(scheduleData),
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      print('Erro ao salvar schedule: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> getWeeklyScheduleWithCells() async {
+    try {
+      final results = await _database.query('weekly_schedule');
+      
+      if (results.isNotEmpty) {
+        final first = results.first;
+        final timeSlotsJson = first['time_slots'] as String? ?? '[]';
+        final scheduleJson = first['schedule_data'] as String? ?? '[]';
+        
+        final timeSlots = List<String>.from(jsonDecode(timeSlotsJson));
+        final scheduleData = List<List<dynamic>>.from(jsonDecode(scheduleJson));
+        
+        final schedule = scheduleData.map((day) => 
+          day.map((cell) {
+            try {
+              return ScheduleCell.fromMap(Map<String, dynamic>.from(cell));
+            } catch (e) {
+              print('Erro ao converter célula: $e');
+              return ScheduleCell(
+                dayIndex: 0,
+                timeIndex: 0,
+                subject: '',
+                color: Colors.transparent,
+              );
+            }
+          }).toList()
+        ).toList();
+        
+        return {
+          'timeSlots': timeSlots,
+          'schedule': schedule,
+        };
+      }
+    } catch (e) {
+      print('Erro ao carregar schedule: $e');
+    }
+    
+    return {};
+  }
+
+  Future<void> clearWeeklySchedule() async {
+    await _database.delete('weekly_schedule');
+  }
+  
+  Future<List<Map<String, dynamic>>> getSubjectsSummary(DateTime startDate, DateTime endDate) async {
+    final results = await _database.rawQuery('''
+      SELECT 
+        date,
+        COUNT(*) as total_subjects,
+        SUM(sessions) as total_sessions
+      FROM day_subjects
+      WHERE date BETWEEN ? AND ?
+      GROUP BY date
+      ORDER BY date ASC
+    ''', [
+      _formatDate(startDate),
+      _formatDate(endDate),
+    ]);
+    
+    return results;
+  }
+
+  Future<List<Map<String, dynamic>>> getMostStudiedSubjects({int limit = 5}) async {
+    final results = await _database.rawQuery('''
+      SELECT 
+        name,
+        COUNT(*) as days_studied,
+        SUM(sessions) as total_sessions
+      FROM day_subjects
+      GROUP BY name
+      ORDER BY total_sessions DESC
+      LIMIT ?
+    ''', [limit]);
+    
+    return results;
+  }
+
+  Future<Map<String, dynamic>> exportData() async {
+    final subjects = await _database.query('day_subjects');
+    final topics = await _database.query('study_topics');
+    final schedule = await _database.query('weekly_schedule');
+    
+    return {
+      'subjects': subjects,
+      'topics': topics,
+      'schedule': schedule,
+      'exported_at': DateTime.now().toIso8601String(),
+    };
+  }
+
+  Future<void> importData(Map<String, dynamic> data) async {
+    _daySubjectsCache.clear();
+    _studyTopicsCache.clear();
+    
+    await _database.transaction((txn) async {
+      await txn.delete('day_subjects');
+      await txn.delete('study_topics');
+      await txn.delete('weekly_schedule');
+      
+      if (data['subjects'] != null) {
+        for (final subject in data['subjects'] as List) {
+          await txn.insert('day_subjects', subject as Map<String, dynamic>);
+        }
+      }
+      
+      if (data['topics'] != null) {
+        for (final topic in data['topics'] as List) {
+          await txn.insert('study_topics', topic as Map<String, dynamic>);
+        }
+      }
+      
+      if (data['schedule'] != null) {
+        for (final schedule in data['schedule'] as List) {
+          await txn.insert('weekly_schedule', schedule as Map<String, dynamic>);
+        }
+      }
+    });
   }
 
   Future<void> close() async {
-    if (_database != null) {
-      await _database!.close();
-      _database = null;
-    }
+    await _database.close();
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

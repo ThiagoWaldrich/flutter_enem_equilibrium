@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class QuestionBankGrid extends StatelessWidget {
   final List<Map<String, dynamic>> questions;
   final Function(Map<String, dynamic> question) onQuestionTap;
@@ -633,12 +631,9 @@ class QuestionBankGrid extends StatelessWidget {
   String? _getImageUrl(String? imagePath) {
     if (imagePath == null || imagePath.isEmpty) return null;
 
-    final supabase = Supabase.instance.client;
-
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
 
-    return supabase.storage.from('question-images').getPublicUrl(imagePath);
   }
 }

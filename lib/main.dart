@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' as provider_package;
+import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io' show Platform;
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
 import 'services/storage_service.dart';
 import 'services/database_service.dart';
 import 'services/calendar_service.dart';
 import 'services/mind_map_service.dart';
 import 'services/monthly_goals_service.dart';
 import 'services/enhanced_database_service.dart';
-import 'services/auth_service.dart'; 
 import 'utils/theme.dart';
 import 'screens/calendar_screen.dart';
-import 'screens/question_bank_screen.dart';
-import 'screens/add_edit_question_screen.dart';
+import 'screens/weekly_schedule_screen.dart';
 import 'screens/goals_screen.dart';
 import 'screens/review_screen.dart';
 import 'screens/autodiagnostico_screen.dart';
-import 'screens/login_screen.dart'; 
+
 void main() async {
   if (kIsWeb) {
     debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
@@ -31,12 +29,10 @@ void main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-  
 
   final db = EnhancedDatabaseService();
   await db.init();
-  
-  
+
   runApp(MyApp(db: db));
 }
 
@@ -47,17 +43,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return provider_package.MultiProvider(
+    return MultiProvider(
       providers: [
-        // provider_package.Provider<SupabaseClient>(
-        //   create: (_) => Supabase.instance.client,
-        // ),
-        
-        // provider_package.Provider<AuthService>(
-        //   create: (_) => AuthService(),
-        // ),
-        
-        provider_package.FutureProvider<StorageService?>(
+        FutureProvider<StorageService?>(
           create: (_) async {
             final service = StorageService();
             await service.init();
@@ -65,8 +53,7 @@ class MyApp extends StatelessWidget {
           },
           initialData: null,
         ),
-        
-        provider_package.FutureProvider<DatabaseService?>(
+        FutureProvider<DatabaseService?>(
           create: (_) async {
             final service = DatabaseService();
             await service.init();
@@ -74,41 +61,24 @@ class MyApp extends StatelessWidget {
           },
           initialData: null,
         ),
-        
-
-        provider_package.Provider<EnhancedDatabaseService>.value(value: db),
-        provider_package.ChangeNotifierProxyProvider<StorageService, CalendarService>(
-          create: (context) {
-            final storage = context.read<StorageService>();
-            return CalendarService(storage);
-          },
-          update: (context, storage, previous) {
-            return previous ?? CalendarService(storage);
-          },
+        Provider<EnhancedDatabaseService>.value(value: db),
+        ChangeNotifierProxyProvider<StorageService, CalendarService>(
+          create: (context) => CalendarService(context.read<StorageService>()),
+          update: (_, storage, previous) => previous ?? CalendarService(storage),
         ),
-        
-        provider_package.ChangeNotifierProxyProvider<StorageService, MindMapService>(
-          create: (context) {
-            final storage = context.read<StorageService>();
-            return MindMapService(storage);
-          },
-          update: (context, storage, previous) {
-            return previous ?? MindMapService(storage);
-          },
+        ChangeNotifierProxyProvider<StorageService, MindMapService>(
+          create: (context) => MindMapService(context.read<StorageService>()),
+          update: (_, storage, previous) => previous ?? MindMapService(storage),
         ),
-        
-        provider_package.ChangeNotifierProxyProvider2<StorageService, DatabaseService, MonthlyGoalsService>(
-          create: (context) {
-            final storage = context.read<StorageService>();
-            final database = context.read<DatabaseService>();
-            return MonthlyGoalsService(storage, database);
-          },
-          update: (context, storage, database, previous) {
-            return previous ?? MonthlyGoalsService(storage, database);
-          },
+        ChangeNotifierProxyProvider2<StorageService, DatabaseService, MonthlyGoalsService>(
+          create: (context) => MonthlyGoalsService(
+            context.read<StorageService>(),
+            context.read<DatabaseService>(),
+          ),
+          update: (_, storage, database, previous) =>
+              previous ?? MonthlyGoalsService(storage, database),
         ),
       ],
-      
       child: const EquilibriumApp(),
     );
   }
@@ -119,11 +89,9 @@ class EquilibriumApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storageService = provider_package.Provider.of<StorageService?>(context);
-    final databaseService = provider_package.Provider.of<DatabaseService?>(context);
-    //final authService = provider_package.Provider.of<AuthService>(context);
-    //final isAuthenticated = AuthService.isAuthenticated;
-    
+    final storageService = Provider.of<StorageService?>(context);
+    final databaseService = Provider.of<DatabaseService?>(context);
+
     if (storageService == null || databaseService == null) {
       return const MaterialApp(
         home: Scaffold(
@@ -140,31 +108,19 @@ class EquilibriumApp extends StatelessWidget {
         ),
       );
     }
-    
-    // if (!isAuthenticated) {
-    //   return MaterialApp(
-    //     title: 'Equilibrium',
-    //     theme: AppTheme.lightTheme,
-    //     home: const LoginScreen(),
-    //     debugShowCheckedModeBanner: false,
-    //   );
-    // }
-    
+
     return MaterialApp(
       title: 'Equilibrium',
       theme: AppTheme.lightTheme,
       locale: const Locale('pt', 'BR'),
       home: const CalendarScreen(),
       debugShowCheckedModeBanner: false,
-      
       routes: {
-        '/calendar': (context) => const CalendarScreen(),
-        //'/question-bank': (context) => const QuestionBankScreen(),
-        '/add-question': (context) => const AddEditQuestionScreen(),
-        '/goals': (context) => const GoalsScreen(),
-        '/review': (context) => const ReviewScreen(),
-        '/autodiagnostico': (context) => const AutodiagnosticoScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/calendar': (_) => const CalendarScreen(),
+        '/weekly-schedule': (_) => const WeeklyScheduleScreen(),
+        '/goals': (_) => const GoalsScreen(),
+        '/review': (_) => const ReviewScreen(),
+        '/autodiagnostico': (_) => const AutodiagnosticoScreen(),
       },
     );
   }

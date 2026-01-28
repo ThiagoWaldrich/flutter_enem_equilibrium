@@ -71,6 +71,7 @@ class MonthlyGoalsService extends ChangeNotifier {
         'useAutodiagnostico': useAutodiagnostico,
       },
       'subjects': subjectHours,
+      'questions': {}, // Inicializar questões vazias
       'generatedAt': DateTime.now().toIso8601String(),
     };
     
@@ -83,7 +84,7 @@ class MonthlyGoalsService extends ChangeNotifier {
     Map<String, int> weights,
   ) {
     final areas = {
-      'linguagens': ['Português', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
+      'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
       'matematica': ['Matemática'],
       'natureza': ['Física', 'Química', 'Biologia'],
       'humanas': ['História', 'Geografia', 'Filosofia', 'Sociologia'],
@@ -127,7 +128,7 @@ class MonthlyGoalsService extends ChangeNotifier {
     }
     
     final areas = {
-      'linguagens': ['Português', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
+      'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
       'matematica': ['Matemática'],
       'natureza': ['Física', 'Química', 'Biologia'],
       'humanas': ['História', 'Geografia', 'Filosofia', 'Sociologia'],
@@ -185,6 +186,64 @@ class MonthlyGoalsService extends ChangeNotifier {
     
     return subjectHours;
   }
+  
+  // -------------------------
+  // GERENCIAMENTO DE QUESTÕES (NOVO)
+  // -------------------------
+  
+  // Atualizar questões de uma matéria
+  Future<void> updateSubjectQuestions(String subject, int questions) async {
+    if (_currentMonthGoals == null) return;
+    
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+    final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
+    
+    final questionsData = Map<String, dynamic>.from(_currentMonthGoals!['questions'] ?? {});
+    questionsData[subject] = (questionsData[subject] ?? 0) + questions;
+    
+    _currentMonthGoals!['questions'] = questionsData;
+    
+    await _storageService.saveData(goalsKey, _currentMonthGoals);
+    notifyListeners();
+  }
+  
+  // Obter questões de uma matéria
+  int getSubjectQuestions(String subject) {
+    if (_currentMonthGoals == null) return 0;
+    
+    final questions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
+    if (questions == null || !questions.containsKey(subject)) return 0;
+    
+    return (questions[subject] as int?) ?? 0;
+  }
+  
+  // Obter todas as questões do mês
+  Map<String, int> getAllSubjectQuestions() {
+    if (_currentMonthGoals == null) return {};
+    
+    final questions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
+    if (questions == null) return {};
+    
+    return questions.map((key, value) => MapEntry(key, (value as int)));
+  }
+  
+  // Sincronizar com dados do calendário
+  Future<void> syncWithCalendar(Map<String, int> calendarQuestions) async {
+    if (_currentMonthGoals == null) return;
+    
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+    final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
+    
+    // Atualizar questões com dados do calendário
+    _currentMonthGoals!['questions'] = calendarQuestions;
+    
+    await _storageService.saveData(goalsKey, _currentMonthGoals);
+    notifyListeners();
+  }
+  
+  // -------------------------
+  // MÉTODOS EXISTENTES
+  // -------------------------
   
   Future<void> deleteCurrentMonthGoals() async {
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());

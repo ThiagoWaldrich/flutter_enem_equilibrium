@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../services/calendar_service.dart';
 import '../utils/theme.dart';
+import '../utils/constants.dart';
 
 class CalendarGrid extends StatelessWidget {
   final DateTime selectedMonth;
@@ -42,6 +43,45 @@ class CalendarGrid extends StatelessWidget {
     return [...previousMonthDays, ...currentMonthDays, ...nextMonthDays];
   }
 
+  // NOVO: Verificar se é feriado nacional
+  bool _isNationalHoliday(DateTime date) {
+    final dateStr = DateFormat('MM-dd').format(date);
+    final holidayText = AppConstants.holidays2026[dateStr];
+    
+    // Lista de feriados nacionais (excluindo datas comemorativas)
+    final nationalHolidays = {
+      '01-01', // Ano Novo
+      '04-03', // Sexta-feira Santa
+      '04-21', // Tiradentes
+      '05-01', // Dia do Trabalho
+      '06-04', // Corpus Christi
+      '09-07', // Independência do Brasil
+      '10-12', // Nossa Senhora Aparecida
+      '11-02', // Finados
+      '11-15', // Proclamação da República
+      '12-25', // Natal
+      // Carnaval (datas móveis)
+      '02-16', '02-17',
+    };
+    
+    return holidayText != null && nationalHolidays.contains(dateStr);
+  }
+
+  // NOVO: Verificar se é data comemorativa
+  bool _isCommemorativeDate(DateTime date) {
+    final dateStr = DateFormat('MM-dd').format(date);
+    final holidayText = AppConstants.holidays2026[dateStr];
+    
+    // Se está no mapa mas NÃO é feriado nacional, é data comemorativa
+    return holidayText != null && !_isNationalHoliday(date);
+  }
+
+  // NOVO: Obter texto do feriado/data comemorativa
+  String? _getHolidayText(DateTime date) {
+    final dateStr = DateFormat('MM-dd').format(date);
+    return AppConstants.holidays2026[dateStr];
+  }
+
   @override
   Widget build(BuildContext context) {
     final calendarService = context.watch<CalendarService>();
@@ -75,7 +115,7 @@ class CalendarGrid extends StatelessWidget {
                         day,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: daySize * 0.22, // Tamanho relativo
+                          fontSize: daySize * 0.5, // Tamanho relativo
                           color: Colors.white,
                           letterSpacing: 0.5,
                         ),
@@ -120,6 +160,12 @@ class CalendarGrid extends StatelessWidget {
 
                   final hasData = total > 0;
 
+                  // NOVO: Verificar se é feriado ou data comemorativa
+                  final holidayText = _getHolidayText(day);
+                  final isNationalHoliday = _isNationalHoliday(day);
+                  final isCommemorativeDate = _isCommemorativeDate(day);
+                  final isSpecialDay = (isNationalHoliday || isCommemorativeDate) && isCurrentMonth;
+
                   return GestureDetector(
                     onTap: () => onDateSelected(day),
                     child: _DayCell(
@@ -130,6 +176,10 @@ class CalendarGrid extends StatelessWidget {
                       hasData: hasData,
                       percentage: percentage,
                       daySize: daySize,
+                      holidayText: holidayText,
+                      isNationalHoliday: isNationalHoliday,
+                      isCommemorativeDate: isCommemorativeDate,
+                      isSpecialDay: isSpecialDay,
                     ),
                   );
                 },
@@ -150,6 +200,10 @@ class _DayCell extends StatelessWidget {
   final bool hasData;
   final int percentage;
   final double daySize;
+  final String? holidayText;
+  final bool isNationalHoliday;
+  final bool isCommemorativeDate;
+  final bool isSpecialDay;
 
   const _DayCell({
     required this.day,
@@ -159,6 +213,10 @@ class _DayCell extends StatelessWidget {
     required this.hasData,
     required this.percentage,
     required this.daySize,
+    this.holidayText,
+    required this.isNationalHoliday,
+    required this.isCommemorativeDate,
+    required this.isSpecialDay,
   });
 
   @override
@@ -179,10 +237,20 @@ class _DayCell extends StatelessWidget {
       textColor = AppTheme.textSecondary.withOpacity(0.3);
     }
 
+    // NOVO: Definir cor de fundo para dias especiais
+    Color? specialDayBackgroundColor;
+    if (isSpecialDay) {
+      if (isNationalHoliday) {
+        specialDayBackgroundColor = AppConstants.holidayColor;
+      } else if (isCommemorativeDate) {
+        specialDayBackgroundColor = AppConstants.commemorativeDateColor;
+      }
+    }
+
     return Container(
       margin: EdgeInsets.all(spacing * 0.25), // Usar spacing relativo
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: specialDayBackgroundColor ?? backgroundColor,
         borderRadius: BorderRadius.circular(daySize * 0.2), // Borda relativa
         border: Border.all(
           color: borderColor ?? AppTheme.lightGray.withOpacity(0.5),
@@ -193,19 +261,56 @@ class _DayCell extends StatelessWidget {
         children: [
           // Número do dia
           Center(
-            child: Text(
-              day.toString(),
-              style: TextStyle(
-                fontSize: daySize * 0.28, // Tamanho relativo
-                fontWeight:
-                    isToday || isSelected ? FontWeight.bold : FontWeight.w500,
-                color: textColor,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  day.toString(),
+                  style: TextStyle(
+                    fontSize: daySize * 0.3, // Tamanho relativo
+                    fontWeight: isToday || isSelected 
+                        ? FontWeight.bold 
+                        : (isSpecialDay ? FontWeight.w600 : FontWeight.w500),
+                    color: isSpecialDay 
+                        ? Colors.white // Texto branco em fundo colorido
+                        : textColor,
+                  ),
+                ),
+                
+
+                if (holidayText != null && isCurrentMonth && (isNationalHoliday || isCommemorativeDate))
+                  Padding(
+                    padding: EdgeInsets.only(top: daySize * 0.03),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: daySize * 0.03,
+                        vertical: daySize * 0.01,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isNationalHoliday 
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(daySize * 0.04),
+                      ),
+                      child: Text(
+                        _getShortHolidayName(holidayText!),
+                        style: TextStyle(
+                          fontSize: daySize * 0.20,
+                          fontWeight: FontWeight.w600,
+                          color: isNationalHoliday ? Colors.white : Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
 
           // Indicador de progresso
-          if (hasData && isCurrentMonth && !isSelected)
+          if (hasData && isCurrentMonth && !isSelected && !isSpecialDay)
             Positioned(
               bottom: spacing * 0.5,
               left: 0,
@@ -231,13 +336,54 @@ class _DayCell extends StatelessWidget {
                 ),
               ),
             ),
+
+          // Tooltip para mostrar o nome completo do feriado/data comemorativa
+          if (holidayText != null && isCurrentMonth && (isNationalHoliday || isCommemorativeDate))
+            Positioned.fill(
+              child: Tooltip(
+                message: holidayText!,
+                waitDuration: const Duration(milliseconds: 500),
+                textStyle: const TextStyle(fontSize: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Container(),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  // Método getter para acessar spacing do widget pai
-  double get spacing => daySize * 0.08; // Spacing baseado no daySize
+  double get spacing => daySize * 0.08; 
+
+
+  String _getShortHolidayName(String fullName) {
+    final shortNames = {
+      'Ano Novo': 'Ano Novo',
+      'Carnaval': 'Carnaval',
+      'Sexta-feira Santa': 'Sexta Santa',
+      'Tiradentes': 'Tiradentes',
+      'Dia do Trabalho': 'Trabalho',
+      'Corpus Christi': 'Corpus',
+      'Independência do Brasil': 'Independência',
+      'Nossa Senhora Aparecida': 'Aparecida',
+      'Finados': 'Finados',
+      'Proclamação da República': 'República',
+      'Natal': 'Natal',
+      'Dia dos Namorados': 'Namorados',
+      'Dia Internacional da Mulher': 'Mulher',
+      'Dia da Mentira': 'Mentira',
+      'Descobrimento do Brasil': 'Descobrimento',
+      'Dia das Mães': 'Mães',
+      'Dia dos Pais': 'Pais',
+      'Halloween': 'Halloween',
+      'Réveillon': 'Réveillon',
+    };
+    
+    return shortNames[fullName] ?? fullName;
+  }
 
   Color _getProgressColor(int percentage) {
     if (percentage >= 100) return AppTheme.successColor;

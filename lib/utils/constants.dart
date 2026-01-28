@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 class AppConstants {
   // Matérias pré-definidas
   static const List<Map<String, dynamic>> predefinedSubjects = [
@@ -13,7 +15,17 @@ class AppConstants {
     {'name': 'Literatura', 'sessions': 1},
     {'name': 'Redação', 'sessions': 1},
     {'name': 'Artes', 'sessions': 1},
-    {'name': 'Simulado', 'sessions': 1},
+  ];
+
+    // Horários padrão para a nova aba
+  static const List<String> defaultTimeSlots = [
+    '05:00', '06:00', '07:00', '08:00', '09:00', '10:00',
+    '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
+    '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'
+  ];
+
+  static const List<String> weekDays = [
+    'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
   ];
 
   // Metas mensais de horas por matéria
@@ -64,4 +76,8 @@ class AppConstants {
   static const String keyReview = 'calendar_review';
   static const String keyMindMaps = 'mind_maps';
   static const String keyMonthlyGoals = 'monthly_goals';
+
+  // Cores para feriados e datas comemorativas
+  static const Color holidayColor = Color(0xFFEF4444); // Vermelho para feriados
+  static const Color commemorativeDateColor = Color(0xFF4FC3F7); // Azul-amarelado para datas comemorativas
 }
