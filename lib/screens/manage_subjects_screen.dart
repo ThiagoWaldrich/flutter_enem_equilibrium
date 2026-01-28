@@ -209,7 +209,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                   ),
                 ),
               );
-            }).toList(),
+            }),
           
           const SizedBox(height: 24),
           
@@ -227,7 +227,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _selectedSubject,
+                    initialValue: _selectedSubject,
                     decoration: const InputDecoration(
                       labelText: 'Matéria',
                       border: OutlineInputBorder(),

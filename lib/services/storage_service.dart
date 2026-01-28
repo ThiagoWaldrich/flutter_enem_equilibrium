@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -14,7 +15,7 @@ class StorageService {
       final jsonString = jsonEncode(data);
       return await _prefs!.setString(key, jsonString);
     } catch (e) {
-      print('Erro ao salvar dados: $e');
+      debugPrint('Erro ao salvar dados: $e');
       return false;
     }
   }
@@ -26,7 +27,7 @@ class StorageService {
       if (jsonString == null) return null;
       return jsonDecode(jsonString);
     } catch (e) {
-      print('Erro ao carregar dados: $e');
+      debugPrint('Erro ao carregar dados: $e');
       return null;
     }
   }
@@ -36,7 +37,7 @@ class StorageService {
     try {
       return await _prefs!.remove(key);
     } catch (e) {
-      print('Erro ao remover dados: $e');
+      debugPrint('Erro ao remover dados: $e');
       return false;
     }
   }
@@ -46,7 +47,7 @@ class StorageService {
     try {
       return await _prefs!.clear();
     } catch (e) {
-      print('Erro ao limpar dados: $e');
+      debugPrint('Erro ao limpar dados: $e');
       return false;
     }
   }

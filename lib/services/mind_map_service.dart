@@ -57,7 +57,7 @@ class MindMapService extends ChangeNotifier {
   ) async {
     final key = _getKey(subject, topic);
     final existing = _mindMaps[key];
-    
+
     if (existing != null) {
       _mindMaps[key] = existing.copyWith(
         files: [...existing.files, ...files],
@@ -72,7 +72,7 @@ class MindMapService extends ChangeNotifier {
         timestamp: DateTime.now().toIso8601String(),
       );
     }
-    
+
     await _saveData();
     notifyListeners();
   }
@@ -85,11 +85,11 @@ class MindMapService extends ChangeNotifier {
   ) async {
     final key = _getKey(subject, topic);
     final mindMap = _mindMaps[key];
-    
+
     if (mindMap != null && fileIndex < mindMap.files.length) {
       final updatedFiles = List<MindMapFile>.from(mindMap.files);
       updatedFiles.removeAt(fileIndex);
-      
+
       if (updatedFiles.isEmpty) {
         _mindMaps.remove(key);
       } else {
@@ -98,7 +98,7 @@ class MindMapService extends ChangeNotifier {
           timestamp: DateTime.now().toIso8601String(),
         );
       }
-      
+
       await _saveData();
       notifyListeners();
     }
@@ -116,11 +116,11 @@ class MindMapService extends ChangeNotifier {
   Map<String, int> getStatistics() {
     int totalTopics = _mindMaps.length;
     int totalFiles = 0;
-    
-    _mindMaps.values.forEach((map) {
+
+    for (final map in _mindMaps.values) {
       totalFiles += map.files.length;
-    });
-    
+    }
+
     return {
       'topics': totalTopics,
       'files': totalFiles,

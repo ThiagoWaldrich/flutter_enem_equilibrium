@@ -6,10 +6,10 @@ import 'question_card.dart';
 class QuestionsGridView extends StatefulWidget {
   final List<Question> questions;
 
-  const QuestionsGridView({
-    Key? key, // MODIFICADO: Key opcional
-    required this.questions,
-  }) : super(key: key);
+const QuestionsGridView({
+  super.key, 
+  required this.questions,
+});
 
   @override
   State<QuestionsGridView> createState() => _QuestionsGridViewState();
@@ -49,7 +49,7 @@ class _QuestionsGridViewState extends State<QuestionsGridView> {
             border: Border.all(color: Colors.grey[200]!, width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha:0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -74,7 +74,7 @@ class _QuestionsGridViewState extends State<QuestionsGridView> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: subjectColor.withOpacity(0.08),
+                      color: subjectColor.withValues(alpha:0.08),
                       borderRadius: isExpanded
                           ? const BorderRadius.only(
                               topLeft: Radius.circular(12),

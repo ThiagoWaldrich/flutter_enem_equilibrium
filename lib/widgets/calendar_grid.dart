@@ -90,13 +90,13 @@ class CalendarGrid extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Color(0XFF042044),
+        color:const Color(0XFF042044),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black,
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -234,7 +234,7 @@ class _DayCell extends StatelessWidget {
     }
 
     if (!isCurrentMonth) {
-      textColor = AppTheme.textSecondary.withOpacity(0.3);
+      textColor = AppTheme.textSecondary.withValues(alpha: 0.3);
     }
 
     // NOVO: Definir cor de fundo para dias especiais
@@ -248,12 +248,12 @@ class _DayCell extends StatelessWidget {
     }
 
     return Container(
-      margin: EdgeInsets.all(spacing * 0.25), // Usar spacing relativo
+      margin: EdgeInsets.all(spacing * 0.25),
       decoration: BoxDecoration(
         color: specialDayBackgroundColor ?? backgroundColor,
-        borderRadius: BorderRadius.circular(daySize * 0.2), // Borda relativa
+        borderRadius: BorderRadius.circular(daySize * 0.2), 
         border: Border.all(
-          color: borderColor ?? AppTheme.lightGray.withOpacity(0.5),
+          color: borderColor ?? AppTheme.lightGray.withValues(alpha:0.5),
           width: borderColor != null ? 2 : 1,
         ),
       ),
@@ -288,8 +288,8 @@ class _DayCell extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isNationalHoliday 
-                            ? Colors.white.withOpacity(0.2)
-                            : Colors.black.withOpacity(0.1),
+                            ? Colors.white.withValues(alpha:0.2)
+                            : Colors.black.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(daySize * 0.04),
                       ),
                       child: Text(
@@ -320,7 +320,7 @@ class _DayCell extends StatelessWidget {
                   width: daySize * 0.5, // Largura relativa
                   height: daySize * 0.06, // Altura relativa
                   decoration: BoxDecoration(
-                    color: _getProgressColor(percentage).withOpacity(0.3),
+                    color: _getProgressColor(percentage).withValues(alpha:0.3),
                     borderRadius: BorderRadius.circular(daySize * 0.03),
                   ),
                   child: FractionallySizedBox(

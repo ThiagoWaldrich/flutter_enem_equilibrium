@@ -312,7 +312,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha:0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -337,7 +337,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                                 child: Card(
                                   elevation: 0,
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha:0.9),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -499,8 +499,8 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                                                         begin: Alignment.topLeft,
                                                         end: Alignment.bottomRight,
                                                         colors: [
-                                                          cell.color.withOpacity(0.3),
-                                                          cell.color.withOpacity(0.15),
+                                                          cell.color.withValues(alpha:0.3),
+                                                          cell.color.withValues(alpha:0.15),
                                                         ],
                                                       )
                                                     : null,
@@ -508,14 +508,14 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                                                 borderRadius: BorderRadius.circular(12),
                                                 border: Border.all(
                                                   color: hasContent 
-                                                      ? cell.color.withOpacity(0.4)
+                                                      ? cell.color.withValues(alpha:0.4)
                                                       : Colors.grey[300]!,
                                                   width: 1.5,
                                                 ),
                                                 boxShadow: hasContent
                                                     ? [
                                                         BoxShadow(
-                                                          color: cell.color.withOpacity(0.2),
+                                                          color: cell.color.withValues(alpha:0.2),
                                                           blurRadius: 4,
                                                           offset: const Offset(0, 2),
                                                         ),
@@ -570,7 +570,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha:0.05),
                           blurRadius: 8,
                           offset: const Offset(0, -2),
                         ),
@@ -723,7 +723,7 @@ class __EditCellDialogState extends State<_EditCellDialog> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: color.withOpacity(0.4),
+                          color: color.withValues(alpha: 0.4),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),

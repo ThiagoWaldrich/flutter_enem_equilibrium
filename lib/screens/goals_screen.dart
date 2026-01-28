@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../services/storage_service.dart';
-import '../services/database_service.dart';
 import '../services/monthly_goals_service.dart';
-import '../utils/constants.dart';
 import '../utils/theme.dart';
 
 class GoalsScreen extends StatefulWidget {
@@ -242,7 +239,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.book, color: color),
@@ -255,7 +252,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -268,7 +265,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
               ),
             ),
           );
-        }).toList(),
+        }),
         
         const SizedBox(height: 80),
       ],
@@ -443,7 +440,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            color: AppTheme.primaryColor.withValues(alpha:0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

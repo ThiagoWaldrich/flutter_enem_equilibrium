@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../utils/theme.dart';
 import '../../utils/subject_data_constants.dart';
-import '../autodiagnostico_screen.dart';
 import '../../models/question.dart';
 
 class RegisterTab extends StatelessWidget {
@@ -85,7 +83,7 @@ class RegisterTab extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -100,7 +98,7 @@ class RegisterTab extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -143,7 +141,7 @@ class RegisterTab extends StatelessWidget {
 
               // Campo Matéria
               DropdownButtonFormField<String>(
-                value: selectedSubject,
+                initialValue: selectedSubject,
                 decoration: const InputDecoration(
                   labelText: 'Matéria *',
                   prefixIcon: Icon(Icons.book),
@@ -162,7 +160,7 @@ class RegisterTab extends StatelessWidget {
 
               // Campo Tópico
               DropdownButtonFormField<String>(
-                value: selectedTopic,
+                initialValue: selectedTopic,
                 decoration: const InputDecoration(
                   labelText: 'Tópico *',
                   prefixIcon: Icon(Icons.topic),
@@ -182,7 +180,7 @@ class RegisterTab extends StatelessWidget {
 
               // Campo Subtopic
               DropdownButtonFormField<String>(
-                value: selectedSubtopic,
+                initialValue: selectedSubtopic,
                 decoration: const InputDecoration(
                   labelText: 'Subtópico',
                   prefixIcon: Icon(Icons.subdirectory_arrow_right),
@@ -205,7 +203,7 @@ class RegisterTab extends StatelessWidget {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: selectedYear,
+                      initialValue: selectedYear,
                       decoration: const InputDecoration(
                         labelText: 'Ano *',
                         prefixIcon: Icon(Icons.calendar_today),
@@ -224,7 +222,7 @@ class RegisterTab extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: selectedSource,
+                      initialValue: selectedSource,
                       decoration: const InputDecoration(
                         labelText: 'Fonte',
                         prefixIcon: Icon(Icons.source),
@@ -264,19 +262,19 @@ class RegisterTab extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppTheme.lightGray.withOpacity(0.3),
+                  color: AppTheme.lightGray.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.lightGray),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.image,
+                        Icon(Icons.image,
                             size: 20, color: AppTheme.textSecondary),
-                        const SizedBox(width: 8),
-                        const Text(
+                        SizedBox(width: 8),
+                        Text(
                           'Imagem da Questão',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
@@ -380,10 +378,10 @@ class RegisterTab extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: onClearForm,
-                      child: const Text('Limpar Formulário'),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 52),
                       ),
+                      child: const Text('Limpar Formulário'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -430,7 +428,9 @@ class _ErrorCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: value ? AppTheme.primaryColor.withOpacity(0.05) : Colors.transparent,
+        color: value
+            ? AppTheme.primaryColor.withValues(alpha: 0.05)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: value ? AppTheme.primaryColor : AppTheme.lightGray,
@@ -442,7 +442,9 @@ class _ErrorCheckbox extends StatelessWidget {
         onChanged: (val) => onChanged(val ?? false),
         title: Row(
           children: [
-            Icon(icon, size: 20, color: value ? AppTheme.primaryColor : AppTheme.textSecondary),
+            Icon(icon,
+                size: 20,
+                color: value ? AppTheme.primaryColor : AppTheme.textSecondary),
             const SizedBox(width: 8),
             Text(
               label,
@@ -453,7 +455,9 @@ class _ErrorCheckbox extends StatelessWidget {
             ),
           ],
         ),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        subtitle: Text(subtitle,
+            style:
+                const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         controlAffinity: ListTileControlAffinity.trailing,
         activeColor: AppTheme.primaryColor,
       ),

@@ -12,7 +12,6 @@ import '../utils/theme.dart';
 import '../widgets/questions_grid_view.dart';
 import 'mind_maps_screen.dart';
 import '../utils/subject_data_constants.dart';
-import '../screens/audodiagnostico/data_tab.dart';
 
 class AutodiagnosticoScreen extends StatefulWidget {
   const AutodiagnosticoScreen({super.key});
@@ -591,17 +590,17 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                   if (question.errors['conteudo'] == true)
                     Chip(
                       label: const Text('Conteúdo'),
-                      backgroundColor: Colors.red.withOpacity(0.1),
+                      backgroundColor: Colors.red.withValues(alpha:0.1),
                     ),
                   if (question.errors['atencao'] == true)
                     Chip(
                       label: const Text('Atenção'),
-                      backgroundColor: Colors.orange.withOpacity(0.1),
+                      backgroundColor: Colors.orange.withValues(alpha:0.1),
                     ),
                   if (question.errors['tempo'] == true)
                     Chip(
                       label: const Text('Tempo'),
-                      backgroundColor: Colors.blue.withOpacity(0.1),
+                      backgroundColor: Colors.blue.withValues(alpha:0.1),
                     ),
                 ],
               ),
@@ -767,7 +766,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
                 valueListenable: _filterSubjectNotifier,
                 builder: (context, filterValue, _) {
                   return DropdownButtonFormField<String?>(
-                    value: filterValue,
+                    initialValue: filterValue,
                     decoration: const InputDecoration(
                       labelText: 'Filtrar por matéria',
                       border: OutlineInputBorder(),

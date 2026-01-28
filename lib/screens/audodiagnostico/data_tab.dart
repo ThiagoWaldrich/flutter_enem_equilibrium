@@ -139,7 +139,7 @@ class _DataTabState extends State<DataTab> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha:0.05),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -175,7 +175,6 @@ class _DataTabState extends State<DataTab> {
                                     value: subject,
                                     child: Text('$subject (${widget.subjectStats[subject] ?? 0})'),
                                   ))
-                              .toList(),
                         ],
                         onChanged: (String? newValue) {
                           EasyDebounce.debounce(
@@ -222,7 +221,6 @@ class _DataTabState extends State<DataTab> {
                                     value: year,
                                     child: Text('$year (${widget.yearStats[year] ?? 0})'),
                                   ))
-                              .toList(),
                         ],
                         onChanged: (String? newValue) {
                           EasyDebounce.debounce(
@@ -268,8 +266,7 @@ class _DataTabState extends State<DataTab> {
                               .map((source) => DropdownMenuItem<String?>(
                                     value: source,
                                     child: Text('$source (${widget.sourceStats[source] ?? 0})'),
-                                  ))
-                              .toList(),
+                                  ))                         
                         ],
                         onChanged: (String? newValue) {
                           EasyDebounce.debounce(
@@ -476,14 +473,14 @@ class _DataTabState extends State<DataTab> {
                   if (question.year != null)
                     Chip(
                       label: Text(question.year!),
-                      backgroundColor: Colors.blue.withOpacity(0.1),
+                      backgroundColor: Colors.blue.withValues(alpha:0.1),
                       side: BorderSide.none,
                       visualDensity: VisualDensity.compact,
                     ),
                   if (question.source != null)
                     Chip(
                       label: Text(question.source!),
-                      backgroundColor: Colors.green.withOpacity(0.1),
+                      backgroundColor: Colors.green.withValues(alpha:0.1),
                       side: BorderSide.none,
                       visualDensity: VisualDensity.compact,
                     ),
@@ -534,9 +531,9 @@ class _DataTabState extends State<DataTab> {
       margin: const EdgeInsets.only(right: 4),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
+        border: Border.all(color: color.withValues(alpha:0.5), width: 1),
       ),
       child: Text(
         letter,

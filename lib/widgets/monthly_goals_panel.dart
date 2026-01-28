@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../services/calendar_service.dart';
 import '../services/monthly_goals_service.dart';
 import '../utils/theme.dart';
@@ -158,7 +157,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(0.1),
+                                  color: color.withValues(alpha:0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -184,7 +183,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
                           Container(
                             height: 6,
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
+                              color: color.withValues(alpha:0.1),
                               borderRadius: BorderRadius.circular(3),
                             ),
                           ),
@@ -196,7 +195,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
                                 gradient: LinearGradient(
                                   colors: [
                                     color,
-                                    color.withOpacity(0.7),
+                                    color.withValues(alpha:0.7),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(3),
@@ -221,7 +220,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${questions} questões resolvidas',
+                            '$questions questões resolvidas',
                             style: TextStyle(
                               fontSize: 11,
                               color: color,
@@ -327,14 +326,14 @@ class MonthlyGoalsPanel extends StatelessWidget {
             Icon(
               Icons.flag_outlined,
               size: 44,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha:0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Nenhuma meta definida',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha:0.7),
                 fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
@@ -344,7 +343,7 @@ class MonthlyGoalsPanel extends StatelessWidget {
               'Clique no ícone 🏴 para\ngerar suas metas mensais',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha:0.5),
               ),
               textAlign: TextAlign.center,
             ),
@@ -422,7 +421,7 @@ class _SummaryCard extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha:0.3),
           ),
           const SizedBox(height: 2),
           Text(
