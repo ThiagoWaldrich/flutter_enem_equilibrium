@@ -45,7 +45,7 @@ class _MindMapsScreenState extends State<MindMapsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final topicsBySubject = snapshot.data as Map<String, Set<String>>? ?? {};
+          final topicsBySubject = snapshot.data ?? {};
 
           if (topicsBySubject.isEmpty) {
             return Center(
@@ -148,7 +148,7 @@ class _SubjectSectionState extends State<_SubjectSection> {
         border: Border.all(color: AppTheme.lightGray),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -169,7 +169,7 @@ class _SubjectSectionState extends State<_SubjectSection> {
                 gradient: LinearGradient(
                   colors: [
                     AppTheme.getSubjectColor(widget.subject),
-                    AppTheme.getSubjectColor(widget.subject).withOpacity(0.8),
+                    AppTheme.getSubjectColor(widget.subject).withValues(alpha:0.8),
                   ],
                 ),
                 borderRadius: _isExpanded
@@ -199,7 +199,7 @@ class _SubjectSectionState extends State<_SubjectSection> {
                           '$completedTopics/$totalTopics tópicos',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha:0.9),
                           ),
                         ),
                       ],
@@ -264,11 +264,11 @@ class _TopicItem extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: hasMaps
-            ? AppTheme.successColor.withOpacity(0.05)
-            : AppTheme.lightGray.withOpacity(0.3),
+            ? AppTheme.successColor.withValues(alpha:0.05)
+            : AppTheme.lightGray.withValues(alpha:0.3),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: hasMaps ? AppTheme.successColor.withOpacity(0.3) : AppTheme.lightGray,
+          color: hasMaps ? AppTheme.successColor.withValues(alpha:0.3) : AppTheme.lightGray,
         ),
       ),
       child: Row(

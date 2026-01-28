@@ -7,7 +7,6 @@ import '../services/calendar_service.dart';
 import '../widgets/calendar_grid.dart';
 import '../widgets/day_panel.dart';
 import '../widgets/monthly_goals_panel.dart';
-import '../utils/theme.dart';
 import 'autodiagnostico_screen.dart';
 import 'goals_screen.dart';
 import 'review_screen.dart';
@@ -49,10 +48,10 @@ class GlassContainer extends StatelessWidget {
       height: height,
       margin: margin,
       decoration: BoxDecoration(
-        color: color.withOpacity(opacity),
+        color: color.withValues(alpha:opacity),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: Colors.white.withOpacity(0.12),
+          color: Colors.white.withValues(alpha:0.12),
           width: 0.7,
         ),
       ),
@@ -271,10 +270,10 @@ class _CalendarScreenState extends State<CalendarScreen>
             ),
           )
         else
-          Expanded(
+          const Expanded(
             flex: 1,
             child: RepaintBoundary(
-              child: _EmptyDayPanel(), // ✅ Extraído como widget
+              child: _EmptyDayPanel(), 
             ),
           ),
 
@@ -380,7 +379,7 @@ class _CalendarScreenState extends State<CalendarScreen>
             bottom: 70,
             right: 16,
             child: FloatingActionButton.extended(
-              backgroundColor: Colors.white.withOpacity(0.15),
+              backgroundColor: Colors.white.withValues(alpha:0.15),
               foregroundColor: Colors.white,
               heroTag: 'dayPanelFAB', 
               onPressed: () {
@@ -457,9 +456,9 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   Widget _buildBottomNavBar() {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFF011B3D).withOpacity(0.8),
+      backgroundColor: const Color(0xFF011B3D).withValues(alpha:0.8),
       selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white.withOpacity(0.6),
+      unselectedItemColor: Colors.white.withValues(alpha:0.6),
       selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
       type: BottomNavigationBarType.fixed, // ✅ Melhor performance
       items: const [
@@ -512,15 +511,15 @@ class _MonthYearSelector extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha:0.15),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: Colors.white.withValues(alpha:0.25)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: selectedMonth.month - 1,
-              dropdownColor: const Color(0xFF011B3D).withOpacity(0.95),
+              dropdownColor: const Color(0xFF011B3D).withValues(alpha:0.95),
               style: const TextStyle(color: Colors.white, fontSize: 14),
               icon: const Icon(
                 Icons.arrow_drop_down,
@@ -550,15 +549,15 @@ class _MonthYearSelector extends StatelessWidget {
         // Seletor de ano
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
+            color: Colors.white.withValues(alpha:0.15),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            border: Border.all(color: Colors.white.withValues(alpha:0.25)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: selectedMonth.year,
-              dropdownColor: const Color(0xFF011B3D).withOpacity(0.95),
+              dropdownColor: const Color(0xFF011B3D).withValues(alpha:0.95),
               style: const TextStyle(color: Colors.white, fontSize: 14),
               icon: const Icon(
                 Icons.arrow_drop_down,
@@ -621,10 +620,10 @@ class _EmptyDayPanel extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha:0.02),
         borderRadius: BorderRadius.circular(20.0),
         border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color: Colors.white.withValues(alpha:0.08),
           width: 0.5,
         ),
       ),
@@ -635,19 +634,19 @@ class _EmptyDayPanel extends StatelessWidget {
             Icon(
               Icons.calendar_today,
               size: 64,
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha:0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Selecione um dia',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha:0.5),
                   ),
             ),
             const SizedBox(height: 8),
             Text(
               'Clique em qualquer dia do calendário',
-              style: TextStyle(color: Colors.white.withOpacity(0.3)),
+              style: TextStyle(color: Colors.white.withValues(alpha:0.3)),
               textAlign: TextAlign.center,
             ),
           ],

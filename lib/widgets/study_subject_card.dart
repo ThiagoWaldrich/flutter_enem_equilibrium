@@ -35,7 +35,7 @@ class StudySubjectCard extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progress,
-                backgroundColor: color.withOpacity(0.3),
+                backgroundColor: color.withValues(alpha:0.3),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ],

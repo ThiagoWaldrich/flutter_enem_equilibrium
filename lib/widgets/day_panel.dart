@@ -26,7 +26,7 @@ class DayPanel extends StatefulWidget {
 class _DayPanelState extends State<DayPanel> {
   // Mapa para armazenar controllers por data
   final Map<String, TextEditingController> _notesControllers = {};
-  
+
   // Data atual sendo exibida
   String _currentDateKey = '';
 
@@ -39,7 +39,7 @@ class _DayPanelState extends State<DayPanel> {
   void _initializeForDate() {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
     _currentDateKey = dateStr;
-    
+
     // Garantir que temos um controller para esta data
     if (!_notesControllers.containsKey(dateStr)) {
       final calendarService = context.read<CalendarService>();
@@ -52,11 +52,11 @@ class _DayPanelState extends State<DayPanel> {
 
   TextEditingController _getCurrentNotesController() {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-    
+
     // Se mudou de data, atualizar o controller
     if (dateStr != _currentDateKey) {
       _currentDateKey = dateStr;
-      
+
       // Criar novo controller se não existir para esta data
       if (!_notesControllers.containsKey(dateStr)) {
         final calendarService = context.read<CalendarService>();
@@ -66,20 +66,20 @@ class _DayPanelState extends State<DayPanel> {
         );
       }
     }
-    
+
     return _notesControllers[dateStr]!;
   }
 
   @override
   void didUpdateWidget(DayPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // Se a data mudou, garantir que temos o controller correto
+
+
     if (widget.selectedDate != oldWidget.selectedDate) {
       final newDateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-      final oldDateStr = DateFormat('yyyy-MM-dd').format(oldWidget.selectedDate);
-      
-      // Se não temos controller para a nova data, criar
+      // final oldDateStr =
+      //     DateFormat('yyyy-MM-dd').format(oldWidget.selectedDate);
+
       if (!_notesControllers.containsKey(newDateStr)) {
         final calendarService = context.read<CalendarService>();
         final dayData = calendarService.getDayData(newDateStr);
@@ -87,8 +87,7 @@ class _DayPanelState extends State<DayPanel> {
           text: dayData?.notes ?? '',
         );
       }
-      
-      // Forçar rebuild para mostrar as anotações corretas
+
       if (mounted) {
         setState(() {});
       }
@@ -97,7 +96,6 @@ class _DayPanelState extends State<DayPanel> {
 
   @override
   void dispose() {
-    // Descarta todos os controllers
     for (final controller in _notesControllers.values) {
       controller.dispose();
     }
@@ -121,7 +119,7 @@ class _DayPanelState extends State<DayPanel> {
     // Verificar se as notas no service estão sincronizadas com o controller
     final controller = _getCurrentNotesController();
     final serviceNotes = dayData?.notes ?? '';
-    
+
     // Sincronizar se necessário (após carregar dados do service)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (controller.text != serviceNotes) {
@@ -141,7 +139,7 @@ class _DayPanelState extends State<DayPanel> {
       child: Column(
         children: [
           // Cabeçalho
-          Container(
+          Container (
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: const Color(0xFF042044),
@@ -179,7 +177,6 @@ class _DayPanelState extends State<DayPanel> {
             ),
           ),
 
-          // Conteúdo scrollável
           Expanded(
             child: ListView(
               controller: widget.scrollController,
@@ -219,7 +216,7 @@ class _DayPanelState extends State<DayPanel> {
 
                 const SizedBox(height: 20),
 
-                // Anotações
+
                 const Text(
                   '📝 Anotações do dia:',
                   style: TextStyle(
@@ -230,7 +227,7 @@ class _DayPanelState extends State<DayPanel> {
                 ),
                 const SizedBox(height: 20),
                 TextField(
-                  key: ValueKey('notes_$dateStr'), // Key única por data
+                  key: ValueKey('notes_$dateStr'),
                   controller: controller,
                   maxLines: 8,
                   style: const TextStyle(fontSize: 14, color: Colors.white),
@@ -241,7 +238,8 @@ class _DayPanelState extends State<DayPanel> {
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
                     ),
-                    hintText: 'Horário de início / Horário de término - Lista/Livro - Pág...',
+                    hintText:
+                        'Horário de início / Horário de término - Lista/Livro - Pág...',
                     hintStyle:
                         const TextStyle(fontSize: 14, color: Colors.white54),
                   ),
@@ -250,16 +248,18 @@ class _DayPanelState extends State<DayPanel> {
 
                 const SizedBox(height: 24),
 
-                // Rotina de Estudos
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '📚 Rotina de Estudos do Dia',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    Expanded(
+                      child: Text(
+                        '📚 Rotina de Estudos do Dia',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis, 
                       ),
                     ),
                     IconButton(
@@ -286,7 +286,7 @@ class _DayPanelState extends State<DayPanel> {
                   Container(
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
-                      color: AppTheme.lightGray.withOpacity(0.3),
+                      color: AppTheme.lightGray.withValues(alpha:0.3),
                       borderRadius:
                           BorderRadius.circular(AppTheme.borderRadius),
                       border: Border.all(color: AppTheme.lightGray),
@@ -411,7 +411,7 @@ class _EnergySelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final calendarService = context.read<CalendarService>();
 
-   return Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(5, (index) {
         final value = index + 1;
@@ -451,7 +451,7 @@ class _EmojiButton extends StatelessWidget {
         height: 52,
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primaryColor.withOpacity(0.1)
+              ? AppTheme.primaryColor.withValues(alpha:0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -464,7 +464,7 @@ class _EmojiButton extends StatelessWidget {
             emoji,
             style: TextStyle(
               fontSize: 28,
-              color: isActive ? null : Colors.white.withOpacity(0.5),
+              color: isActive ? null : Colors.white.withValues(alpha:0.5),
             ),
           ),
         ),
@@ -490,13 +490,12 @@ class _SubjectCard extends StatelessWidget {
     final goalsService = context.read<MonthlyGoalsService>();
     final color = AppTheme.getSubjectColor(subject.name);
     final totalSessions = subject.sessions;
-    
+
     // Calcular sessões completadas e questões
     final completedCount = completedSessions.length;
     final totalQuestions = completedSessions.fold(
-      0, (sum, session) => sum + session.questionCount
-    );
-    
+        0, (sum, session) => sum + session.questionCount);
+
     final progress = totalSessions > 0 ? completedCount / totalSessions : 0.0;
 
     return Container(
@@ -539,7 +538,7 @@ class _SubjectCard extends StatelessWidget {
                         'Sessões: $completedCount/$totalSessions • Questões: $totalQuestions',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha:0.7),
                         ),
                       ),
                     ],
@@ -556,7 +555,7 @@ class _SubjectCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: progress,
-                backgroundColor: color.withOpacity(0.1),
+                backgroundColor: color.withValues(alpha:0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
                 minHeight: 6,
               ),
@@ -575,7 +574,7 @@ class _SubjectCard extends StatelessWidget {
                   (s) => s.sessionNumber == sessionNumber,
                   orElse: () => StudySession(sessionNumber, questionCount: 0),
                 );
-                
+
                 final isCompleted = completedSessions
                     .any((s) => s.sessionNumber == sessionNumber);
 
@@ -592,14 +591,15 @@ class _SubjectCard extends StatelessWidget {
                     );
                   },
                   onUpdateQuestionCount: (change) {
-                    final newCount = (session.questionCount + change).clamp(0, 999);
+                    final newCount =
+                        (session.questionCount + change).clamp(0, 999);
                     calendarService.updateQuestionCount(
                       dateStr,
                       subject.id,
                       sessionNumber,
                       newCount,
                     );
-                    
+
                     // Atualizar questões mensais
                     if (change != 0) {
                       goalsService.updateSubjectQuestions(subject.name, change);
@@ -657,21 +657,19 @@ class _SessionWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isCompleted
-                      ? Colors.white
-                      : AppTheme.textSecondary,
+                  color: isCompleted ? Colors.white : AppTheme.textSecondary,
                 ),
               ),
             ),
           ),
         ),
-        
+
         // Contador de questões (apenas se sessão completada)
         if (isCompleted) ...[
           const SizedBox(height: 4),
           Container(
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Row(

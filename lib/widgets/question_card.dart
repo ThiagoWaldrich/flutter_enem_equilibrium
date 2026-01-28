@@ -8,11 +8,11 @@ class QuestionCard extends StatelessWidget {
   final Question question;
   final bool showImage;
 
-  const QuestionCard({
-    Key? key, // MODIFICADO: Key opcional
-    required this.question,
-    this.showImage = true,
-  }) : super(key: key); // MODIFICADO: super(key: key)
+const QuestionCard({
+  super.key,
+  required this.question,
+  this.showImage = true,
+});
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +178,7 @@ class QuestionCard extends StatelessWidget {
                           if (question.image != null)
                             InkWell(
                               onTap: () => _showImageDialog(context),
-                              child: Text(
+                              child: const Text(
                                 'Ver imagem',
                                 style: TextStyle(
                                   fontSize: 11,
@@ -303,7 +303,7 @@ class QuestionCard extends StatelessWidget {
               right: 10,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: IconButton(

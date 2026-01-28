@@ -2,7 +2,6 @@ name:  equilibrium
 description: Calendário de Estudos e Autodiagnóstico ENEM
 
 # Informações do desenvolvedor
-author: Thiago Waldrich
 homepage: https://github.com/ThiagoWaldrich/flutter_enem_equilibrium
 repository: https://github.com/ThiagoWaldrich/flutter_enem_equilibrium
 
@@ -65,11 +64,11 @@ flutter:
   assets:
     - assets/model.ico
 
-flutter_icons:
-  image_path: "assets/model.ico"
-  android: true
-  ios: true
-  windows: true
-  macos: true
-  linux: true
-  web: true
+# flutter_icons:
+#   image_path: "assets/model.ico"
+#   android: true
+#   ios: true
+#   windows: true
+#   macos: true
+#   linux: true
+#   web: true

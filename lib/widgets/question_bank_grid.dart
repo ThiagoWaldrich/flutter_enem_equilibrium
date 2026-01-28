@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/theme.dart';
+
 class QuestionBankGrid extends StatelessWidget {
   final List<Map<String, dynamic>> questions;
   final Function(Map<String, dynamic> question) onQuestionTap;
@@ -33,14 +34,15 @@ class QuestionBankGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildQuestionCard(BuildContext context, Map<String, dynamic> question, int index) {
+  Widget _buildQuestionCard(
+      BuildContext context, Map<String, dynamic> question, int index) {
     final subject = question['subject'] as Map<String, dynamic>?;
     final topic = question['topic'] as Map<String, dynamic>?;
     final source = question['source'] as Map<String, dynamic>?;
     final statement = question['statement']?.toString() ?? 'Sem enunciado';
     final contextText = question['context']?.toString() ?? '';
     final imageUrl = _getImageUrl(question['image_url']);
-    final questionNumber = question['question_number'] ?? (index + 1);
+    // final questionNumber = question['question_number'] ?? (index + 1);
     final difficulty = question['difficulty_level'] ?? 3;
     final correctAnswer = question['correct_answer']?.toString() ?? '';
     final createdAt = question['created_at']?.toString() ?? '';
@@ -49,9 +51,9 @@ class QuestionBankGrid extends StatelessWidget {
     final topicName = topic?['name'] ?? '';
     final sourceName = source?['name'] ?? '';
     final sourceYear = source?['year'];
-    
+
     Color subjectColor = _getSubjectColor(subjectName);
-    
+
     return GestureDetector(
       onTap: () => onQuestionTap(question),
       child: Container(
@@ -64,7 +66,7 @@ class QuestionBankGrid extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha:0.03),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -77,10 +79,10 @@ class QuestionBankGrid extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: subjectColor.withOpacity(0.08),
+                color: subjectColor.withValues(alpha:0.08),
                 border: Border(
                   bottom: BorderSide(
-                    color: subjectColor.withOpacity(0.2),
+                    color: subjectColor.withValues(alpha:0.2),
                     width: 1,
                   ),
                 ),
@@ -98,7 +100,7 @@ class QuestionBankGrid extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +127,7 @@ class QuestionBankGrid extends StatelessWidget {
                             _buildDifficultyBadge(difficulty),
                           ],
                         ),
-                        
+
                         // Tópico
                         if (topicName.isNotEmpty)
                           Padding(
@@ -162,7 +164,8 @@ class QuestionBankGrid extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Texto da questão
-                            if (statement.isNotEmpty && statement != 'Sem enunciado')
+                            if (statement.isNotEmpty &&
+                                statement != 'Sem enunciado')
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
@@ -176,7 +179,7 @@ class QuestionBankGrid extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            
+
                             // Contexto (se houver)
                             if (contextText.isNotEmpty)
                               Container(
@@ -214,7 +217,7 @@ class QuestionBankGrid extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                            
+
                             // Informações adicionais em badges
                             Wrap(
                               spacing: 6,
@@ -223,12 +226,13 @@ class QuestionBankGrid extends StatelessWidget {
                                 // Resposta correta
                                 if (correctAnswer.isNotEmpty)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.green.withOpacity(0.1),
+                                      color: Colors.green.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.green.withOpacity(0.3),
+                                        color: Colors.green.withValues(alpha:0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -251,16 +255,17 @@ class QuestionBankGrid extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                
+
                                 // Fonte
                                 if (sourceName.isNotEmpty)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.1),
+                                      color: Colors.blue.withValues(alpha:0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.blue.withOpacity(0.3),
+                                        color: Colors.blue.withValues(alpha:0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -273,7 +278,9 @@ class QuestionBankGrid extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          sourceYear != null ? '$sourceName $sourceYear' : sourceName,
+                                          sourceYear != null
+                                              ? '$sourceName $sourceYear'
+                                              : sourceName,
                                           style: TextStyle(
                                             fontSize: 11,
                                             color: Colors.blue[700],
@@ -284,16 +291,19 @@ class QuestionBankGrid extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                
+
                                 // Imagem
                                 if (imageUrl != null)
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: Colors.purple.withOpacity(0.1),
+                                      color:
+                                          Colors.purple.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: Colors.purple.withOpacity(0.3),
+                                        color: Colors.purple
+                                            .withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -357,12 +367,10 @@ class QuestionBankGrid extends StatelessWidget {
                                 ),
                               ],
                             ),
-                          
-                          // Botões de ação (como no autodiagnóstico)
+
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Botão de menu popup (substitui os ícones individuais)
                               PopupMenuButton<String>(
                                 icon: Icon(
                                   Icons.more_vert,
@@ -370,46 +378,51 @@ class QuestionBankGrid extends StatelessWidget {
                                   size: 18,
                                 ),
                                 itemBuilder: (context) => [
-                                  PopupMenuItem(
+                                  const PopupMenuItem(
                                     value: 'view',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.visibility, size: 16, color: AppTheme.infoColor),
-                                        const SizedBox(width: 8),
-                                        const Text('Ver Detalhes'),
+                                        Icon(Icons.visibility,
+                                            size: 16,
+                                            color: AppTheme.infoColor),
+                                        SizedBox(width: 8),
+                                        Text('Ver Detalhes'),
                                       ],
                                     ),
                                   ),
                                   if (onEditTap != null)
-                                    PopupMenuItem(
+                                    const PopupMenuItem(
                                       value: 'edit',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.edit, size: 16, color: Colors.blue),
-                                          const SizedBox(width: 8),
-                                          const Text('Editar'),
+                                          Icon(Icons.edit,
+                                              size: 16, color: Colors.blue),
+                                          SizedBox(width: 8),
+                                          Text('Editar'),
                                         ],
                                       ),
                                     ),
                                   if (onAddToTestTap != null)
-                                    PopupMenuItem(
+                                    const PopupMenuItem(
                                       value: 'add_to_test',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.add_circle, size: 16, color: Colors.green),
-                                          const SizedBox(width: 8),
-                                          const Text('Adicionar ao simulado'),
+                                          Icon(Icons.add_circle,
+                                              size: 16, color: Colors.green),
+                                          SizedBox(width: 8),
+                                          Text('Adicionar ao simulado'),
                                         ],
                                       ),
                                     ),
                                   if (onDeleteTap != null)
-                                    PopupMenuItem(
+                                    const PopupMenuItem(
                                       value: 'delete',
                                       child: Row(
                                         children: [
-                                          Icon(Icons.delete, size: 16, color: Colors.red),
-                                          const SizedBox(width: 8),
-                                          const Text('Excluir'),
+                                          Icon(Icons.delete,
+                                              size: 16, color: Colors.red),
+                                          SizedBox(width: 8),
+                                          Text('Excluir'),
                                         ],
                                       ),
                                     ),
@@ -449,7 +462,7 @@ class QuestionBankGrid extends StatelessWidget {
   Widget _buildDifficultyBadge(int difficulty) {
     Color color;
     String label;
-    
+
     switch (difficulty) {
       case 1:
         color = Colors.green;
@@ -475,14 +488,14 @@ class QuestionBankGrid extends StatelessWidget {
         color = Colors.grey;
         label = 'N/A';
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -507,7 +520,8 @@ class QuestionBankGrid extends StatelessWidget {
       return const Color(0xFF9C27B0);
     } else if (lowerName.contains('matemática')) {
       return const Color(0xFFF44336);
-    } else if (lowerName.contains('português') || lowerName.contains('literatura')) {
+    } else if (lowerName.contains('português') ||
+        lowerName.contains('literatura')) {
       return const Color(0xFFFF9800);
     } else if (lowerName.contains('história')) {
       return const Color(0xFF795548);
@@ -524,100 +538,100 @@ class QuestionBankGrid extends StatelessWidget {
     }
   }
 
-  void _showImagePreview(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: InteractiveViewer(
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.contain,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        width: 300,
-                        height: 300,
-                        color: Colors.grey[200],
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
-                          ),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 300,
-                        height: 300,
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image,
-                                size: 50,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'Erro ao carregar imagem',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // void _showImagePreview(BuildContext context, String imageUrl) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => Dialog(
+  //       backgroundColor: Colors.transparent,
+  //       insetPadding: const EdgeInsets.all(20),
+  //       child: Stack(
+  //         children: [
+  //           Container(
+  //             decoration: BoxDecoration(
+  //               color: Colors.white,
+  //               borderRadius: BorderRadius.circular(12),
+  //               boxShadow: [
+  //                 BoxShadow(
+  //                   color: Colors.black.withValues(alpha: 0.3),
+  //                   blurRadius: 20,
+  //                 ),
+  //               ],
+  //             ),
+  //             child: ClipRRect(
+  //               borderRadius: BorderRadius.circular(12),
+  //               child: InteractiveViewer(
+  //                 minScale: 0.5,
+  //                 maxScale: 4.0,
+  //                 child: Image.network(
+  //                   imageUrl,
+  //                   fit: BoxFit.contain,
+  //                   loadingBuilder: (context, child, loadingProgress) {
+  //                     if (loadingProgress == null) return child;
+  //                     return Container(
+  //                       width: 300,
+  //                       height: 300,
+  //                       color: Colors.grey[200],
+  //                       child: Center(
+  //                         child: CircularProgressIndicator(
+  //                           value: loadingProgress.expectedTotalBytes != null
+  //                               ? loadingProgress.cumulativeBytesLoaded /
+  //                                   loadingProgress.expectedTotalBytes!
+  //                               : null,
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                   errorBuilder: (context, error, stackTrace) {
+  //                     return Container(
+  //                       width: 300,
+  //                       height: 300,
+  //                       color: Colors.grey[200],
+  //                       child: const Center(
+  //                         child: Column(
+  //                           mainAxisAlignment: MainAxisAlignment.center,
+  //                           children: [
+  //                             Icon(
+  //                               Icons.broken_image,
+  //                               size: 50,
+  //                               color: Colors.grey,
+  //                             ),
+  //                             SizedBox(height: 10),
+  //                             Text(
+  //                               'Erro ao carregar imagem',
+  //                               style: TextStyle(color: Colors.grey),
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                     );
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //           Positioned(
+  //             top: 10,
+  //             right: 10,
+  //             child: Container(
+  //               decoration: BoxDecoration(
+  //                 color: Colors.black.withValues(alpha: 0.6),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //               child: IconButton(
+  //                 icon: const Icon(
+  //                   Icons.close,
+  //                   color: Colors.white,
+  //                   size: 24,
+  //                 ),
+  //                 onPressed: () => Navigator.pop(context),
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   String _formatDate(String dateString) {
     try {
@@ -634,6 +648,6 @@ class QuestionBankGrid extends StatelessWidget {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
-
+    return imagePath;
   }
 }

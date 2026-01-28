@@ -19,19 +19,18 @@ class AppTheme {
   // Bordas e raios
   static const double borderRadius = 12.0;
   static const double cardElevation = 2.0;
-  
+
   static ThemeData get lightTheme {
     return ThemeData(
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light().copyWith(
         primary: primaryColor,
         secondary: secondaryColor,
         error: dangerColor,
-        background: backgroundColor,
         surface: cardBackground,
       ),
-      
+
       // AppBar - TUDO BRANCO AQUI
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryColor,
@@ -39,19 +38,20 @@ class AppTheme {
         elevation: 0,
         centerTitle: false,
         iconTheme: IconThemeData(color: Colors.white), // ← Ícones brancos
-        actionsIconTheme: IconThemeData(color: Colors.white), // ← Ícones de ação brancos
+        actionsIconTheme:
+            IconThemeData(color: Colors.white), // ← Ícones de ação brancos
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: Colors.white, // ← Título branco
         ),
       ),
-      
+
       // Ícones globais também brancos no AppBar
       iconTheme: const IconThemeData(
         color: Colors.white,
       ),
-      
+
       // Botões
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -68,7 +68,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryColor,
@@ -83,7 +83,7 @@ class AppTheme {
           ),
         ),
       ),
-      
+
       // Cards
       // cardTheme: const CardTheme(
       //   elevation: cardElevation,
@@ -93,7 +93,7 @@ class AppTheme {
       //   ),
       //   margin: EdgeInsets.symmetric(vertical: 6),
       // ),
-      
+
       // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -110,10 +110,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintStyle: const TextStyle(color: Color(0xFF64748B)),
       ),
-      
+
       // Texto
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
@@ -149,7 +150,7 @@ class AppTheme {
           color: Color(0xFF64748B),
         ),
       ),
-      
+
       // Divider
       dividerTheme: const DividerThemeData(
         color: Color(0xFFE8ECF0),
@@ -158,7 +159,7 @@ class AppTheme {
       ),
     );
   }
-  
+
   // Métodos auxiliares para cores de matérias
   static Color getSubjectColor(String subjectName) {
     final colors = {
@@ -179,7 +180,7 @@ class AppTheme {
       'Simulado': const Color(0xFF78716C),
       'Língua Portuguesa': const Color(0xFF22C55E),
     };
-    
+
     return colors[subjectName] ?? darkGray;
   }
 
@@ -231,7 +232,7 @@ class AppTheme {
       end: Alignment.bottomRight,
     );
   }
-  
+
   // Método para cores de texto sobre gradiente
   static Color getTextOnGradient(Color backgroundColor) {
     // Calcula o brilho relativo da cor de fundo
@@ -239,7 +240,7 @@ class AppTheme {
     // Se o brilho for baixo (cor escura), usa texto branco, senão preto
     return luminance < 0.5 ? Colors.white : Colors.black;
   }
-  
+
   // Método para cores de erros
   static Map<String, Color> getErrorColors() {
     return {
@@ -248,7 +249,7 @@ class AppTheme {
       'tempo': infoColor,
     };
   }
-  
+
   // Método para cores de status
   static Map<String, Color> getStatusColors() {
     return {

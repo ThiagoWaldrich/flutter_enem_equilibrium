@@ -96,7 +96,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -133,7 +133,7 @@ class _ChartsTabState extends State<ChartsTab> {
                     return PieChartSectionData(
                       value: entry.value.toDouble(),
                       title: '$percentage%',
-                      color: color.withOpacity(isSelected ? 1.0 : 0.7),
+                      color: color.withValues(alpha: isSelected ? 1.0 : 0.7),
                       radius: isSelected ? 90 : 80,
                       titleStyle: TextStyle(
                         fontSize: 14,
@@ -142,7 +142,7 @@ class _ChartsTabState extends State<ChartsTab> {
                         shadows: isSelected
                             ? [
                                 Shadow(
-                                  color: Colors.black.withOpacity(0.5),
+                                  color: Colors.black.withValues(alpha:0.5),
                                   blurRadius: 4,
                                 )
                               ]
@@ -182,7 +182,7 @@ class _ChartsTabState extends State<ChartsTab> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: isSelected ? color : color.withOpacity(0.1),
+                    color: isSelected ? color : color.withValues(alpha:0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: color,
@@ -220,30 +220,30 @@ class _ChartsTabState extends State<ChartsTab> {
     );
   }
 
-  Widget _buildSubjectSelector(List<MapEntry<String, int>> sortedStats) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: sortedStats.map((entry) {
-          final isSelected = entry.key == _selectedSubject;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text('${entry.key} (${entry.value})'),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) _selectSubject(entry.key);
-              },
-              selectedColor: AppTheme.getSubjectColor(entry.key),
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppTheme.textPrimary,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  // Widget _buildSubjectSelector(List<MapEntry<String, int>> sortedStats) {
+  //   return SingleChildScrollView(
+  //     scrollDirection: Axis.horizontal,
+  //     child: Row(
+  //       children: sortedStats.map((entry) {
+  //         final isSelected = entry.key == _selectedSubject;
+  //         return Padding(
+  //           padding: const EdgeInsets.only(right: 8),
+  //           child: ChoiceChip(
+  //             label: Text('${entry.key} (${entry.value})'),
+  //             selected: isSelected,
+  //             onSelected: (selected) {
+  //               if (selected) _selectSubject(entry.key);
+  //             },
+  //             selectedColor: AppTheme.getSubjectColor(entry.key),
+  //             labelStyle: TextStyle(
+  //               color: isSelected ? Colors.white : AppTheme.textPrimary,
+  //             ),
+  //           ),
+  //         );
+  //       }).toList(),
+  //     ),
+  //   );
+  // }
 
   Widget _buildTopicPieChart() {
     if (_topicStatsForSubject.isEmpty) {
@@ -254,7 +254,7 @@ class _ChartsTabState extends State<ChartsTab> {
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha:0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -287,7 +287,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -369,7 +369,7 @@ class _ChartsTabState extends State<ChartsTab> {
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha:0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -403,7 +403,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -491,7 +491,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -555,7 +555,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -596,7 +596,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -659,7 +659,7 @@ class _ChartsTabState extends State<ChartsTab> {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+            tooltipBgColor: Colors.blueGrey.withValues(alpha: 0.9),
             tooltipPadding: const EdgeInsets.all(8),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               if (groupIndex >= 0 && groupIndex < recentYears.length) {
@@ -708,10 +708,10 @@ class _ChartsTabState extends State<ChartsTab> {
               },
             ),
           ),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
-        gridData: FlGridData(
+        gridData: const FlGridData(
           show: true,
           drawVerticalLine: false,
         ),
@@ -755,7 +755,7 @@ class _ChartsTabState extends State<ChartsTab> {
         barTouchData: BarTouchData(
           enabled: true,
           touchTooltipData: BarTouchTooltipData(
-            tooltipBgColor: Colors.blueGrey.withOpacity(0.9),
+            tooltipBgColor: Colors.blueGrey.withValues(alpha:0.9),
             tooltipPadding: const EdgeInsets.all(8),
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               if (groupIndex >= 0 && groupIndex < topSources.length) {
@@ -815,10 +815,10 @@ class _ChartsTabState extends State<ChartsTab> {
               },
             ),
           ),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
-        gridData: FlGridData(
+        gridData: const FlGridData(
           show: true,
           drawVerticalLine: false,
         ),
@@ -833,14 +833,14 @@ class _ChartsTabState extends State<ChartsTab> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color, color.withOpacity(0.8)],
+          colors: [color, color.withValues(alpha:0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha:0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -863,7 +863,7 @@ class _ChartsTabState extends State<ChartsTab> {
             label,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha:0.9),
             ),
             textAlign: TextAlign.center,
           ),
@@ -877,9 +877,9 @@ class _ChartsTabState extends State<ChartsTab> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha:0.3)),
       ),
       child: Column(
         children: [
@@ -916,7 +916,7 @@ class _ChartsTabState extends State<ChartsTab> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

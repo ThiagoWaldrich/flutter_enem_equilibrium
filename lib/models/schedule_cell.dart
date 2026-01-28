@@ -32,7 +32,7 @@ class ScheduleCell {
       'dayIndex': dayIndex,
       'timeIndex': timeIndex,
       'subject': subject,
-      'color': color.value,
+      'color': color.toARGB32(),
     };
   }
 

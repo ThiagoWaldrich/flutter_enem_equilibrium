@@ -197,7 +197,7 @@ class _ManageSubjectsWithTopicsScreenState extends State<ManageSubjectsWithTopic
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha:0.1),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -266,7 +266,7 @@ class _SubjectCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha:0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(Icons.book, color: color),
@@ -305,7 +305,7 @@ class _SubjectCard extends StatelessWidget {
                       '${topic.topic} (${topic.sessions})',
                       style: const TextStyle(fontSize: 12),
                     ),
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha:0.1),
                     side: BorderSide.none,
                   );
                 }).toList(),
@@ -387,7 +387,7 @@ class _AddSubjectDialogState extends State<_AddSubjectDialog> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   DropdownButtonFormField<String>(
-                    value: _selectedSubject,
+                    initialValue: _selectedSubject,
                     decoration: const InputDecoration(
                       labelText: 'Matéria',
                       border: OutlineInputBorder(),

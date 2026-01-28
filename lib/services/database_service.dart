@@ -134,7 +134,7 @@ class DatabaseService {
         await db.execute('CREATE INDEX IF NOT EXISTS idx_attention_error ON questions(attention_error)');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_time_error ON questions(time_error)');
       } catch (e) {
-        print('⚠️ Erro na migração: $e');
+        debugPrint('⚠️ Erro na migração: $e');
       }
     }
   }

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
+// import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:async';
 import 'dart:convert';
 import '../models/subject.dart';
 import '../models/study_topic.dart';
-import '../utils/constants.dart';
 import '../models/schedule_cell.dart';
 
 class EnhancedDatabaseService {
@@ -351,7 +350,7 @@ class EnhancedDatabaseService {
           'schedule': scheduleData,
         };
       } catch (e) {
-        print('Erro no parse do weekly schedule: $e');
+        debugPrint('Erro no parse do weekly schedule: $e');
         return {};
       }
     }
@@ -395,7 +394,7 @@ class EnhancedDatabaseService {
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     } catch (e) {
-      print('Erro ao salvar schedule: $e');
+      debugPrint('Erro ao salvar schedule: $e');
       rethrow;
     }
   }
@@ -417,7 +416,7 @@ class EnhancedDatabaseService {
             try {
               return ScheduleCell.fromMap(Map<String, dynamic>.from(cell));
             } catch (e) {
-              print('Erro ao converter célula: $e');
+              debugPrint('Erro ao converter célula: $e');
               return ScheduleCell(
                 dayIndex: 0,
                 timeIndex: 0,
@@ -434,7 +433,7 @@ class EnhancedDatabaseService {
         };
       }
     } catch (e) {
-      print('Erro ao carregar schedule: $e');
+      debugPrint('Erro ao carregar schedule: $e');
     }
     
     return {};
