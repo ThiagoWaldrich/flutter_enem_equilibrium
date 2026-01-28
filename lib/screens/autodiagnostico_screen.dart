@@ -522,36 +522,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
               'erro_tempo': q.errors['tempo'] ?? false,
               'data': q.timestamp,
             })
-        .toList();
-
-    final jsonData = jsonEncode(data);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Exportar Dados'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Total de questões: ${_displayedQuestions.length}'),
-            const SizedBox(height: 16),
-            SelectableText(
-              jsonData.length > 200
-                  ? '${jsonData.substring(0, 200)}...'
-                  : jsonData,
-              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fechar'),
-          ),
-        ],
-      ),
-    );
+        .toList();   
   }
 
   void _showQuestionDetails(Question question) {
@@ -657,11 +628,6 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         title: const Text('📊 Autodiagnóstico ENEM'),
         backgroundColor: AppTheme.primaryColor,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.download, color: Colors.white),
-            onPressed: _exportData,
-            tooltip: 'Exportar',
-          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: _loadInitialData,
