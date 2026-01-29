@@ -1,3 +1,4 @@
+import 'package:equilibrium/features/core/services/file_upload_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
@@ -5,18 +6,18 @@ import 'dart:io' show Platform;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'services/storage_service.dart';
-import 'services/database_service.dart';
-import 'services/calendar_service.dart';
-import 'services/mind_map_service.dart';
-import 'services/monthly_goals_service.dart';
-import 'services/enhanced_database_service.dart';
-import 'utils/theme.dart';
-import 'screens/calendar_screen.dart';
-import 'screens/weekly_schedule_screen.dart';
-import 'screens/goals_screen.dart';
-import 'screens/review_screen.dart';
-import 'screens/autodiagnostico_screen.dart';
+import 'features/core/services/storage_service.dart';
+import 'features/core/services/database_service.dart';
+import 'features/calendar/logic/calendar_service.dart';
+import 'features/mindmaps/logic/mind_map_service.dart';
+import 'features/goals/logic/monthly_goals_service.dart';
+import 'features/core/services/enhanced_database_service.dart';
+import 'features/core/theme/theme.dart';
+import 'features/calendar/screen/calendar_screen.dart';
+import 'features/subjects/screen/weekly_schedule_screen.dart';
+import 'features/goals/screen/goals_screen.dart';
+import 'features/questions/screen/review_screen.dart';
+import 'features/questions/screen/autodiagnostico_screen.dart';
 
 void main() async {
   if (kIsWeb) {
@@ -45,6 +46,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<FileUploadService>(
+          create: (context) => FileUploadService(),
+        ),
         FutureProvider<StorageService?>(
           create: (_) async {
             final service = StorageService();
@@ -64,13 +68,15 @@ class MyApp extends StatelessWidget {
         Provider<EnhancedDatabaseService>.value(value: db),
         ChangeNotifierProxyProvider<StorageService, CalendarService>(
           create: (context) => CalendarService(context.read<StorageService>()),
-          update: (_, storage, previous) => previous ?? CalendarService(storage),
+          update: (_, storage, previous) =>
+              previous ?? CalendarService(storage),
         ),
         ChangeNotifierProxyProvider<StorageService, MindMapService>(
           create: (context) => MindMapService(context.read<StorageService>()),
           update: (_, storage, previous) => previous ?? MindMapService(storage),
         ),
-        ChangeNotifierProxyProvider2<StorageService, DatabaseService, MonthlyGoalsService>(
+        ChangeNotifierProxyProvider2<StorageService, DatabaseService,
+            MonthlyGoalsService>(
           create: (context) => MonthlyGoalsService(
             context.read<StorageService>(),
             context.read<DatabaseService>(),
