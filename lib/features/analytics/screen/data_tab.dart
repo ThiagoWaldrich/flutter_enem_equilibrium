@@ -2,7 +2,6 @@ import 'package:equilibrium/features/questions/models/question.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_debounce/easy_debounce.dart';
 import '../../core/theme/theme.dart';
-import '../../questions/logic/questions_view_model.dart';
 import '../../core/utils/subject_data_constants.dart';
 
 class DataTab extends StatefulWidget {

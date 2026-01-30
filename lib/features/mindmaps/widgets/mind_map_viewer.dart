@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:equilibrium/features/mindmaps/models/mind_map.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../mindmaps/logic/mind_map_service.dart';
+import '../logic/mind_map_service.dart';
 import '../../core/theme/theme.dart';
 
 class MindMapViewer extends StatefulWidget {
@@ -80,7 +80,6 @@ class _MindMapViewerState extends State<MindMapViewer> {
       ),
       body: Stack(
         children: [
-          // Carrossel
           PageView.builder(
             controller: _pageController,
             itemCount: mindMap.files.length,
@@ -95,7 +94,6 @@ class _MindMapViewerState extends State<MindMapViewer> {
             },
           ),
 
-          // Indicador de página
           Positioned(
             bottom: 20,
             left: 0,
@@ -119,7 +117,6 @@ class _MindMapViewerState extends State<MindMapViewer> {
             ),
           ),
 
-          // Botão anterior
           if (mindMap.files.length > 1)
             Positioned(
               left: 16,
@@ -146,8 +143,6 @@ class _MindMapViewerState extends State<MindMapViewer> {
                 ),
               ),
             ),
-
-          // Botão próximo
           if (mindMap.files.length > 1)
             Positioned(
               right: 16,

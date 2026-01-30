@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import '../../core/theme/theme.dart';
 import '../../core/utils/subject_data_constants.dart';
-import '../../questions/logic/questions_view_model.dart';
 
 class RegisterTab extends StatelessWidget {
   final String? selectedSubject;

@@ -2,7 +2,7 @@ import 'package:equilibrium/features/core/services/database_service.dart';
 import 'package:equilibrium/features/core/services/file_upload_service.dart';
 import 'package:equilibrium/features/core/theme/theme.dart';
 import 'package:equilibrium/features/mindmaps/logic/mind_map_service.dart';
-import 'package:equilibrium/features/questions/widgets/mind_map_viewer.dart';
+import 'package:equilibrium/features/mindmaps/widgets/mind_map_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
