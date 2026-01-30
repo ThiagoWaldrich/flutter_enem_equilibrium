@@ -671,7 +671,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
           _buildChartsTab(),
           _buildDataTab(),
           _buildNotebookTab(),
-          const MindMapsScreen(),
+          MindMapsScreen(key: PageStorageKey<String>('mindmaps')),
         ],
       ),
     );
