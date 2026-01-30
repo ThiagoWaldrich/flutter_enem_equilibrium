@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../widgets/day_data.dart';
 import '../../questions/models/subject.dart';
-import '../../questions/models/monthly_goal.dart';
+import '../../goals/models/monthly_goal.dart';
 import '../../core/theme/constants.dart';
 import '../../core/services/storage_service.dart';
 import 'package:intl/intl.dart';

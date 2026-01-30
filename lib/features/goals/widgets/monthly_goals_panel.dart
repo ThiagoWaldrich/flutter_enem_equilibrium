@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../calendar/logic/calendar_service.dart';
-import '../../goals/logic/monthly_goals_service.dart';
+import '../logic/monthly_goals_service.dart';
 import '../../core/theme/theme.dart';
 
 class MonthlyGoalsPanel extends StatelessWidget {
@@ -12,32 +12,27 @@ class MonthlyGoalsPanel extends StatelessWidget {
     final calendarService = context.watch<CalendarService>();
     final goalsService = context.watch<MonthlyGoalsService>();
 
-    // Verificar se existem metas geradas
     final hasGeneratedGoals = goalsService.hasGoalsForCurrentMonth();
 
     if (!hasGeneratedGoals) {
       return _buildEmptyState(context);
     }
 
-    // Pegar as metas geradas
+
     final generatedGoals = goalsService.getAllSubjectGoals();
 
-    // Calcular horas estudadas no mês atual
     final studiedHours =
         _calculateStudiedHours(calendarService, generatedGoals.keys.toList());
 
-    // Obter questões do calendário
     final calendarQuestions = calendarService.getCurrentMonthQuestions();
 
-    // Sincronizar questões com o goals service
     WidgetsBinding.instance.addPostFrameCallback((_) {
       goalsService.syncWithCalendar(calendarQuestions);
     });
 
-    // Obter questões do goals service
     final goalsQuestions = goalsService.getAllSubjectQuestions();
 
-    // Preparar dados para exibição
+
     final goalsList = generatedGoals.entries.map((entry) {
       final subject = entry.key;
       final target = entry.value;
@@ -57,7 +52,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
     goalsList.sort((a, b) =>
         (b['percentage'] as double).compareTo(a['percentage'] as double));
 
-    // Calcular totais
     double totalHours = 0;
     double totalTarget = 0;
     int totalQuestions = 0;
@@ -110,7 +104,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
             ),
           ),
 
-          // Lista de metas
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -134,7 +127,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Nome e progresso
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -177,7 +169,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
-                      // Barra de progresso de horas
                       Stack(
                         children: [
                           Container(
@@ -207,7 +198,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      // Percentual e estatísticas
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -236,7 +226,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
             ),
           ),
 
-          // Resumo - MODIFICADO PARA CENTRALIZAR
           Container(
             padding: const EdgeInsets.all(12),
             decoration: const BoxDecoration(
@@ -247,7 +236,6 @@ class MonthlyGoalsPanel extends StatelessWidget {
             ),
             child: Column(
               children: [
-                // Primeira linha - 4 cards
                 Row(
                   children: [
                     Expanded(

@@ -6,7 +6,7 @@ import 'package:intl/intl.dart';
 import '../logic/calendar_service.dart';
 import '../widgets/calendar_grid.dart';
 import '../widgets/day_panel.dart';
-import '../../questions/widgets/monthly_goals_panel.dart';
+import '../../goals/widgets/monthly_goals_panel.dart';
 import '../../questions/screen/autodiagnostico_screen.dart';
 import '../../goals/screen/goals_screen.dart';
 import '../../questions/screen/review_screen.dart';

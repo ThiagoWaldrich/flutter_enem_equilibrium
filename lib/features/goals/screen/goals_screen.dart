@@ -486,8 +486,6 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                     ),
                     
                     const SizedBox(height: 24),
-                    
-                    // Método de distribuição
                     const Text(
                       'Método de distribuição',
                       style: TextStyle(
@@ -521,7 +519,6 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                     
                     const SizedBox(height: 24),
                     
-                    // Pesos das áreas
                     if (!_useAutodiagnostico) ...[
                       Row(
                         children: [

@@ -503,7 +503,13 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
     if (confirm == true) {
       final databaseService = context.read<DatabaseService>();
       await databaseService.deleteQuestions([question.id]);
-      await _loadInitialData();
+
+      setState(() {
+        _displayedQuestions.removeWhere((q) => q.id == question.id);
+        _totalQuestions--;
+        _subjectStats[question.subject] =
+            (_subjectStats[question.subject] ?? 1) - 1;
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -715,7 +721,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
 
   Widget _buildChartsTab() {
     return ChartsTab(
-      stats: {},
+      stats: const {},
       questions: _displayedQuestions,
       isLoading: _isLoading,
       subjectStats: _subjectStats,
@@ -835,8 +841,10 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
       return const Center(child: Text('Nenhuma questão cadastrada'));
     }
 
-    return QuestionsGridView(
-      questions: _displayedQuestions,
+    return SizedBox.expand(
+      child: QuestionsGridView(
+        questions: _displayedQuestions,
+      ),
     );
   }
 }

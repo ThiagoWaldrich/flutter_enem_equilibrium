@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:equilibrium/features/questions/models/question.dart';
 import 'package:equilibrium/features/questions/models/question_image.dart';
 import 'package:flutter/foundation.dart';
@@ -81,31 +80,30 @@ class DatabaseService {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE questions (
-        id TEXT PRIMARY KEY,
-        subject TEXT NOT NULL,
-        topic TEXT NOT NULL,
-        subtopic TEXT,
-        description TEXT,
-        year TEXT,
-        source TEXT,
-        error_description TEXT,
-        content_error INTEGER DEFAULT 0,
-        attention_error INTEGER DEFAULT 0,
-        time_error INTEGER DEFAULT 0,
-        image_data TEXT,
-        image_name TEXT,
-        image_type TEXT,
-        timestamp TEXT NOT NULL
-      )
-    ''');
+    CREATE TABLE questions (
+      id TEXT PRIMARY KEY,
+      subject TEXT NOT NULL,
+      topic TEXT NOT NULL,
+      subtopic TEXT,
+      description TEXT,
+      year TEXT,
+      source TEXT,
+      error_description TEXT,
+      content_error INTEGER DEFAULT 0,
+      attention_error INTEGER DEFAULT 0,
+      time_error INTEGER DEFAULT 0,
+      image_path TEXT,
+      image_name TEXT,
+      image_type TEXT,
+      timestamp TEXT NOT NULL
+    )
+  ''');
 
     await db.execute('CREATE INDEX idx_subject ON questions(subject)');
     await db.execute('CREATE INDEX idx_topic ON questions(topic)');
     await db.execute('CREATE INDEX idx_timestamp ON questions(timestamp)');
     await db.execute('CREATE INDEX idx_year ON questions(year)');
     await db.execute('CREATE INDEX idx_source ON questions(source)');
-    // Índices para os campos de erro
     await db
         .execute('CREATE INDEX idx_content_error ON questions(content_error)');
     await db.execute(
@@ -150,7 +148,6 @@ class DatabaseService {
     }
   }
 
-  // Função para inserir uma nova questão
   Future<int> insertQuestion(Question question) async {
     final db = await database;
 
@@ -206,23 +203,23 @@ class DatabaseService {
     );
   }
 
-  Uint8List? _parseImageData(dynamic raw) {
-    if (raw == null) return null;
+  // Uint8List? _parseImageData(dynamic raw) {
+  //   if (raw == null) return null;
 
-    if (raw is Uint8List) {
-      return raw;
-    }
+  //   if (raw is Uint8List) {
+  //     return raw;
+  //   }
 
-    if (raw is String) {
-      try {
-        return base64Decode(raw.split(',').last);
-      } catch (_) {
-        return null;
-      }
-    }
+  //   if (raw is String) {
+  //     try {
+  //       return base64Decode(raw.split(',').last);
+  //     } catch (_) {
+  //       return null;
+  //     }
+  //   }
 
-    return null;
-  }
+  //   return null;
+  // }
 
   // Função para obter estatísticas por ano
   Future<Map<String, int>> getYearStats() async {
