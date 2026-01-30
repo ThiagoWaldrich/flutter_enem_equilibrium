@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Cores baseadas na imagem
   static const Color primaryColor = Color(0xFF011B3D);
   static const Color secondaryColor = Color(0xFF6b8cbc);
   static const Color accentColor = Color(0xFFff7b54);

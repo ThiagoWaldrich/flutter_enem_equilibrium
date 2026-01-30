@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../widgets/day_data.dart';
-import '../../questions/models/subject.dart';
+import '../../subjects/models/subject.dart';
 import '../../goals/models/monthly_goal.dart';
 import '../../core/theme/constants.dart';
 import '../../core/services/storage_service.dart';
 import 'package:intl/intl.dart';
+import '../logic/date_calculator_service.dart';
 
 class CalendarService extends ChangeNotifier {
   final StorageService _storageService;
@@ -14,28 +15,6 @@ class CalendarService extends ChangeNotifier {
   CalendarService(this._storageService) {
     _loadData();
     _initializeMonthlyGoals();
-  }
-
-  DateTime _parseDate(String dateStr) {
-    try {
-      if (dateStr.length == 10 && dateStr.contains('-')) {
-        return DateTime.parse(dateStr);
-      }
-      if (dateStr.length == 7 && dateStr.contains('-')) {
-        return DateTime.parse('$dateStr-01');
-      }
-      return DateTime.parse(dateStr);
-    } catch (e) {
-      try {
-        final parts = dateStr.split('-');
-        if (parts.length >= 2) {
-          final year = int.tryParse(parts[0]) ?? DateTime.now().year;
-          final month = int.tryParse(parts[1]) ?? DateTime.now().month;
-          return DateTime(year, month, 1);
-        }
-      } catch (_) {}
-      return DateTime.now();
-    }
   }
 
   Future<void> _loadData() async {
@@ -72,23 +51,17 @@ class CalendarService extends ChangeNotifier {
     return _daysData[dateStr];
   }
 
+  // ✅ MODIFICADO: Retorna lista VAZIA se não há matérias customizadas
   List<Subject> getDaySubjects(String dateStr) {
     final dayData = _daysData[dateStr];
+    
+    // SE tem matérias customizadas, retorna elas
     if (dayData?.customSubjects != null) {
       return dayData!.customSubjects!;
     }
 
-    return AppConstants.predefinedSubjects
-        .asMap()
-        .entries
-        .map(
-          (entry) => Subject(
-            id: (entry.key + 1).toString(),
-            name: entry.value['name'] as String,
-            sessions: entry.value['sessions'] as int,
-          ),
-        )
-        .toList();
+    // ✅ SENÃO, retorna lista VAZIA (não as pré-definidas)
+    return [];
   }
 
   Future<void> saveDayData(String dateStr, DayData dayData) async {
@@ -136,18 +109,13 @@ class CalendarService extends ChangeNotifier {
     }
 
     final subjectProgress = List<StudySession>.from(progress[subjectId]!);
-
-    // Verificar se a sessão já existe
     final existingIndex =
         subjectProgress.indexWhere((s) => s.sessionNumber == session);
 
     if (existingIndex != -1) {
-      // Remover sessão existente
       subjectProgress.removeAt(existingIndex);
     } else {
-      // Adicionar nova sessão com 0 questões
       subjectProgress.add(StudySession(session));
-      // Ordenar por número de sessão
       subjectProgress
           .sort((a, b) => a.sessionNumber.compareTo(b.sessionNumber));
     }
@@ -160,7 +128,6 @@ class CalendarService extends ChangeNotifier {
     await updateMonthlyGoals(dateStr);
     notifyListeners();
   }
-
 
   Future<void> updateQuestionCount(
     String dateStr,
@@ -180,12 +147,10 @@ class CalendarService extends ChangeNotifier {
         subjectProgress.indexWhere((s) => s.sessionNumber == session);
 
     if (sessionIndex != -1) {
-      // SUBSTITUI a sessão (não muta)
       subjectProgress[sessionIndex] = subjectProgress[sessionIndex].copyWith(
         questionCount: questionCount,
       );
     } else {
-      // Adiciona nova sessão
       subjectProgress.add(
         StudySession(session, questionCount: questionCount),
       );
@@ -200,13 +165,14 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Salvar matérias customizadas
+  // ✅ Salvar matérias customizadas (ISSO SALVA NO STORAGE!)
   Future<void> saveCustomSubjects(
       String dateStr, List<Subject> subjects) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(
       customSubjects: subjects,
-      studyProgress: {},
+      // ❗ NÃO LIMPA O studyProgress - mantém as sessões completadas
+      // studyProgress: {}, ← REMOVA ESTA LINHA
     );
     await _saveData();
     notifyListeners();
@@ -214,11 +180,11 @@ class CalendarService extends ChangeNotifier {
 
   Future<void> updateMonthlyGoals(String dateStr) async {
     try {
-      final date = _parseDate(dateStr);
+      final date = DateCalculator.parseDate(dateStr);
       final year = date.year;
       final month = date.month;
 
-      // Resetar
+      // Resetar metas
       _monthlyGoals.updateAll((_, goal) => goal.copyWith(current: 0));
 
       // Último dia do mês
@@ -252,13 +218,9 @@ class CalendarService extends ChangeNotifier {
     }
   }
 
-  // -------------------------
-  // QUESTÕES MENSAIS (NOVO)
-  // -------------------------
-
   // Obter questões mensais por matéria
   Map<String, int> getMonthlyQuestions(String monthStr) {
-    final date = _parseDate(monthStr);
+    final date = DateCalculator.parseDate(monthStr);
     final year = date.year;
     final month = date.month;
     final lastDay = DateTime(year, month + 1, 0).day;
@@ -271,14 +233,12 @@ class CalendarService extends ChangeNotifier {
       final dayData = _daysData[dateStr];
 
       if (dayData != null) {
-        // Para cada matéria do dia
         final subjects = getDaySubjects(dateStr);
         for (final subject in subjects) {
           final sessions = dayData.studyProgress[subject.id] ?? [];
           final totalQuestions =
               sessions.fold(0, (sum, session) => sum + session.questionCount);
 
-          // Acumular por nome da matéria
           monthlyQuestions[subject.name] =
               (monthlyQuestions[subject.name] ?? 0) + totalQuestions;
         }
@@ -300,24 +260,10 @@ class CalendarService extends ChangeNotifier {
     return questions.values.fold(0, (sum, count) => sum + count);
   }
 
-  // Método auxiliar para obter todos os dias do mês
-  List<DateTime> getAllDaysInMonth(int year, int month) {
-    final firstDay = DateTime(year, month, 1);
-    final lastDay = DateTime(year, month + 1, 0);
-
-    final days = <DateTime>[];
-    for (var i = 0; i <= lastDay.difference(firstDay).inDays; i++) {
-      days.add(firstDay.add(Duration(days: i)));
-    }
-
-    return days;
-  }
-
   // Obter resumo mensal com questões
   Map<String, Map<String, dynamic>> getMonthlySummary(DateTime date) {
     final month = DateFormat('yyyy-MM').format(date);
-    final days = getAllDaysInMonth(date.year, date.month);
-
+    final days = DateCalculator.getAllDaysInMonth(date.year, date.month);
     final result = <String, Map<String, dynamic>>{};
     final subjectsSummary = <String, Map<String, dynamic>>{};
 
@@ -326,7 +272,6 @@ class CalendarService extends ChangeNotifier {
       final dayData = getDayData(dateStr);
 
       if (dayData != null) {
-        // Obter as matérias deste dia específico
         final daySubjects = getDaySubjects(dateStr);
 
         for (final subject in daySubjects) {
@@ -357,9 +302,7 @@ class CalendarService extends ChangeNotifier {
     return result;
   }
 
-  // -------------------------
-  // PROGRESSO DIÁRIO (ATUALIZADO)
-  // -------------------------
+  // Progresso diário
   Map<String, dynamic> getDayProgress(String dateStr) {
     final subjects = getDaySubjects(dateStr);
     final dayData = _daysData[dateStr];
@@ -385,4 +328,23 @@ class CalendarService extends ChangeNotifier {
   }
 
   Map<String, MonthlyGoal> get monthlyGoals => _monthlyGoals;
+
+  // ✅ NOVO MÉTODO: Obter matérias padrão (para o ManageSubjectsScreen)
+  List<Subject> getDefaultSubjects() {
+    return AppConstants.predefinedSubjects
+        .asMap()
+        .entries
+        .map(
+          (entry) => Subject(
+            id: (entry.key + 1).toString(),
+            name: entry.value['name'] as String,
+            sessions: entry.value['sessions'] as int,
+          ),
+        )
+        .toList();
+  }
+
+  // Métodos de formatação
+  String formatMonth(DateTime date) => DateCalculator.formatMonth(date);
+  String formatDay(DateTime date) => DateCalculator.formatDay(date);
 }

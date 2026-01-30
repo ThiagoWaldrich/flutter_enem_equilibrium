@@ -1,4 +1,4 @@
-import '../../questions/models/subject.dart';
+import '../../subjects/models/subject.dart';
 
 class StudySession {
   final int sessionNumber;

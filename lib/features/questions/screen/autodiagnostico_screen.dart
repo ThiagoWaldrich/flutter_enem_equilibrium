@@ -510,6 +510,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
         _subjectStats[question.subject] =
             (_subjectStats[question.subject] ?? 1) - 1;
       });
+      await _loadInitialData();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

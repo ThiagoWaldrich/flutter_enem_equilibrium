@@ -53,7 +53,7 @@ dependencies:
   printing: ^5.11.1
   
   # File Picker
-  file_picker: ^6.1.1
+  file_picker: ^10.3.10
   msix: ^3.16.12
 
 dev_dependencies:

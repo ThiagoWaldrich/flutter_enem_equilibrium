@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../calendar/logic/calendar_service.dart';
-import '../../questions/models/subject.dart';
+import '../models/subject.dart';
 import '../../core/theme/constants.dart';
 import '../../core/theme/theme.dart';
 
@@ -24,12 +24,12 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
   late List<Subject> _subjects;
 
   @override
-  void initState() {
-    super.initState();
-    final calendarService = context.read<CalendarService>();
-    final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
-    _subjects = List.from(calendarService.getDaySubjects(dateStr));
-  }
+void initState() {
+  super.initState();
+  final calendarService = context.read<CalendarService>();
+  final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
+  _subjects = List.from(calendarService.getDaySubjects(dateStr));
+}
 
   void _addSubject() {
     if (_selectedSubject == null || _selectedSubject!.isEmpty) {
@@ -93,7 +93,8 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
               });
               Navigator.pop(context);
             },
-            child: const Text('Excluir', style: TextStyle(color: AppTheme.dangerColor)),
+            child: const Text('Excluir',
+                style: TextStyle(color: AppTheme.dangerColor)),
           ),
         ],
       ),
@@ -104,10 +105,10 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Restaurar Padrão'),
+        title: const Text('Restaurar Matérias Padrão'),
         content: const Text(
-          'Restaurar as matérias padrão para este dia? '
-          'Isso removerá todas as suas alterações.',
+          'Deseja usar as matérias padrão para este dia? '
+          'Isso substituirá suas matérias atuais.',
         ),
         actions: [
           TextButton(
@@ -117,15 +118,9 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                _subjects = AppConstants.predefinedSubjects
-                    .asMap()
-                    .entries
-                    .map((entry) => Subject(
-                          id: (entry.key + 1).toString(),
-                          name: entry.value['name'] as String,
-                          sessions: entry.value['sessions'] as int,
-                        ))
-                    .toList();
+                // ✅ Usa o novo método getDefaultSubjects()
+                final calendarService = context.read<CalendarService>();
+                _subjects = List.from(calendarService.getDefaultSubjects());
               });
               Navigator.pop(context);
             },
@@ -140,7 +135,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
     final calendarService = context.read<CalendarService>();
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
     await calendarService.saveCustomSubjects(dateStr, _subjects);
-    
+
     if (mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -170,7 +165,7 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          
+
           // Lista de matérias
           if (_subjects.isEmpty)
             const Card(
@@ -188,12 +183,13 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
             ..._subjects.asMap().entries.map((entry) {
               final index = entry.key;
               final subject = entry.value;
-              
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(subject.name),
-                  subtitle: Text('${subject.sessions} sess${subject.sessions != 1 ? 'ões' : 'ão'}'),
+                  subtitle: Text(
+                      '${subject.sessions} sess${subject.sessions != 1 ? 'ões' : 'ão'}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -202,7 +198,8 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                         onPressed: () => _editSubject(index),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete, color: AppTheme.dangerColor),
+                        icon: const Icon(Icons.delete,
+                            color: AppTheme.dangerColor),
                         onPressed: () => _deleteSubject(index),
                       ),
                     ],
@@ -210,9 +207,9 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
                 ),
               );
             }),
-          
+
           const SizedBox(height: 24),
-          
+
           // Adicionar nova matéria
           Card(
             color: Colors.grey[50],
@@ -273,9 +270,9 @@ class _ManageSubjectsScreenState extends State<ManageSubjectsScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Botões de ação
           Row(
             children: [

@@ -5,8 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:async';
 import 'dart:convert';
-import '../../questions/models/subject.dart';
-import '../../questions/models/study_topic.dart';
+import '../../subjects/models/subject.dart';
+import '../../goals/models/study_topic.dart';
 import '../../calendar/widgets/schedule_cell.dart';
 
 class EnhancedDatabaseService {

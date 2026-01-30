@@ -14,10 +14,11 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool _hasError = false;
   String? _errorMessage;
   
+  // Cache para evitar recálculos
+  String? _cachedMonth;
+  
   MonthlyGoalsService(this._storageService, this._databaseService) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _safeLoadCurrentMonthGoals();
-    });
+    _initializeGoals();
   }
   
   Map<String, dynamic>? get currentMonthGoals => _currentMonthGoals;
@@ -25,16 +26,30 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool get hasError => _hasError;
   String? get errorMessage => _errorMessage;
   
+  /// Inicializa as metas apenas uma vez
+  void _initializeGoals() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeLoadCurrentMonthGoals();
+    });
+  }
+  
   Future<void> _safeLoadCurrentMonthGoals() async {
     if (_isLoading) return;
+    
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+  
+    if (_cachedMonth == currentMonth && _currentMonthGoals != null) {
+      return;
+    }
     
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
-    _notifyListenersSafe();
+    notifyListeners();
     
     try {
       await _loadCurrentMonthGoals();
+      _cachedMonth = currentMonth;
     } catch (e) {
       _hasError = true;
       _errorMessage = 'Erro ao carregar metas: $e';
@@ -43,7 +58,7 @@ class MonthlyGoalsService extends ChangeNotifier {
       }
     } finally {
       _isLoading = false;
-      _notifyListenersSafe();
+      notifyListeners();
     }
   }
   
@@ -70,7 +85,7 @@ class MonthlyGoalsService extends ChangeNotifier {
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
-    _notifyListenersSafe();
+    notifyListeners();
     
     try {
       final now = DateTime.now();
@@ -116,9 +131,8 @@ class MonthlyGoalsService extends ChangeNotifier {
       };
       
       await _storageService.saveData(goalsKey, goalsData);
+      _cachedMonth = currentMonth; // Atualiza cache
       await _loadCurrentMonthGoals();
-      
-      _notifyListenersSafe();
     } catch (e) {
       _hasError = true;
       _errorMessage = 'Erro ao gerar metas: $e';
@@ -127,7 +141,7 @@ class MonthlyGoalsService extends ChangeNotifier {
       }
     } finally {
       _isLoading = false;
-      _notifyListenersSafe();
+      notifyListeners();
     }
   }
   
@@ -256,12 +270,17 @@ class MonthlyGoalsService extends ChangeNotifier {
     final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
     
     final questionsData = Map<String, dynamic>.from(_currentMonthGoals!['questions'] ?? {});
-    questionsData[subject] = (questionsData[subject] ?? 0) + questions;
+    final oldValue = questionsData[subject] ?? 0;
+    final newValue = oldValue + questions;
     
+    // Só atualiza se houver mudança real
+    if (oldValue == newValue) return;
+    
+    questionsData[subject] = newValue;
     _currentMonthGoals!['questions'] = questionsData;
     
     await _storageService.saveData(goalsKey, _currentMonthGoals);
-    _notifyListenersSafe();
+    notifyListeners();
   }
   
   int getSubjectQuestions(String subject) {
@@ -282,8 +301,15 @@ class MonthlyGoalsService extends ChangeNotifier {
     return questions.map((key, value) => MapEntry(key, (value as int)));
   }
 
+  /// Sincroniza com calendário - CHAMADO APENAS QUANDO NECESSÁRIO
   Future<void> syncWithCalendar(Map<String, int> calendarQuestions) async {
     if (_currentMonthGoals == null) return;
+    
+    // Verifica se há mudanças antes de atualizar
+    final currentQuestions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
+    if (mapEquals(currentQuestions, calendarQuestions)) {
+      return; // Nada mudou, não precisa atualizar
+    }
     
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
     final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
@@ -291,18 +317,19 @@ class MonthlyGoalsService extends ChangeNotifier {
     _currentMonthGoals!['questions'] = calendarQuestions;
     
     await _storageService.saveData(goalsKey, _currentMonthGoals);
-    _notifyListenersSafe();
+    notifyListeners();
   }
   
   Future<void> deleteCurrentMonthGoals() async {
     _isLoading = true;
-    _notifyListenersSafe();
+    notifyListeners();
     
     try {
       final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
       final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
       
       await _storageService.removeData(goalsKey);
+      _cachedMonth = null; // Limpa cache
       await _loadCurrentMonthGoals();
     } catch (e) {
       _hasError = true;
@@ -312,7 +339,7 @@ class MonthlyGoalsService extends ChangeNotifier {
       }
     } finally {
       _isLoading = false;
-      _notifyListenersSafe();
+      notifyListeners();
     }
   }
   
@@ -344,26 +371,12 @@ class MonthlyGoalsService extends ChangeNotifier {
   }
   
   Future<void> reload() async {
+    _cachedMonth = null; 
     await _safeLoadCurrentMonthGoals();
   }
-
-  bool _isNotifying = false;
   
-  void _notifyListenersSafe() {
-    if (_isNotifying) return;
-    
-    _isNotifying = true;
-    
-
-    Future.microtask(() {
-      _isNotifying = false;
-      notifyListeners();
-    });
-  }
-  
-  @override
-  void dispose() {
-    _isNotifying = false;
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   super.dispose();
+  // }
 }

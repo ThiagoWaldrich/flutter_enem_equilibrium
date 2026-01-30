@@ -2,8 +2,8 @@ import 'package:equilibrium/features/core/services/enhanced_database_service.dar
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../questions/models/subject.dart';
-import '../../questions/models/study_topic.dart';
+import '../models/subject.dart';
+import '../../goals/models/study_topic.dart';
 import '../../core/theme/constants.dart';
 import '../../core/theme/theme.dart';
 
