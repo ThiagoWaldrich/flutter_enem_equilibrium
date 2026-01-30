@@ -20,7 +20,6 @@ class _MindMapsScreenState extends State<MindMapsScreen>
   @override
   bool get wantKeepAlive => true;
   final bool _showOnlyPending = false;
-  Map<String, Set<String>>? _cachedTopics;
 
   @override
   void initState() {
@@ -51,6 +50,18 @@ class _MindMapsScreenState extends State<MindMapsScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      appBar: AppBar(
+        title: const Text('Mapas Mentais'),
+        backgroundColor: AppTheme.primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              setState(() {});
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder(
         future: _loadTopics(),
         builder: (context, snapshot) {
@@ -110,14 +121,12 @@ class _MindMapsScreenState extends State<MindMapsScreen>
   }
 
   Future<Map<String, Set<String>>> _loadTopics() async {
-    if (_cachedTopics != null) return _cachedTopics!;
     final databaseService = context.read<DatabaseService>();
     final questions = await databaseService.getQuestions(limit: 1000);
     final topicsBySubject = <String, Set<String>>{};
     for (final question in questions) {
       topicsBySubject.putIfAbsent(question.subject, () => {}).add(question.topic);
     }
-    _cachedTopics = topicsBySubject;
     return topicsBySubject;
   }
 }
@@ -500,12 +509,7 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
                   final file = _selectedFiles[index];
                   final fileName = file.path.split('/').last;
                   return ListTile(
-                    leading: Icon(
-                      fileName.toLowerCase().endsWith('.pdf')
-                          ? Icons.picture_as_pdf
-                          : Icons.image,
-                      color: AppTheme.primaryColor,
-                    ),
+                    leading: const Icon(Icons.image, color: AppTheme.primaryColor),
                     title: Text(fileName),
                     subtitle: Text(_formatFileSize(file.lengthSync())),
                     trailing: IconButton(
@@ -530,7 +534,7 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
                   child: OutlinedButton.icon(
                     onPressed: _isUploading ? null : _pickFiles,
                     icon: const Icon(Icons.folder_open),
-                    label: const Text('Selecionar Arquivos (PDF/Imagem)'),
+                    label: const Text('Selecionar Imagens'),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -554,7 +558,7 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
                     label: Text(
                       _isUploading
                           ? 'Enviando...'
-                          : 'Salvar ${_selectedFiles.length} Arquivo(s)',
+                          : 'Salvar ${_selectedFiles.length} Imagem(ns)',
                     ),
                   ),
                 ),
@@ -568,8 +572,8 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
 
   Future<void> _pickFiles() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      type: FileType.image,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'],
       allowMultiple: true,
     );
     if (result != null) {
@@ -586,13 +590,29 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
     try {
       final uploadService = context.read<FileUploadService>();
       final mindMapService = context.read<MindMapService>();
-      final mindMapFiles = await uploadService.prepareFiles(_selectedFiles);
+      
+      final validImageFiles = _selectedFiles.where((file) {
+        final path = file.path.toLowerCase();
+        return path.endsWith('.jpg') || 
+               path.endsWith('.jpeg') || 
+               path.endsWith('.png') ||
+               path.endsWith('.gif') ||
+               path.endsWith('.bmp') ||
+               path.endsWith('.webp');
+      }).toList();
+      
+      if (validImageFiles.isEmpty) {
+        throw Exception('Nenhuma imagem válida selecionada');
+      }
+      
+      final mindMapFiles = await uploadService.prepareFiles(validImageFiles);
       await mindMapService.addFiles(widget.subject, widget.topic, mindMapFiles);
+      
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${mindMapFiles.length} mapa(s) adicionado(s) com sucesso!'),
+            content: Text('${mindMapFiles.length} imagem(ns) adicionada(s) com sucesso!'),
             backgroundColor: AppTheme.successColor,
           ),
         );
@@ -601,7 +621,7 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao enviar arquivos: ${e.toString()}'),
+            content: Text('Erro ao enviar imagens: ${e.toString()}'),
             backgroundColor: AppTheme.dangerColor,
           ),
         );

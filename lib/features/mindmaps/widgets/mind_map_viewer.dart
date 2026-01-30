@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:equilibrium/features/mindmaps/models/mind_map.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -90,10 +89,9 @@ class _MindMapViewerState extends State<MindMapViewer> {
             },
             itemBuilder: (context, index) {
               final file = mindMap.files[index];
-              return _buildFileView(file);
+              return _buildImageView(file);
             },
           ),
-
           Positioned(
             bottom: 20,
             left: 0,
@@ -116,7 +114,6 @@ class _MindMapViewerState extends State<MindMapViewer> {
               ),
             ),
           ),
-
           if (mindMap.files.length > 1)
             Positioned(
               left: 16,
@@ -174,22 +171,35 @@ class _MindMapViewerState extends State<MindMapViewer> {
     );
   }
 
-  Widget _buildFileView(MindMapFile file) {
-    if (file.isPdf) {
-      return _buildPdfView(file);
-    } else if (file.isImage) {
-      return _buildImageView(file);
-    } else {
-      return const Center(
-        child: Text(
-          'Tipo de arquivo não suportado',
-          style: TextStyle(color: Colors.white),
+  Widget _buildImageView(MindMapFile file) {
+    final fileExists = File(file.filePath).existsSync();
+    
+    if (!fileExists) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 60),
+            const SizedBox(height: 16),
+            Text('Arquivo não encontrado:\n${file.name}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                final mindMapService = context.read<MindMapService>();
+                mindMapService.removeFile(
+                  widget.subject,
+                  widget.topic,
+                  _currentPage,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Remover arquivo corrompido'),
+            ),
+          ],
         ),
       );
     }
-  }
-
-  Widget _buildImageView(dynamic file) {
+    
     try {
       final imageFile = File(file.filePath);
       return InteractiveViewer(
@@ -200,15 +210,28 @@ class _MindMapViewerState extends State<MindMapViewer> {
             imageFile,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
-              return const Center(
+              return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.broken_image, size: 80, color: Colors.white54),
-                    SizedBox(height: 16),
-                    Text(
+                    const Icon(Icons.broken_image, size: 80, color: Colors.white54),
+                    const SizedBox(height: 16),
+                    const Text(
                       'Erro ao carregar imagem',
                       style: TextStyle(color: Colors.white),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        final mindMapService = context.read<MindMapService>();
+                        mindMapService.removeFile(
+                          widget.subject,
+                          widget.topic,
+                          _currentPage,
+                        );
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Remover arquivo corrompido'),
                     ),
                   ],
                 ),
@@ -218,73 +241,33 @@ class _MindMapViewerState extends State<MindMapViewer> {
         ),
       );
     } catch (e) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error, size: 80, color: Colors.red),
-            SizedBox(height: 16),
-            Text(
+            const Icon(Icons.error, size: 80, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text(
               'Erro ao decodificar imagem',
               style: TextStyle(color: Colors.white),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                final mindMapService = context.read<MindMapService>();
+                mindMapService.removeFile(
+                  widget.subject,
+                  widget.topic,
+                  _currentPage,
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Remover arquivo corrompido'),
             ),
           ],
         ),
       );
     }
-  }
-
-  Widget _buildPdfView(dynamic file) {
-    // Para PDF, vamos mostrar uma mensagem informativa
-    // Em produção, você pode usar pacotes como flutter_pdfview ou syncfusion_flutter_pdfviewer
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.picture_as_pdf,
-            size: 120,
-            color: Colors.red,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            file.name,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Visualização de PDF em desenvolvimento.\nPor enquanto, apenas imagens são suportadas.',
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () {
-              // Aqui você pode adicionar funcionalidade para abrir em app externo
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Funcionalidade em desenvolvimento'),
-                ),
-              );
-            },
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Abrir em App Externo'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _deleteCurrentFile(int totalFiles) async {
@@ -316,11 +299,9 @@ class _MindMapViewerState extends State<MindMapViewer> {
       );
 
       if (mounted) {
-        // Se era o último arquivo, voltar
         if (totalFiles == 1) {
           Navigator.pop(context);
         } else {
-          // Ajustar página se necessário
           if (_currentPage >= totalFiles - 1) {
             _pageController.jumpToPage(_currentPage - 1);
           }
