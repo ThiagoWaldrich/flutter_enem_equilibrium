@@ -18,15 +18,19 @@ class _GoalsScreenState extends State<GoalsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadGoals();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadGoals();
+    });
   }
 
   Future<void> _loadGoals() async {
     setState(() => _isLoading = true);
-    
+
     final goalsService = context.read<MonthlyGoalsService>();
     await goalsService.reload();
-    
+
+    if (!mounted) return;
+
     setState(() {
       _currentGoals = goalsService.currentMonthGoals;
       _isLoading = false;
@@ -49,7 +53,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Excluir Metas'),
-        content: const Text('Tem certeza que deseja excluir as metas do mês atual?'),
+        content:
+            const Text('Tem certeza que deseja excluir as metas do mês atual?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -64,28 +69,28 @@ class _GoalsScreenState extends State<GoalsScreen> {
       ),
     );
 
-    if (confirm == true) {
-      final goalsService = context.read<MonthlyGoalsService>();
-      await goalsService.deleteCurrentMonthGoals();
-      _loadGoals();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Metas excluídas com sucesso'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
-      }
-    }
+    if (confirm != true) return;
+
+    final goalsService = context.read<MonthlyGoalsService>();
+    await goalsService.deleteCurrentMonthGoals();
+    if (!mounted) return;
+
+    _loadGoals();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Metas excluídas com sucesso'),
+        backgroundColor: AppTheme.successColor,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-
-        title: const Text('🎯 Metas Mensais', style: TextStyle(color: Colors.white),),
+        title: const Text('🎯 Metas Mensais',
+            style: TextStyle(color: Colors.white)),
         actions: [
           if (_currentGoals != null)
             IconButton(
@@ -115,27 +120,19 @@ class _GoalsScreenState extends State<GoalsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.flag_outlined,
-            size: 80,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.flag_outlined, size: 80, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'Nenhuma meta definida',
             style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+                fontSize: 18,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
             'Clique no botão abaixo para gerar suas metas',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
           ),
         ],
       ),
@@ -145,13 +142,12 @@ class _GoalsScreenState extends State<GoalsScreen> {
   Widget _buildGoalsList() {
     final config = _currentGoals!['config'] as Map<String, dynamic>;
     final subjects = _currentGoals!['subjects'] as Map<String, dynamic>;
-    
     final monthName = DateFormat('MMMM yyyy', 'pt_BR').format(DateTime.now());
-    
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Card de configuração
+        // Configuração
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -166,26 +162,24 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       child: Text(
                         'Configuração - ${monthName.toUpperCase()}',
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
                 const Divider(height: 24),
                 _buildConfigRow('Horas por dia', '${config['hoursPerDay']}h'),
-                _buildConfigRow('Sábado', config['includeSaturday'] ? 'Sim' : 'Não'),
-                _buildConfigRow('Domingo', config['includeSunday'] ? 'Sim' : 'Não'),
+                _buildConfigRow(
+                    'Sábado', config['includeSaturday'] ? 'Sim' : 'Não'),
+                _buildConfigRow(
+                    'Domingo', config['includeSunday'] ? 'Sim' : 'Não'),
                 _buildConfigRow('Total de horas', '${config['totalHours']}h'),
               ],
             ),
           ),
         ),
-        
         const SizedBox(height: 16),
-        
-        // Card de pesos
+        // Pesos
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -198,10 +192,8 @@ class _GoalsScreenState extends State<GoalsScreen> {
                     SizedBox(width: 12),
                     Text(
                       'Distribuição por Área',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -214,24 +206,15 @@ class _GoalsScreenState extends State<GoalsScreen> {
             ),
           ),
         ),
-        
         const SizedBox(height: 16),
-        
-        // Metas por matéria
-        const Text(
-          'Metas por Matéria',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        const Text('Metas por Matéria',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        
         ...subjects.entries.map((entry) {
           final subject = entry.key;
           final hours = entry.value as num;
           final color = AppTheme.getSubjectColor(subject);
-          
+
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             child: ListTile(
@@ -239,34 +222,29 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha:0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.book, color: color),
               ),
-              title: Text(
-                subject,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
+              title: Text(subject,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text('Meta: ${hours.toStringAsFixed(1)} horas'),
               trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha:0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '${hours.toStringAsFixed(0)}h',
-                  style: TextStyle(
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(color: color, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
           );
         }),
-        
         const SizedBox(height: 80),
       ],
     );
@@ -278,17 +256,10 @@ class _GoalsScreenState extends State<GoalsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -299,32 +270,22 @@ class _GoalsScreenState extends State<GoalsScreen> {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              area,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(area, style: const TextStyle(fontSize: 14))),
           Expanded(
             child: LinearProgressIndicator(
               value: weight / 10,
               backgroundColor: Colors.grey[200],
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppTheme.primaryColor,
-              ),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
             ),
           ),
           const SizedBox(width: 12),
           SizedBox(
             width: 30,
-            child: Text(
-              weight.toString(),
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.right,
-            ),
+            child: Text(weight.toString(),
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.right),
           ),
         ],
       ),
@@ -334,10 +295,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
 
 class _GoalGeneratorDialog extends StatefulWidget {
   final VoidCallback onGoalsGenerated;
-
-  const _GoalGeneratorDialog({
-    required this.onGoalsGenerated,
-  });
+  const _GoalGeneratorDialog({required this.onGoalsGenerated});
 
   @override
   State<_GoalGeneratorDialog> createState() => _GoalGeneratorDialogState();
@@ -345,22 +303,23 @@ class _GoalGeneratorDialog extends StatefulWidget {
 
 class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
   final _formKey = GlobalKey<FormState>();
-  
+
   double _hoursPerDay = 6.0;
   bool _includeSaturday = true;
   bool _includeSunday = false;
-  
+
   final Map<String, int> _weights = {
     'linguagens': 2,
     'matematica': 3,
     'natureza': 3,
     'humanas': 2,
   };
-  
-  bool _useAutodiagnostico = true;
+
+  int _distributionMethod = 1;
   bool _isGenerating = false;
 
   int get _totalWeight => _weights.values.reduce((a, b) => a + b);
+  bool get _useAutodiagnostico => _distributionMethod == 1;
 
   @override
   Widget build(BuildContext context) {
@@ -375,9 +334,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
               decoration: const BoxDecoration(
                 color: AppTheme.primaryColor,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  topRight: Radius.circular(4),
-                ),
+                    topLeft: Radius.circular(4), topRight: Radius.circular(4)),
               ),
               child: Row(
                 children: [
@@ -387,20 +344,18 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                     child: Text(
                       'Gerador de Metas Mensais',
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(context)),
                 ],
               ),
             ),
-            
+
             // Content
             Expanded(
               child: Form(
@@ -409,13 +364,9 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                   padding: const EdgeInsets.all(20),
                   children: [
                     // Horas por dia
-                    const Text(
-                      'Quantas horas por dia você vai estudar?',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const Text('Quantas horas por dia você vai estudar?',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -426,117 +377,82 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                             max: 12,
                             divisions: 22,
                             label: '${_hoursPerDay.toStringAsFixed(1)}h',
-                            onChanged: (value) {
-                              setState(() {
-                                _hoursPerDay = value;
-                              });
-                            },
+                            onChanged: (value) =>
+                                setState(() => _hoursPerDay = value),
                           ),
                         ),
                         Container(
                           width: 60,
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
+                              horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha:0.1),
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            '${_hoursPerDay.toStringAsFixed(1)}h',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+                          child: Text('${_hoursPerDay.toStringAsFixed(1)}h',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                              textAlign: TextAlign.center),
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
                     // Dias da semana
-                    const Text(
-                      'Dias de estudo',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const Text('Dias de estudo',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     CheckboxListTile(
                       title: const Text('Incluir sábado'),
                       value: _includeSaturday,
-                      onChanged: (value) {
-                        setState(() {
-                          _includeSaturday = value ?? true;
-                        });
-                      },
+                      onChanged: (value) =>
+                          setState(() => _includeSaturday = value ?? true),
                     ),
                     CheckboxListTile(
                       title: const Text('Incluir domingo'),
                       value: _includeSunday,
-                      onChanged: (value) {
-                        setState(() {
-                          _includeSunday = value ?? false;
-                        });
-                      },
+                      onChanged: (value) =>
+                          setState(() => _includeSunday = value ?? false),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    const Text(
-                      'Método de distribuição',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const Text('Método de distribuição',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    RadioListTile<bool>(
+                    RadioListTile<int>(
                       title: const Text('Usar dados do Autodiagnóstico'),
                       subtitle: const Text('Distribui horas baseado nos erros'),
-                      value: true,
-                      groupValue: _useAutodiagnostico,
-                      onChanged: (value) {
-                        setState(() {
-                          _useAutodiagnostico = value ?? true;
-                        });
-                      },
+                      value: 1,
+                      groupValue: _distributionMethod,
+                      onChanged: (value) =>
+                          setState(() => _distributionMethod = value ?? 1),
                     ),
-                    RadioListTile<bool>(
+                    RadioListTile<int>(
                       title: const Text('Usar pesos das áreas'),
                       subtitle: const Text('Distribui horas baseado nos pesos'),
-                      value: false,
-                      groupValue: _useAutodiagnostico,
-                      onChanged: (value) {
-                        setState(() {
-                          _useAutodiagnostico = value ?? true;
-                        });
-                      },
+                      value: 2,
+                      groupValue: _distributionMethod,
+                      onChanged: (value) =>
+                          setState(() => _distributionMethod = value ?? 2),
                     ),
-                    
+
                     const SizedBox(height: 24),
-                    
                     if (!_useAutodiagnostico) ...[
                       Row(
                         children: [
-                          const Text(
-                            'Pesos das áreas (Total: ',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '$_totalWeight)',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primaryColor,
-                            ),
-                          ),
+                          const Text('Pesos das áreas (Total: ',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                          Text('$_totalWeight',
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor)),
+                          const Text(')',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -549,21 +465,20 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                 ),
               ),
             ),
-            
+
             // Footer
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.grey[100],
-                border: Border(
-                  top: BorderSide(color: Colors.grey[300]!),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey[300]!)),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _isGenerating ? null : () => Navigator.pop(context),
+                      onPressed:
+                          _isGenerating ? null : () => Navigator.pop(context),
                       child: const Text('Cancelar'),
                     ),
                   ),
@@ -577,9 +492,9 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white)),
                             )
                           : const Icon(Icons.auto_awesome),
                       label: Text(_isGenerating ? 'Gerando...' : 'Gerar Metas'),
@@ -600,12 +515,8 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
       child: Row(
         children: [
           SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+              width: 100,
+              child: Text(label, style: const TextStyle(fontSize: 14))),
           Expanded(
             child: Slider(
               value: _weights[key]!.toDouble(),
@@ -613,22 +524,15 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
               max: 10,
               divisions: 20,
               label: _weights[key].toString(),
-              onChanged: (value) {
-                setState(() {
-                  _weights[key] = value.toInt();
-                });
-              },
+              onChanged: (value) =>
+                  setState(() => _weights[key] = value.toInt()),
             ),
           ),
           SizedBox(
             width: 30,
-            child: Text(
-              _weights[key].toString(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.right,
-            ),
+            child: Text(_weights[key].toString(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.right),
           ),
         ],
       ),
@@ -642,7 +546,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
 
     try {
       final goalsService = context.read<MonthlyGoalsService>();
-      
+
       await goalsService.generateGoals(
         hoursPerDay: _hoursPerDay,
         includeSaturday: _includeSaturday,
@@ -650,27 +554,24 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
         useAutodiagnostico: _useAutodiagnostico,
         weights: _weights,
       );
-      
-      if (mounted) {
-        Navigator.pop(context);
-        widget.onGoalsGenerated();
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Metas geradas com sucesso!'),
-            backgroundColor: AppTheme.successColor,
-          ),
-        );
-      }
+
+      if (!mounted) return;
+      Navigator.pop(context);
+      widget.onGoalsGenerated();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Metas geradas com sucesso!'),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
             content: Text('Erro ao gerar metas: $e'),
-            backgroundColor: AppTheme.dangerColor,
-          ),
-        );
-      }
+            backgroundColor: AppTheme.dangerColor),
+      );
     } finally {
       if (mounted) {
         setState(() => _isGenerating = false);

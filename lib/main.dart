@@ -16,7 +16,6 @@ import 'features/core/theme/theme.dart';
 import 'features/calendar/screen/calendar_screen.dart';
 import 'features/subjects/screen/weekly_schedule_screen.dart';
 import 'features/goals/screen/goals_screen.dart';
-import 'features/questions/screen/review_screen.dart';
 import 'features/questions/screen/autodiagnostico_screen.dart';
 
 void main() async {
@@ -125,7 +124,6 @@ class EquilibriumApp extends StatelessWidget {
         '/calendar': (_) => const CalendarScreen(),
         '/weekly-schedule': (_) => const WeeklyScheduleScreen(),
         '/goals': (_) => const GoalsScreen(),
-        '/review': (_) => const ReviewScreen(),
         '/autodiagnostico': (_) => const AutodiagnosticoScreen(),
       },
     );

@@ -327,7 +327,7 @@ class _TopicItem extends StatelessWidget {
                 if (hasMaps)
                   Text(
                     '$fileCount mapa${fileCount != 1 ? 's' : ''}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
                     ),
@@ -477,7 +477,7 @@ class _UploadBottomSheetState extends State<_UploadBottomSheet> {
                       ),
                       Text(
                         widget.topic,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           color: AppTheme.textSecondary,
                         ),

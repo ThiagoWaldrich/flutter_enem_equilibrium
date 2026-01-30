@@ -1,15 +1,17 @@
 import 'package:equilibrium/features/subjects/screen/manage_subjects_screen.dart';
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../logic/calendar_service.dart';
 import '../widgets/calendar_grid.dart';
 import '../widgets/day_panel.dart';
+import '../widgets/glass_container.dart';
+import '../widgets/month_year_selector.dart'; 
 import '../../goals/widgets/monthly_goals_panel.dart';
 import '../../questions/screen/autodiagnostico_screen.dart';
 import '../../goals/screen/goals_screen.dart';
-import '../../questions/screen/review_screen.dart';
+
+final backgroundColor = const Color(0xFF011B3D).withValues(alpha: 1.0);
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -17,63 +19,9 @@ class CalendarScreen extends StatefulWidget {
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
 }
-class GlassContainer extends StatelessWidget {
-  final Widget child;
-  final double? width;
-  final double? height;
-  final EdgeInsetsGeometry padding;
-  final EdgeInsetsGeometry margin;
-  final double borderRadius;
-  final double blur;
-  final double opacity;
-  final Color color;
-
-  const GlassContainer({
-    super.key,
-    required this.child,
-    this.width,
-    this.height,
-    this.padding = const EdgeInsets.all(16.0),
-    this.margin = const EdgeInsets.all(12.0),
-    this.borderRadius = 20.0,
-    this.blur = 6.0,
-    this.opacity = 0.03,
-    this.color = Colors.white,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      margin: margin,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha:opacity),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha:0.12),
-          width: 0.7,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: RepaintBoundary(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-            child: Padding(
-              padding: padding,
-              child: child,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _CalendarScreenState extends State<CalendarScreen>
     with AutomaticKeepAliveClientMixin {
-
   @override
   bool get wantKeepAlive => true;
 
@@ -108,9 +56,8 @@ class _CalendarScreenState extends State<CalendarScreen>
         });
         final calendarService =
             Provider.of<CalendarService>(context, listen: false);
-        calendarService.updateMonthlyGoals(
-          _monthYearFormat.format(DateTime.now())
-        );
+        calendarService
+            .updateMonthlyGoals(_monthYearFormat.format(DateTime.now()));
       }
     });
   }
@@ -119,7 +66,7 @@ class _CalendarScreenState extends State<CalendarScreen>
     if (_selectedDate?.year == date.year &&
         _selectedDate?.month == date.month &&
         _selectedDate?.day == date.day) {
-      return; 
+      return;
     }
     setState(() {
       _selectedDate = date;
@@ -167,66 +114,38 @@ class _CalendarScreenState extends State<CalendarScreen>
       ),
     );
   }
+
   Widget _buildAppBarActions() {
-    return Row(
-      mainAxisSize: MainAxisSize.min, 
-      children: [
-        _MonthYearSelector(
-          selectedMonth: _selectedMonth,
-          months: _months,
-          onMonthChanged: (month) {
-            setState(() {
-              _selectedMonth = DateTime(_selectedMonth.year, month + 1);
-            });
-          },
-          onYearChanged: (year) {
-            setState(() {
-              _selectedMonth = DateTime(year, _selectedMonth.month);
-            });
-          },
-        ),
-        const SizedBox(width: 8),
-        _AppBarIconButton(
-          icon: Icons.flag,
-          tooltip: 'Metas Mensais',
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const GoalsScreen(),
-              ),
-            );
-          },
-        ),
-
-        _AppBarIconButton(
-          icon: Icons.today,
-          tooltip: 'Ir para hoje',
-          onPressed: _goToToday,
-        ),
-
-        _AppBarIconButton(
-          icon: Icons.schedule,
-          tooltip: 'Horários Semanais',
-          onPressed: () {
-            Navigator.pushNamed(context, '/weekly-schedule');
-          },
-        ),
-
-        _AppBarIconButton(
-          icon: Icons.edit,
-          tooltip: 'Gerenciar Matérias',
-          onPressed: _navigateToSubjects,
-        ),
-
-        _AppBarIconButton(
-          icon: Icons.assessment,
-          tooltip: 'Autodiagnóstico',
-          onPressed: _navigateToAutodiagnostico,
-        ),
-      ],
+    return _AppBarActionsContainer(
+      selectedMonth: _selectedMonth,
+      months: _months,
+      onTodayPressed: _goToToday,
+      onGoalsPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const GoalsScreen(),
+          ),
+        );
+      },
+      onSchedulePressed: () {
+        Navigator.pushNamed(context, '/weekly-schedule');
+      },
+      onSubjectsPressed: _navigateToSubjects,
+      onDiagnosticPressed: _navigateToAutodiagnostico,
+      onMonthChanged: (month) {
+        setState(() {
+          _selectedMonth = DateTime(_selectedMonth.year, month + 1);
+        });
+      },
+      onYearChanged: (year) {
+        setState(() {
+          _selectedMonth = DateTime(year, _selectedMonth.month);
+        });
+      },
     );
   }
+
   Widget _buildDesktopLayout(BoxConstraints constraints) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,7 +167,7 @@ class _CalendarScreenState extends State<CalendarScreen>
           ),
         ),
 
-        // Painel do dia
+       
         if (_selectedDate != null)
           Expanded(
             flex: 1,
@@ -273,11 +192,10 @@ class _CalendarScreenState extends State<CalendarScreen>
           const Expanded(
             flex: 1,
             child: RepaintBoundary(
-              child: _EmptyDayPanel(), 
+              child: _EmptyDayPanel(),
             ),
           ),
 
-        // Metas mensais
         const Expanded(
           flex: 1,
           child: RepaintBoundary(
@@ -300,7 +218,6 @@ class _CalendarScreenState extends State<CalendarScreen>
         Expanded(
           child: Column(
             children: [
-              // Calendário
               Expanded(
                 flex: 2,
                 child: RepaintBoundary(
@@ -318,7 +235,6 @@ class _CalendarScreenState extends State<CalendarScreen>
                 ),
               ),
               const SizedBox(height: 12),
-              // Metas mensais
               const Expanded(
                 flex: 1,
                 child: RepaintBoundary(
@@ -379,9 +295,9 @@ class _CalendarScreenState extends State<CalendarScreen>
             bottom: 70,
             right: 16,
             child: FloatingActionButton.extended(
-              backgroundColor: Colors.white.withValues(alpha:0.15),
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
               foregroundColor: Colors.white,
-              heroTag: 'dayPanelFAB', 
+              heroTag: 'dayPanelFAB',
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
@@ -418,10 +334,10 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); 
+    super.build(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF011B3D),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text(
           '🎯Equilibrium',
@@ -431,7 +347,7 @@ class _CalendarScreenState extends State<CalendarScreen>
             color: Colors.white,
           ),
         ),
-        backgroundColor: const Color(0xFF011B3D),
+        backgroundColor: backgroundColor,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [_buildAppBarActions()],
       ),
@@ -449,57 +365,56 @@ class _CalendarScreenState extends State<CalendarScreen>
               },
             ),
       bottomNavigationBar: MediaQuery.of(context).size.width <= 800
-          ? _buildBottomNavBar()
+          ? BottomNavigationBar(
+              backgroundColor: const Color(0xFF011B3D).withValues(alpha: 0.8),
+              selectedItemColor: Colors.white,
+              unselectedItemColor: Colors.white.withValues(alpha: 0.6),
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+              type: BottomNavigationBarType.fixed,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.flag),
+                  label: 'Metas',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.rate_review),
+                  label: 'Revisão',
+                ),
+              ],
+              onTap: (index) {
+                if (index == 0) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GoalsScreen(),
+                    ),
+                  );
+                }
+              },
+            )
           : null,
     );
   }
-
-  Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      backgroundColor: const Color(0xFF011B3D).withValues(alpha:0.8),
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white.withValues(alpha:0.6),
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
-      type: BottomNavigationBarType.fixed, // ✅ Melhor performance
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.flag),
-          label: 'Metas',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.rate_review),
-          label: 'Revisão',
-        ),
-      ],
-      onTap: (index) {
-        if (index == 0) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const GoalsScreen(),
-            ),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ReviewScreen(),
-            ),
-          );
-        }
-      },
-    );
-  }
 }
-class _MonthYearSelector extends StatelessWidget {
+class _AppBarActionsContainer extends StatelessWidget {
   final DateTime selectedMonth;
   final List<String> months;
+  final VoidCallback onTodayPressed;
+  final VoidCallback onGoalsPressed;
+  final VoidCallback onSchedulePressed;
+  final VoidCallback onSubjectsPressed;
+  final VoidCallback onDiagnosticPressed;
   final ValueChanged<int> onMonthChanged;
   final ValueChanged<int> onYearChanged;
 
-  const _MonthYearSelector({
+  const _AppBarActionsContainer({
     required this.selectedMonth,
     required this.months,
+    required this.onTodayPressed,
+    required this.onGoalsPressed,
+    required this.onSchedulePressed,
+    required this.onSubjectsPressed,
+    required this.onDiagnosticPressed,
     required this.onMonthChanged,
     required this.onYearChanged,
   });
@@ -509,93 +424,56 @@ class _MonthYearSelector extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha:0.15),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha:0.25)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: selectedMonth.month - 1,
-              dropdownColor: const Color(0xFF011B3D).withValues(alpha:0.95),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              icon: const Icon(
-                Icons.arrow_drop_down,
-                color: Colors.white,
-                size: 20,
-              ),
-              items: List.generate(
-                12,
-                (index) => DropdownMenuItem(
-                  value: index,
-                  child: Text(
-                    months[index],
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
-              onChanged: (value) {
-                if (value != null) {
-                  onMonthChanged(value);
-                }
-              },
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
 
-        // Seletor de ano
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha:0.15),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white.withValues(alpha:0.25)),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: selectedMonth.year,
-              dropdownColor: const Color(0xFF011B3D).withValues(alpha:0.95),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              icon: const Icon(
-                Icons.arrow_drop_down,
-                color: Colors.white,
-                size: 20,
-              ),
-              items: List.generate(
-                5, 
-                (index) {
-                  final year = DateTime.now().year - 1 + index;
-                  return DropdownMenuItem(
-                    value: year,
-                    child: Text(
-                      year.toString(),
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  );
-                },
-              ),
-              onChanged: (value) {
-                if (value != null) {
-                  onYearChanged(value);
-                }
-              },
-            ),
-          ),
+        MonthYearSelector( 
+          selectedMonth: selectedMonth,
+          months: months,
+          onMonthChanged: onMonthChanged,
+          onYearChanged: onYearChanged,
+        ),
+        
+        const SizedBox(width: 8),
+        
+        _OptimizedIconButton(
+          icon: Icons.flag,
+          tooltip: 'Metas Mensais',
+          onPressed: onGoalsPressed,
+        ),
+        
+        _OptimizedIconButton(
+          icon: Icons.today,
+          tooltip: 'Ir para hoje',
+          onPressed: onTodayPressed,
+        ),
+        
+        _OptimizedIconButton(
+          icon: Icons.schedule,
+          tooltip: 'Horários Semanais',
+          onPressed: onSchedulePressed,
+        ),
+        
+        _OptimizedIconButton(
+          icon: Icons.edit,
+          tooltip: 'Gerenciar Matérias',
+          onPressed: onSubjectsPressed,
+        ),
+        
+        _OptimizedIconButton(
+          icon: Icons.assessment,
+          tooltip: 'Autodiagnóstico',
+          onPressed: onDiagnosticPressed,
         ),
       ],
     );
   }
 }
 
-class _AppBarIconButton extends StatelessWidget {
+class _OptimizedIconButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
 
-  const _AppBarIconButton({
+  const _OptimizedIconButton({
     required this.icon,
     required this.tooltip,
     required this.onPressed,
@@ -607,11 +485,12 @@ class _AppBarIconButton extends StatelessWidget {
       icon: Icon(icon, color: Colors.white),
       onPressed: onPressed,
       tooltip: tooltip,
-      splashRadius: 20, 
+      splashRadius: 20,
+      padding: const EdgeInsets.all(8),
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
     );
   }
 }
-
 class _EmptyDayPanel extends StatelessWidget {
   const _EmptyDayPanel();
 
@@ -620,10 +499,10 @@ class _EmptyDayPanel extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha:0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(20.0),
         border: Border.all(
-          color: Colors.white.withValues(alpha:0.08),
+          color: Colors.white.withValues(alpha: 0.08),
           width: 0.5,
         ),
       ),
@@ -634,19 +513,19 @@ class _EmptyDayPanel extends StatelessWidget {
             Icon(
               Icons.calendar_today,
               size: 64,
-              color: Colors.white.withValues(alpha:0.3),
+              color: Colors.white.withValues(alpha: 0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Selecione um dia',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha:0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
             ),
             const SizedBox(height: 8),
             Text(
               'Clique em qualquer dia do calendário',
-              style: TextStyle(color: Colors.white.withValues(alpha:0.3)),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
               textAlign: TextAlign.center,
             ),
           ],

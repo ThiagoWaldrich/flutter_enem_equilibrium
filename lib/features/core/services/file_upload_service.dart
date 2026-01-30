@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import '../../mindmaps/models/mind_map.dart';
+import 'package:logging/logging.dart';
+
+final _logger = Logger('FileService');
 
 class FileUploadService {
   Future<List<MindMapFile>> prepareFiles(List<File> selectedFiles) async {
@@ -64,15 +67,16 @@ class FileUploadService {
     }
   }
   
-  Future<void> deletePhysicalFile(String filePath) async {
-    try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (e) {
+Future<void> deletePhysicalFile(String filePath) async {
+  try {
+    final file = File(filePath);
+    if (await file.exists()) {
+      await file.delete();
     }
+  } catch (e, stackTrace) {
+    _logger.severe('Erro ao deletar arquivo', e, stackTrace);
   }
+}
   Future<void> cleanupOrphanedFiles(List<String> validFilePaths) async {
     final appDir = await getApplicationDocumentsDirectory();
     final mindMapsDir = Directory('${appDir.path}/mindmaps');

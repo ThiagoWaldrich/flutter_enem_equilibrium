@@ -141,9 +141,9 @@ class _DayPanelState extends State<DayPanel> {
           // Cabeçalho
           Container (
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
+            decoration:const BoxDecoration(
               color: const Color(0xFF042044),
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(AppTheme.borderRadius),
                 topRight: Radius.circular(AppTheme.borderRadius),
               ),
@@ -254,7 +254,7 @@ class _DayPanelState extends State<DayPanel> {
                     Expanded(
                       child: Text(
                         '📚 Rotina de Estudos do Dia',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
