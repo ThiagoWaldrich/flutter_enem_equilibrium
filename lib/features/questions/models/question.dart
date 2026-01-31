@@ -41,7 +41,6 @@ class Question {
     required this.timestamp,
   }) : errorTypes = errorTypes ?? const {};
 
-  // Domínio
   bool get hasErrors => errorTypes.isNotEmpty;
   bool get hasImage => image != null;
 

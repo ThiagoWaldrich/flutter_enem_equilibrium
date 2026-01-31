@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../logic/calendar_service.dart';
-import '../logic/holiday_service.dart'; // NOVO IMPORT
+import '../logic/holiday_service.dart'; 
 import '../../core/theme/theme.dart';
 import '../../core/theme/constants.dart';
 
@@ -66,7 +66,6 @@ class CalendarGrid extends StatelessWidget {
         padding: EdgeInsets.all(spacing * 2),
         child: Column(
           children: [
-            // Cabeçalho com dias da semana
             Container(
               padding: EdgeInsets.only(bottom: spacing),
               child: Row(
@@ -90,8 +89,6 @@ class CalendarGrid extends StatelessWidget {
 
             const Divider(height: 1),
             SizedBox(height: spacing),
-
-            // Grid de dias
             Expanded(
               child: GridView.builder(
                 physics: const BouncingScrollPhysics(),
@@ -121,8 +118,6 @@ class CalendarGrid extends StatelessWidget {
                   final percentage = (dayProgress?['percentage'] ?? 0) as int;
 
                   final hasData = total > 0;
-
-                  // USANDO O NOVO HolidayService
                   final holidayText = HolidayService.getHolidayText(day);
                   final isNationalHoliday = HolidayService.isNationalHoliday(day);
                   final isCommemorativeDate = HolidayService.isCommemorativeDate(day);
@@ -220,7 +215,6 @@ class _DayCell extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Número do dia
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

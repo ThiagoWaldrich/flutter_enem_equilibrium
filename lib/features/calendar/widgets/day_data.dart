@@ -85,12 +85,10 @@ class DayData {
       progressData.forEach((subjectId, sessions) {
         if (sessions is List) {
           if (sessions.isNotEmpty && sessions.first is int) {
-            // Versão antiga: List<int> - converter para StudySession
             studyProgress[subjectId] = (sessions as List<int>)
                 .map((sessionNumber) => StudySession(sessionNumber))
                 .toList();
           } else if (sessions.isNotEmpty && sessions.first is Map) {
-            // Versão nova: List<StudySession>
             studyProgress[subjectId] = (sessions)
                 .map((sessionJson) =>
                     StudySession.fromJson(sessionJson as Map<String, dynamic>))

@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 class AppConstants {
-  // Matérias pré-definidas
   static const List<Map<String, dynamic>> predefinedSubjects = [
     {'name': 'Matemática', 'sessions': 1},
     {'name': 'Física', 'sessions': 1},
@@ -17,7 +16,6 @@ class AppConstants {
     {'name': 'Artes', 'sessions': 1},
   ];
 
-    // Horários padrão para a nova aba
   static const List<String> defaultTimeSlots = [
     '05:00', '06:00', '07:00', '08:00', '09:00', '10:00',
     '11:00', '12:00', '13:00', '14:00', '15:00', '16:00',
@@ -28,7 +26,6 @@ class AppConstants {
     'Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'
   ];
 
-  // Metas mensais de horas por matéria
   static const Map<String, int> monthlyGoalTargets = {
     'Literatura': 15,
     'Português': 8,
@@ -44,40 +41,13 @@ class AppConstants {
     'Redação': 15,
   };
 
-  // Feriados nacionais do Brasil para 2026
-  static const Map<String, String> holidays2026 = {
-    '01-01': 'Ano Novo',
-    '02-16': 'Carnaval',
-    '02-17': 'Carnaval',
-    '04-03': 'Sexta-feira Santa',
-    '04-21': 'Tiradentes',
-    '05-01': 'Dia do Trabalho',
-    '06-04': 'Corpus Christi',
-    '09-07': 'Independência do Brasil',
-    '10-12': 'Nossa Senhora Aparecida',
-    '11-02': 'Finados',
-    '11-15': 'Proclamação da República',
-    '12-25': 'Natal',
-    // Datas comemorativas
-    '02-14': 'Dia dos Namorados',
-    '03-08': 'Dia Internacional da Mulher',
-    '04-01': 'Dia da Mentira',
-    '04-22': 'Descobrimento do Brasil',
-    '05-12': 'Dia das Mães',
-    '06-12': 'Dia dos Namorados (Brasil)',
-    '08-11': 'Dia dos Pais',
-    '10-31': 'Halloween',
-    '12-31': 'Réveillon',
-  };
 
-  // Storage Keys
   static const String keyDaysData = 'calendar_daysData';
   static const String keyGoals = 'calendar_goals';
   static const String keyReview = 'calendar_review';
   static const String keyMindMaps = 'mind_maps';
   static const String keyMonthlyGoals = 'monthly_goals';
 
-  // Cores para feriados e datas comemorativas
-  static const Color holidayColor = Color(0xFFEF4444); // Vermelho para feriados
-  static const Color commemorativeDateColor = Color(0xFF4FC3F7); // Azul-amarelado para datas comemorativas
+  static const Color holidayColor = Color(0xFFEF4444); 
+  static const Color commemorativeDateColor = Color(0xFF4FC3F7); 
 }

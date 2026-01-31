@@ -22,7 +22,7 @@ class GlassContainer extends StatelessWidget {
     this.margin = const EdgeInsets.all(12.0),
     this.borderRadius = 20.0,
     this.blur = 6.0,
-    this.opacity = 0.03,
+    this.opacity = 0.5,
     this.color = Colors.white,
   });
 
@@ -36,7 +36,7 @@ class GlassContainer extends StatelessWidget {
         color: color.withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
+          color: Colors.white.withValues(alpha: 0.5),
           width: 0.7,
         ),
       ),

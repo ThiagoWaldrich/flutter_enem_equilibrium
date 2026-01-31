@@ -19,7 +19,6 @@ class MonthYearSelector extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Dropdown de Mês
         Container(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.15),
@@ -60,8 +59,6 @@ class MonthYearSelector extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-
-        // Dropdown de Ano
         Container(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.15),

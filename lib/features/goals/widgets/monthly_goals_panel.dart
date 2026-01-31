@@ -12,7 +12,6 @@ class MonthlyGoalsPanel extends StatefulWidget {
 }
 
 class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
-  // Cache para evitar recálculos
   Map<String, double>? _cachedStudiedHours;
   List<String>? _cachedSubjects;
   String? _cachedMonthKey;
@@ -20,13 +19,10 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
   @override
   void initState() {
     super.initState();
-    // Sincroniza apenas uma vez na inicialização
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _syncOnce();
     });
   }
-
-  /// Sincroniza apenas UMA VEZ quando o widget é criado
   void _syncOnce() {
     final calendarService = context.read<CalendarService>();
     final goalsService = context.read<MonthlyGoalsService>();
@@ -52,14 +48,12 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
   }
 
   Widget _buildGoalsContent() {
-    // Usa Selector para reconstruir apenas quando necessário
     return Selector2<CalendarService, MonthlyGoalsService, _GoalsData>(
       selector: (_, calendar, goals) {
         final generatedGoals = goals.getAllSubjectGoals();
         final subjects = generatedGoals.keys.toList();
         final monthKey = '${DateTime.now().year}-${DateTime.now().month}';
         
-        // Recalcula horas apenas se mudou o mês ou as matérias
         Map<String, double> studiedHours;
         if (_cachedMonthKey != monthKey || _cachedSubjects != subjects) {
           studiedHours = _calculateStudiedHours(calendar, subjects);
@@ -128,7 +122,6 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
       margin: const EdgeInsets.all(6),
       child: Column(
         children: [
-          // Cabeçalho
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
@@ -155,7 +148,6 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
             ),
           ),
 
-          // Lista de metas
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -166,7 +158,6 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
             ),
           ),
 
-          // Resumo
           _buildSummary(
             totalHours: totalHours,
             overallPercentage: overallPercentage,
@@ -305,12 +296,10 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
 
     final studiedHours = <String, double>{};
 
-    // Inicializar todos os subjects com 0
     for (final subject in subjects) {
       studiedHours[subject] = 0.0;
     }
 
-    // Contar horas estudadas no mês
     for (int day = 1; day <= lastDay; day++) {
       final dateStr = '$year-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
       final dayData = calendarService.getDayData(dateStr);
@@ -322,7 +311,6 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
           final progress = dayData!.studyProgress[subject.id] ?? [];
           final hoursStudied = progress.length.toDouble();
 
-          // Adicionar às horas estudadas se o subject estiver nas metas
           if (studiedHours.containsKey(subject.name)) {
             studiedHours[subject.name] = studiedHours[subject.name]! + hoursStudied;
           }
@@ -334,7 +322,7 @@ class _MonthlyGoalsPanelState extends State<MonthlyGoalsPanel> {
   }
 }
 
-// Classe para encapsular os dados das metas
+
 class _GoalsData {
   final Map<String, double> generatedGoals;
   final Map<String, double> studiedHours;
@@ -374,7 +362,7 @@ class _GoalsData {
   }
 }
 
-// Item de meta - imutável
+
 class _GoalItem {
   final String subject;
   final double target;
@@ -391,7 +379,6 @@ class _GoalItem {
   });
 }
 
-// Card de meta individual - StatelessWidget para melhor performance
 class _GoalCard extends StatelessWidget {
   final _GoalItem goal;
 

@@ -14,8 +14,6 @@ class AppTheme {
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color dangerColor = Color(0xFFEF4444);
   static const Color infoColor = Color(0xFF3B82F6);
-
-  // Bordas e raios
   static const double borderRadius = 12.0;
   static const double cardElevation = 2.0;
 
@@ -29,29 +27,25 @@ class AppTheme {
         error: dangerColor,
         surface: cardBackground,
       ),
-
-      // AppBar - TUDO BRANCO AQUI
       appBarTheme: const AppBarTheme(
         backgroundColor: primaryColor,
-        foregroundColor: Colors.white, // ← Texto e ícones brancos
+        foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: false,
-        iconTheme: IconThemeData(color: Colors.white), // ← Ícones brancos
+        iconTheme: IconThemeData(color: Colors.white), 
         actionsIconTheme:
-            IconThemeData(color: Colors.white), // ← Ícones de ação brancos
+            IconThemeData(color: Colors.white), 
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: Colors.white, // ← Título branco
+          color: Colors.white,
         ),
       ),
 
-      // Ícones globais também brancos no AppBar
       iconTheme: const IconThemeData(
         color: Colors.white,
       ),
 
-      // Botões
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
@@ -82,18 +76,6 @@ class AppTheme {
           ),
         ),
       ),
-
-      // Cards
-      // cardTheme: const CardTheme(
-      //   elevation: cardElevation,
-      //   color: cardBackground,
-      //   shape: RoundedRectangleBorder(
-      //     borderRadius: BorderRadius.circular(borderRadius),
-      //   ),
-      //   margin: EdgeInsets.symmetric(vertical: 6),
-      // ),
-
-      // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
@@ -114,7 +96,6 @@ class AppTheme {
         hintStyle: const TextStyle(color: Color(0xFF64748B)),
       ),
 
-      // Texto
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontSize: 32,
@@ -150,7 +131,6 @@ class AppTheme {
         ),
       ),
 
-      // Divider
       dividerTheme: const DividerThemeData(
         color: Color(0xFFE8ECF0),
         thickness: 1,
@@ -158,8 +138,6 @@ class AppTheme {
       ),
     );
   }
-
-  // Métodos auxiliares para cores de matérias
   static Color getSubjectColor(String subjectName) {
     final colors = {
       'Matemática': const Color(0xFF3B82F6),
@@ -183,43 +161,39 @@ class AppTheme {
     return colors[subjectName] ?? darkGray;
   }
 
-  // Método para cores de tópicos (baseado no hash do nome)
   static Color getTopicColor(String topicName) {
     final hash = topicName.hashCode;
     final colors = [
-      const Color(0xFFEF4444), // Vermelho
-      const Color(0xFF3B82F6), // Azul
-      const Color(0xFF10B981), // Verde
-      const Color(0xFFF59E0B), // Laranja
-      const Color(0xFF8B5CF6), // Roxo
-      const Color(0xFFEC4899), // Rosa
-      const Color(0xFF06B6D4), // Ciano
-      const Color(0xFFF97316), // Laranja escuro
-      const Color(0xFF84CC16), // Verde limão
-      const Color(0xFF6366F1), // Índigo
+      const Color(0xFFEF4444),
+      const Color(0xFF3B82F6), 
+      const Color(0xFF10B981), 
+      const Color(0xFFF59E0B), 
+      const Color(0xFF8B5CF6), 
+      const Color(0xFFEC4899), 
+      const Color(0xFF06B6D4), 
+      const Color(0xFFF97316), 
+      const Color(0xFF84CC16), 
+      const Color(0xFF6366F1), 
     ];
     return colors[hash.abs() % colors.length];
   }
 
-  // Método para cores de subtópicos (tons mais claros)
   static Color getSubtopicColor(String subtopicName) {
     final hash = subtopicName.hashCode;
     final colors = [
-      const Color(0xFFFEE2E2), // Vermelho claro
-      const Color(0xFFDBEAFE), // Azul claro
-      const Color(0xFFD1FAE5), // Verde claro
-      const Color(0xFFFEF3C7), // Amarelo claro
-      const Color(0xFFEDE9FE), // Roxo claro
-      const Color(0xFFFCE7F3), // Rosa claro
-      const Color(0xFFCFFAFE), // Ciano claro
-      const Color(0xFFFFEDD5), // Laranja claro
-      const Color(0xFFD9F99D), // Verde limão claro
-      const Color(0xFFE0E7FF), // Índigo claro
+      const Color(0xFFFEE2E2),
+      const Color(0xFFDBEAFE), 
+      const Color(0xFFD1FAE5),
+      const Color(0xFFFEF3C7), 
+      const Color(0xFFEDE9FE), 
+      const Color(0xFFFCE7F3), 
+      const Color(0xFFCFFAFE),
+      const Color(0xFFFFEDD5),
+      const Color(0xFFD9F99D), 
+      const Color(0xFFE0E7FF),
     ];
     return colors[hash.abs() % colors.length];
   }
-
-  // Método para gerar gradiente baseado no tema
   static Gradient getSubjectGradient(String subjectName) {
     final baseColor = getSubjectColor(subjectName);
     return LinearGradient(
@@ -232,15 +206,10 @@ class AppTheme {
     );
   }
 
-  // Método para cores de texto sobre gradiente
   static Color getTextOnGradient(Color backgroundColor) {
-    // Calcula o brilho relativo da cor de fundo
     final luminance = backgroundColor.computeLuminance();
-    // Se o brilho for baixo (cor escura), usa texto branco, senão preto
     return luminance < 0.5 ? Colors.white : Colors.black;
   }
-
-  // Método para cores de erros
   static Map<String, Color> getErrorColors() {
     return {
       'conteudo': dangerColor,
@@ -248,8 +217,6 @@ class AppTheme {
       'tempo': infoColor,
     };
   }
-
-  // Método para cores de status
   static Map<String, Color> getStatusColors() {
     return {
       'success': successColor,

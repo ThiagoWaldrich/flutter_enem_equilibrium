@@ -317,7 +317,6 @@ class _SubjectCard extends StatelessWidget {
   }
 }
 
-// ========== DIALOGS ==========
 class _AddSubjectDialog extends StatefulWidget {
   final Function(SubjectWithTopics) onAdd;
 

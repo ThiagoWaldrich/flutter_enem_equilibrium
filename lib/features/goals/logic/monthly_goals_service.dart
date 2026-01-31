@@ -14,7 +14,7 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool _hasError = false;
   String? _errorMessage;
   
-  // Cache para evitar recálculos
+
   String? _cachedMonth;
   
   MonthlyGoalsService(this._storageService, this._databaseService) {
@@ -26,7 +26,6 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool get hasError => _hasError;
   String? get errorMessage => _errorMessage;
   
-  /// Inicializa as metas apenas uma vez
   void _initializeGoals() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _safeLoadCurrentMonthGoals();
@@ -131,7 +130,7 @@ class MonthlyGoalsService extends ChangeNotifier {
       };
       
       await _storageService.saveData(goalsKey, goalsData);
-      _cachedMonth = currentMonth; // Atualiza cache
+      _cachedMonth = currentMonth; 
       await _loadCurrentMonthGoals();
     } catch (e) {
       _hasError = true;
@@ -272,8 +271,6 @@ class MonthlyGoalsService extends ChangeNotifier {
     final questionsData = Map<String, dynamic>.from(_currentMonthGoals!['questions'] ?? {});
     final oldValue = questionsData[subject] ?? 0;
     final newValue = oldValue + questions;
-    
-    // Só atualiza se houver mudança real
     if (oldValue == newValue) return;
     
     questionsData[subject] = newValue;
@@ -301,14 +298,14 @@ class MonthlyGoalsService extends ChangeNotifier {
     return questions.map((key, value) => MapEntry(key, (value as int)));
   }
 
-  /// Sincroniza com calendário - CHAMADO APENAS QUANDO NECESSÁRIO
+ 
   Future<void> syncWithCalendar(Map<String, int> calendarQuestions) async {
     if (_currentMonthGoals == null) return;
     
-    // Verifica se há mudanças antes de atualizar
+ 
     final currentQuestions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
     if (mapEquals(currentQuestions, calendarQuestions)) {
-      return; // Nada mudou, não precisa atualizar
+      return; 
     }
     
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
@@ -329,7 +326,7 @@ class MonthlyGoalsService extends ChangeNotifier {
       final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
       
       await _storageService.removeData(goalsKey);
-      _cachedMonth = null; // Limpa cache
+      _cachedMonth = null;
       await _loadCurrentMonthGoals();
     } catch (e) {
       _hasError = true;
@@ -375,8 +372,4 @@ class MonthlyGoalsService extends ChangeNotifier {
     await _safeLoadCurrentMonthGoals();
   }
   
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  // }
 }

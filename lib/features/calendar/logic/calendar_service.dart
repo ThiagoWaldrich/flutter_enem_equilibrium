@@ -51,16 +51,14 @@ class CalendarService extends ChangeNotifier {
     return _daysData[dateStr];
   }
 
-  // ✅ MODIFICADO: Retorna lista VAZIA se não há matérias customizadas
+ 
   List<Subject> getDaySubjects(String dateStr) {
     final dayData = _daysData[dateStr];
     
-    // SE tem matérias customizadas, retorna elas
+ 
     if (dayData?.customSubjects != null) {
       return dayData!.customSubjects!;
     }
-
-    // ✅ SENÃO, retorna lista VAZIA (não as pré-definidas)
     return [];
   }
 
@@ -70,7 +68,6 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Atualizar humor
   Future<void> updateMood(String dateStr, int mood) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(mood: mood);
@@ -78,7 +75,6 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Atualizar energia
   Future<void> updateEnergy(String dateStr, int energy) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(energy: energy);
@@ -86,7 +82,6 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Atualizar notas
   Future<void> updateNotes(String dateStr, String notes) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(notes: notes);
@@ -94,7 +89,6 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Alternar sessão de estudo
   Future<void> toggleStudySession(
     String dateStr,
     String subjectId,
@@ -165,14 +159,12 @@ class CalendarService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Salvar matérias customizadas (ISSO SALVA NO STORAGE!)
+
   Future<void> saveCustomSubjects(
       String dateStr, List<Subject> subjects) async {
     final dayData = _daysData[dateStr] ?? DayData(date: dateStr);
     _daysData[dateStr] = dayData.copyWith(
       customSubjects: subjects,
-      // ❗ NÃO LIMPA O studyProgress - mantém as sessões completadas
-      // studyProgress: {}, ← REMOVA ESTA LINHA
     );
     await _saveData();
     notifyListeners();
@@ -184,10 +176,8 @@ class CalendarService extends ChangeNotifier {
       final year = date.year;
       final month = date.month;
 
-      // Resetar metas
       _monthlyGoals.updateAll((_, goal) => goal.copyWith(current: 0));
 
-      // Último dia do mês
       final lastDay = DateTime(year, month + 1, 0).day;
 
       for (int day = 1; day <= lastDay; day++) {
@@ -218,7 +208,6 @@ class CalendarService extends ChangeNotifier {
     }
   }
 
-  // Obter questões mensais por matéria
   Map<String, int> getMonthlyQuestions(String monthStr) {
     final date = DateCalculator.parseDate(monthStr);
     final year = date.year;
@@ -248,19 +237,16 @@ class CalendarService extends ChangeNotifier {
     return monthlyQuestions;
   }
 
-  // Obter questões do mês atual
   Map<String, int> getCurrentMonthQuestions() {
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
     return getMonthlyQuestions(currentMonth);
   }
 
-  // Obter total de questões do mês
   int getTotalMonthlyQuestions(String monthStr) {
     final questions = getMonthlyQuestions(monthStr);
     return questions.values.fold(0, (sum, count) => sum + count);
   }
 
-  // Obter resumo mensal com questões
   Map<String, Map<String, dynamic>> getMonthlySummary(DateTime date) {
     final month = DateFormat('yyyy-MM').format(date);
     final days = DateCalculator.getAllDaysInMonth(date.year, date.month);
@@ -302,7 +288,6 @@ class CalendarService extends ChangeNotifier {
     return result;
   }
 
-  // Progresso diário
   Map<String, dynamic> getDayProgress(String dateStr) {
     final subjects = getDaySubjects(dateStr);
     final dayData = _daysData[dateStr];
@@ -329,7 +314,6 @@ class CalendarService extends ChangeNotifier {
 
   Map<String, MonthlyGoal> get monthlyGoals => _monthlyGoals;
 
-  // ✅ NOVO MÉTODO: Obter matérias padrão (para o ManageSubjectsScreen)
   List<Subject> getDefaultSubjects() {
     return AppConstants.predefinedSubjects
         .asMap()
@@ -343,8 +327,6 @@ class CalendarService extends ChangeNotifier {
         )
         .toList();
   }
-
-  // Métodos de formatação
   String formatMonth(DateTime date) => DateCalculator.formatMonth(date);
   String formatDay(DateTime date) => DateCalculator.formatDay(date);
 }

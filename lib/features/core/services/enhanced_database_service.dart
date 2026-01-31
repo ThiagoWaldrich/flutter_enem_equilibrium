@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -16,9 +15,8 @@ class EnhancedDatabaseService {
   static bool _isInitialized = false;
   late Database _database;
   
-  // Cache para day_subjects por data
+
   final _daySubjectsCache = <String, List<Subject>>{};
-  // Cache para study_topics por subjectId
   final _studyTopicsCache = <String, List<StudyTopic>>{};
   
   Future<void> init() async {
@@ -106,11 +104,8 @@ class EnhancedDatabaseService {
       ''');
     }
   }
-
-  // ========== MÉTODOS PARA MATÉRIAS ==========
   
   Future<List<Subject>> getDaySubjects(String date) async {
-    // Verificar cache
     if (_daySubjectsCache.containsKey(date)) {
       return _daySubjectsCache[date]!;
     }
@@ -128,7 +123,6 @@ class EnhancedDatabaseService {
       sessions: row['sessions'] as int,
     )).toList();
     
-    // Atualizar cache
     _daySubjectsCache[date] = subjects;
     
     return subjects;
@@ -154,7 +148,6 @@ class EnhancedDatabaseService {
   }
 
   Future<int> saveSubject(Subject subject, String date) async {
-    // Invalida cache para esta data
     _daySubjectsCache.remove(date);
     
     return await _database.insert(
@@ -171,12 +164,8 @@ class EnhancedDatabaseService {
   }
 
   Future<int> deleteSubject(String id) async {
-    // Precisamos saber a data para invalidar o cache
     final subject = await getSubject(id);
     if (subject != null) {
-      // Nota: não temos a data aqui, então não podemos invalidar o cache facilmente.
-      // Podemos optar por limpar todo o cache ou mudar a abordagem.
-      // Por simplicidade, vamos limpar todo o cache de day_subjects.
       _daySubjectsCache.clear();
     }
     
@@ -194,7 +183,6 @@ class EnhancedDatabaseService {
   }
 
   Future<int> deleteDaySubjects(String date) async {
-    // Invalida cache para esta data
     _daySubjectsCache.remove(date);
     
     final subjects = await _database.query(
@@ -224,9 +212,7 @@ class EnhancedDatabaseService {
     List<Subject> subjects,
     Map<String, List<StudyTopic>> topicsBySubject,
   ) async {
-    // Invalida cache para esta data
     _daySubjectsCache.remove(date);
-    // Invalida cache de tópicos para os subjectIds envolvidos
     for (final subject in subjects) {
       _studyTopicsCache.remove(subject.id);
     }
@@ -268,10 +254,9 @@ class EnhancedDatabaseService {
     });
   }
 
-  // ========== MÉTODOS PARA TÓPICOS ==========
+
   
   Future<List<StudyTopic>> getSubjectTopics(String subjectId) async {
-    // Verificar cache
     if (_studyTopicsCache.containsKey(subjectId)) {
       return _studyTopicsCache[subjectId]!;
     }
@@ -289,15 +274,13 @@ class EnhancedDatabaseService {
       topic: row['topic'] as String,
       sessions: row['sessions'] as int,
     )).toList();
-    
-    // Atualizar cache
+  
     _studyTopicsCache[subjectId] = topics;
     
     return topics;
   }
 
   Future<int> saveStudyTopic(StudyTopic topic) async {
-    // Invalida cache para este subjectId
     _studyTopicsCache.remove(topic.subjectId);
     
     return await _database.insert(
@@ -313,7 +296,6 @@ class EnhancedDatabaseService {
   }
 
   Future<int> deleteStudyTopic(String id) async {
-    // Precisamos do subjectId para invalidar o cache
     final topic = await _database.query(
       'study_topics',
       where: 'id = ?',

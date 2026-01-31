@@ -1,4 +1,3 @@
-// screens/weekly_schedule_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/enhanced_database_service.dart';
@@ -300,7 +299,6 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Cabeçalho com dias da semana
                 Container(
                   height: 64,
                   decoration: BoxDecoration(
@@ -374,7 +372,6 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                   ),
                 ),
 
-                // Grade principal - responsiva e sem scroll
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -396,7 +393,6 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                             ),
                             child: Row(
                               children: [
-                                // Coluna de horários
                                 Container(
                                   width: 100,
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -471,7 +467,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                                         ),
                                 ),
                                 
-                                // Células dos dias - distribuídas uniformemente
+
                                 ...List.generate(
                                   AppConstants.weekDays.length,
                                   (dayIndex) {
@@ -560,7 +556,7 @@ class _WeeklyScheduleScreenState extends State<WeeklyScheduleScreen>
                   ),
                 ),
 
-                // Barra de edição de horários
+
                 if (_isEditingTimes)
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -636,16 +632,16 @@ class __EditCellDialogState extends State<_EditCellDialog> {
   late Color _selectedColor;
   
   final List<Color> _colorOptions = [
-    const Color(0xFF6366F1), // Indigo
-    const Color(0xFF8B5CF6), // Purple
-    const Color(0xFFEC4899), // Pink
-    const Color(0xFFEF4444), // Red
-    const Color(0xFFF59E0B), // Amber
-    const Color(0xFF10B981), // Emerald
-    const Color(0xFF06B6D4), // Cyan
-    const Color(0xFF3B82F6), // Blue
-    const Color(0xFF14B8A6), // Teal
-    const Color(0xFF84CC16), // Lime
+    const Color(0xFF6366F1), 
+    const Color(0xFF8B5CF6), 
+    const Color(0xFFEC4899), 
+    const Color(0xFFEF4444), 
+    const Color(0xFFF59E0B), 
+    const Color(0xFF10B981), 
+    const Color(0xFF06B6D4), 
+    const Color(0xFF3B82F6), 
+    const Color(0xFF14B8A6), 
+    const Color(0xFF84CC16), 
   ];
 
   @override

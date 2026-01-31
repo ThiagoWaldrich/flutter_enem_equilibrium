@@ -115,9 +115,11 @@ class DatabaseService {
     if (oldVersion < 3) {
       try {
         await db.execute('ALTER TABLE questions ADD COLUMN image_path TEXT');
-        debugPrint('✅ Coluna image_path adicionada');
+        await db.execute('ALTER TABLE questions ADD COLUMN image_name TEXT');
+        await db.execute('ALTER TABLE questions ADD COLUMN image_type TEXT');
+        debugPrint('✅ Colunas de imagem adicionadas');
       } catch (e) {
-        debugPrint('⚠️ Erro ao adicionar image_path: $e');
+        debugPrint('⚠️ Erro ao adicionar colunas de imagem: $e');
       }
     }
 
@@ -169,13 +171,11 @@ class DatabaseService {
       'timestamp': question.timestamp.toIso8601String(),
     };
 
-    // Invalida caches
     _invalidateCaches();
 
     return await db.insert('questions', map);
   }
 
-  // Função auxiliar para converter map em Question
   Question _questionFromMap(Map<String, dynamic> map) {
     return Question(
       id: map['id'],
@@ -193,47 +193,25 @@ class DatabaseService {
       image:
           map['image_path'] != null && (map['image_path'] as String).isNotEmpty
               ? QuestionImage(
-                  filePath:
-                      map['image_path'] as String, // ✅ Use image_path do banco
-                  name: map['image_name'] ?? '',
-                  type: map['image_type'] ?? 'image/jpeg',
+                  filePath: map['image_path'] as String,
+                  name: map['image_name'] as String? ?? '',
+                  type: map['image_type'] as String? ?? 'image/jpeg',
                 )
               : null,
       timestamp: DateTime.parse(map['timestamp'] as String),
     );
   }
 
-  // Uint8List? _parseImageData(dynamic raw) {
-  //   if (raw == null) return null;
-
-  //   if (raw is Uint8List) {
-  //     return raw;
-  //   }
-
-  //   if (raw is String) {
-  //     try {
-  //       return base64Decode(raw.split(',').last);
-  //     } catch (_) {
-  //       return null;
-  //     }
-  //   }
-
-  //   return null;
-  // }
-
-  // Função para obter estatísticas por ano
   Future<Map<String, int>> getYearStats() async {
     final stats = await _getAllStatsIfNeeded();
     return stats['yearStats'] as Map<String, int>;
   }
 
-  // Função para obter estatísticas por fonte
   Future<Map<String, int>> getSourceStats() async {
     final stats = await _getAllStatsIfNeeded();
     return stats['sourceStats'] as Map<String, int>;
   }
 
-  // Função para obter anos distintos
   Future<List<String>> getDistinctYears() async {
     final db = await database;
 
@@ -247,7 +225,6 @@ class DatabaseService {
     return result.map((row) => row['year'] as String).toList();
   }
 
-  // Função para obter fontes distintas
   Future<List<String>> getDistinctSources() async {
     final db = await database;
 
@@ -261,38 +238,52 @@ class DatabaseService {
     return result.map((row) => row['source'] as String).toList();
   }
 
-  // Função para atualizar uma questão
   Future<int> updateQuestion(Question question) async {
     final db = await database;
 
-    final map = {
-      'subject': question.subject,
-      'topic': question.topic,
-      'subtopic': question.subtopic,
-      'year': question.year,
-      'source': question.source,
-      'error_description': question.errorDescription,
-      'content_error': question.errorTypes.contains(ErrorType.conteudo) ? 1 : 0,
-      'attention_error':
-          question.errorTypes.contains(ErrorType.atencao) ? 1 : 0,
-      'time_error': question.errorTypes.contains(ErrorType.tempo) ? 1 : 0,
-      'image_data': question.image?.data,
-      'image_name': question.image?.name,
-      'image_type': question.image?.type,
-    };
+    try {
+      final Map<String, dynamic> values = {
+        'subject': question.subject,
+        'topic': question.topic,
+        'subtopic': question.subtopic,
+        'year': question.year,
+        'source': question.source,
+        'error_description': question.errorDescription,
+        'content_error': question.errorTypes.contains(ErrorType.conteudo) ? 1 : 0,
+        'attention_error': question.errorTypes.contains(ErrorType.atencao) ? 1 : 0,
+        'time_error': question.errorTypes.contains(ErrorType.tempo) ? 1 : 0,
+        'timestamp': question.timestamp.toIso8601String(), 
+      };
 
-    // Invalida caches
-    _invalidateCaches();
+      if (question.image != null && question.image!.filePath.isNotEmpty) {
+        values['image_path'] = question.image!.filePath;
+        values['image_name'] = question.image!.name;
+        values['image_type'] = question.image!.type;
+      } else {
+        values['image_path'] = null;
+        values['image_name'] = null;
+        values['image_type'] = null;
+      }
 
-    return await db.update(
-      'questions',
-      map,
-      where: 'id = ?',
-      whereArgs: [question.id],
-    );
+      debugPrint('📝 Atualizando questão ${question.id} com valores: $values');
+
+      final result = await db.update(
+        'questions',
+        values,
+        where: 'id = ?',
+        whereArgs: [question.id],
+      );
+
+      _invalidateCaches();
+
+      debugPrint('✅ Questão atualizada com sucesso: ${question.id}');
+      return result;
+    } catch (e) {
+      debugPrint('❌ Erro ao atualizar questão ${question.id}: $e');
+      rethrow;
+    }
   }
 
-  // Função principal para obter questões com filtros (com cache)
   Future<List<Question>> getQuestions({
     int limit = 100,
     int offset = 0,
@@ -301,12 +292,10 @@ class DatabaseService {
     String? source,
     String? errorType,
   }) async {
-    // Criar chave de cache baseada nos parâmetros
     final cacheKey =
         '${subject ?? ''}_${year ?? ''}_${source ?? ''}_${errorType ?? ''}_$limit-$offset';
     final now = DateTime.now().millisecondsSinceEpoch;
 
-    // Verificar se temos cache válido (menos de 30 segundos)
     if (_questionsCache.containsKey(cacheKey)) {
       final cacheTime = _questionsCacheTime[cacheKey] ?? 0;
       if (now - cacheTime < _questionsCacheMaxAge) {
@@ -363,14 +352,11 @@ class DatabaseService {
     final questions =
         List.generate(maps.length, (i) => _questionFromMap(maps[i]));
 
-    // Atualizar cache
     _questionsCache[cacheKey] = questions;
     _questionsCacheTime[cacheKey] = now;
 
     return questions;
   }
-
-  // Versão light sem cache (para quando sabemos que os dados mudaram)
   Future<List<Question>> getQuestionsLight({
     int limit = 100,
     int offset = 0,
@@ -384,7 +370,7 @@ class DatabaseService {
     String query = '''
       SELECT id, subject, topic, subtopic, year, source, 
              error_description, content_error, attention_error, 
-             time_error, timestamp
+             time_error, image_path, image_name, image_type, timestamp
       FROM questions
     ''';
 
@@ -444,12 +430,18 @@ class DatabaseService {
           if (map['attention_error'] == 1) ErrorType.atencao,
           if (map['time_error'] == 1) ErrorType.tempo,
         },
+        image: map['image_path'] != null && (map['image_path'] as String).isNotEmpty
+            ? QuestionImage(
+                filePath: map['image_path'] as String,
+                name: map['image_name'] as String? ?? '',
+                type: map['image_type'] as String? ?? 'image/jpeg',
+              )
+            : null,
         timestamp: DateTime.parse(map['timestamp'] as String),
       );
     });
   }
 
-  // Função para obter todas as estatísticas de uma vez (com cache)
   Future<Map<String, dynamic>> getAllStats() async {
     return await _getAllStatsIfNeeded();
   }
@@ -457,14 +449,11 @@ class DatabaseService {
   Future<Map<String, dynamic>> _getAllStatsIfNeeded() async {
     final now = DateTime.now();
 
-    // Se o cache está válido, retornar
     if (_statsCacheTime != null &&
         now.difference(_statsCacheTime!) < _statsCacheDuration &&
         _statsCache.isNotEmpty) {
       return _statsCache;
     }
-
-    // Caso contrário, buscar do banco
     final db = await database;
 
     final results = await Future.wait([
@@ -561,8 +550,6 @@ class DatabaseService {
     }
     return errorStats;
   }
-
-  // Função para fechar o banco de dados
   Future<void> close() async {
     if (_database != null) {
       await _database!.close();
@@ -576,5 +563,28 @@ class DatabaseService {
     _statsCacheTime = null;
     _questionsCache.clear();
     _questionsCacheTime.clear();
+  }
+
+  Future<bool> _checkColumnExists(String columnName) async {
+    final db = await database;
+    final result = await db.rawQuery('PRAGMA table_info(questions)');
+    
+    for (final column in result) {
+      if (column['name'] == columnName) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> debugTableInfo() async {
+    final db = await database;
+    final result = await db.rawQuery('PRAGMA table_info(questions)');
+    
+    debugPrint('=== COLUNAS DA TABELA QUESTIONS ===');
+    for (final column in result) {
+      debugPrint('${column['name']} (${column['type']})');
+    }
+    debugPrint('===================================');
   }
 }

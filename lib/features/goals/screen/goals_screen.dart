@@ -147,7 +147,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Configuração
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -179,7 +178,6 @@ class _GoalsScreenState extends State<GoalsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        // Pesos
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -328,7 +326,6 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
@@ -356,14 +353,12 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
               ),
             ),
 
-            // Content
             Expanded(
               child: Form(
                 key: _formKey,
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    // Horas por dia
                     const Text('Quantas horas por dia você vai estudar?',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
@@ -398,7 +393,6 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                     ),
 
                     const SizedBox(height: 24),
-                    // Dias da semana
                     const Text('Dias de estudo',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w600)),
@@ -466,7 +460,6 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
               ),
             ),
 
-            // Footer
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
