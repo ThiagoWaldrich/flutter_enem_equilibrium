@@ -1,4 +1,3 @@
-// calendar/logic/holiday_service.dart
 import 'package:intl/intl.dart';
 
 class HolidayService {
@@ -15,7 +14,6 @@ class HolidayService {
     '11-02': 'Finados',
     '11-15': 'Proclamação da República',
     '12-25': 'Natal',
-    // Datas comemorativas
     '02-14': 'Dia dos Namorados',
     '03-08': 'Dia Internacional da Mulher',
     '04-01': 'Dia da Mentira',

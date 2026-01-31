@@ -16,8 +16,14 @@ class StudySubjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+
     return Card(
       elevation: 2,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
@@ -35,7 +41,7 @@ class StudySubjectCard extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: progress,
-                backgroundColor: color.withValues(alpha:0.3),
+                backgroundColor: color.withValues(alpha: 0.3),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ],

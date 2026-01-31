@@ -24,10 +24,8 @@ class DayPanel extends StatefulWidget {
 }
 
 class _DayPanelState extends State<DayPanel> {
-  // Mapa para armazenar controllers por data
   final Map<String, TextEditingController> _notesControllers = {};
 
-  // Data atual sendo exibida
   String _currentDateKey = '';
 
   @override
@@ -40,7 +38,6 @@ class _DayPanelState extends State<DayPanel> {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
     _currentDateKey = dateStr;
 
-    // Garantir que temos um controller para esta data
     if (!_notesControllers.containsKey(dateStr)) {
       final calendarService = context.read<CalendarService>();
       final dayData = calendarService.getDayData(dateStr);
@@ -53,11 +50,9 @@ class _DayPanelState extends State<DayPanel> {
   TextEditingController _getCurrentNotesController() {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
 
-    // Se mudou de data, atualizar o controller
     if (dateStr != _currentDateKey) {
       _currentDateKey = dateStr;
 
-      // Criar novo controller se não existir para esta data
       if (!_notesControllers.containsKey(dateStr)) {
         final calendarService = context.read<CalendarService>();
         final dayData = calendarService.getDayData(dateStr);
@@ -77,8 +72,6 @@ class _DayPanelState extends State<DayPanel> {
 
     if (widget.selectedDate != oldWidget.selectedDate) {
       final newDateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
-      // final oldDateStr =
-      //     DateFormat('yyyy-MM-dd').format(oldWidget.selectedDate);
 
       if (!_notesControllers.containsKey(newDateStr)) {
         final calendarService = context.read<CalendarService>();
@@ -115,12 +108,9 @@ class _DayPanelState extends State<DayPanel> {
     final dateStr = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
     final dayData = calendarService.getDayData(dateStr);
     final subjects = calendarService.getDaySubjects(dateStr);
-
-    // Verificar se as notas no service estão sincronizadas com o controller
     final controller = _getCurrentNotesController();
     final serviceNotes = dayData?.notes ?? '';
 
-    // Sincronizar se necessário (após carregar dados do service)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (controller.text != serviceNotes) {
         controller.text = serviceNotes;
@@ -138,7 +128,6 @@ class _DayPanelState extends State<DayPanel> {
       margin: const EdgeInsets.all(10),
       child: Column(
         children: [
-          // Cabeçalho
           Container (
             padding: const EdgeInsets.all(10),
             decoration:const BoxDecoration(
@@ -182,7 +171,6 @@ class _DayPanelState extends State<DayPanel> {
               controller: widget.scrollController,
               padding: const EdgeInsets.all(10),
               children: [
-                // Humor
                 const Text(
                   'Humor:',
                   style: TextStyle(
@@ -199,7 +187,6 @@ class _DayPanelState extends State<DayPanel> {
 
                 const SizedBox(height: 20),
 
-                // Energia
                 const Text(
                   'Energia:',
                   style: TextStyle(
@@ -280,8 +267,6 @@ class _DayPanelState extends State<DayPanel> {
                 ),
 
                 const SizedBox(height: 16),
-
-                // Lista de matérias ou mensagem vazia
                 if (subjects.isEmpty)
                   Container(
                     padding: const EdgeInsets.all(32),
@@ -336,7 +321,6 @@ class _DayPanelState extends State<DayPanel> {
 
                 const SizedBox(height: 20),
 
-                // Botão para adicionar mais matérias
                 if (subjects.isNotEmpty)
                   OutlinedButton.icon(
                     onPressed: () {
@@ -490,8 +474,6 @@ class _SubjectCard extends StatelessWidget {
     final goalsService = context.read<MonthlyGoalsService>();
     final color = AppTheme.getSubjectColor(subject.name);
     final totalSessions = subject.sessions;
-
-    // Calcular sessões completadas e questões
     final completedCount = completedSessions.length;
     final totalQuestions = completedSessions.fold(
         0, (sum, session) => sum + session.questionCount);
@@ -507,7 +489,6 @@ class _SubjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabeçalho da matéria
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -547,8 +528,6 @@ class _SubjectCard extends StatelessWidget {
               ],
             ),
           ),
-
-          // Barra de progresso
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: ClipRRect(
@@ -562,7 +541,6 @@ class _SubjectCard extends StatelessWidget {
             ),
           ),
 
-          // Sessões com contador de questões
           Padding(
             padding: const EdgeInsets.all(16),
             child: Wrap(
@@ -600,7 +578,6 @@ class _SubjectCard extends StatelessWidget {
                       newCount,
                     );
 
-                    // Atualizar questões mensais
                     if (change != 0) {
                       goalsService.updateSubjectQuestions(subject.name, change);
                     }
@@ -636,7 +613,6 @@ class _SessionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Botão da sessão
         InkWell(
           onTap: onToggleSession,
           borderRadius: BorderRadius.circular(8),
@@ -663,8 +639,6 @@ class _SessionWidget extends StatelessWidget {
             ),
           ),
         ),
-
-        // Contador de questões (apenas se sessão completada)
         if (isCompleted) ...[
           const SizedBox(height: 4),
           Container(

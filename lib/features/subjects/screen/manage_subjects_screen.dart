@@ -118,7 +118,6 @@ void initState() {
           TextButton(
             onPressed: () {
               setState(() {
-                // ✅ Usa o novo método getDefaultSubjects()
                 final calendarService = context.read<CalendarService>();
                 _subjects = List.from(calendarService.getDefaultSubjects());
               });
@@ -165,8 +164,6 @@ void initState() {
             style: TextStyle(color: Colors.grey),
           ),
           const SizedBox(height: 16),
-
-          // Lista de matérias
           if (_subjects.isEmpty)
             const Card(
               child: Padding(
@@ -209,8 +206,6 @@ void initState() {
             }),
 
           const SizedBox(height: 24),
-
-          // Adicionar nova matéria
           Card(
             color: Colors.grey[50],
             child: Padding(
@@ -272,8 +267,6 @@ void initState() {
           ),
 
           const SizedBox(height: 24),
-
-          // Botões de ação
           Row(
             children: [
               Expanded(

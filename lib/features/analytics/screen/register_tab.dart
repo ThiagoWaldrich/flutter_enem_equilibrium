@@ -139,7 +139,7 @@ class RegisterTab extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 24),
 
-              // Campo Matéria
+
               DropdownButtonFormField<String>(
                 initialValue: selectedSubject,
                 decoration: const InputDecoration(
@@ -158,7 +158,7 @@ class RegisterTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Campo Tópico
+
               DropdownButtonFormField<String>(
                 initialValue: selectedTopic,
                 decoration: const InputDecoration(
@@ -178,7 +178,6 @@ class RegisterTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Campo Subtopic
               DropdownButtonFormField<String>(
                 initialValue: selectedSubtopic,
                 decoration: const InputDecoration(
@@ -197,8 +196,6 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
-
-              // Campos Ano e Fonte lado a lado
               Row(
                 children: [
                   Expanded(
@@ -242,8 +239,6 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
-
-              // Campo Análise do Erro
               TextField(
                 controller: errorDescriptionController,
                 maxLines: 4,
@@ -257,8 +252,6 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-
-              // Seção de imagem
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -327,8 +320,6 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
-
-              // Tipos de erro
               const Text(
                 'Tipo de Erro',
                 style: TextStyle(
@@ -407,8 +398,6 @@ class RegisterTab extends StatelessWidget {
     );
   }
 }
-
-// Classe ErrorCheckbox movida para dentro do RegisterTab
 class _ErrorCheckbox extends StatelessWidget {
   final String label;
   final String subtitle;

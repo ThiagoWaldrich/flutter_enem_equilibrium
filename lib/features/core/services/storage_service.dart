@@ -9,7 +9,6 @@ class StorageService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Salvar dados
   Future<bool> saveData(String key, dynamic data) async {
     try {
       final jsonString = jsonEncode(data);
@@ -20,7 +19,6 @@ class StorageService {
     }
   }
 
-  // Carregar dados
   dynamic getData(String key) {
     try {
       final jsonString = _prefs!.getString(key);
@@ -31,8 +29,6 @@ class StorageService {
       return null;
     }
   }
-
-  // Remover dados
   Future<bool> removeData(String key) async {
     try {
       return await _prefs!.remove(key);
@@ -42,7 +38,6 @@ class StorageService {
     }
   }
 
-  // Limpar todos os dados
   Future<bool> clearAll() async {
     try {
       return await _prefs!.clear();

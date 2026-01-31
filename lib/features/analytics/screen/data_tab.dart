@@ -57,7 +57,6 @@ class _DataTabState extends State<DataTab> {
     super.initState();
     _scrollController.addListener(_onScroll);
 
-    // Observar mudanças nos filtros
     widget.filterSubjectNotifier.addListener(_updateFilterVisibility);
     widget.filterYearNotifier.addListener(_updateFilterVisibility);
     widget.filterSourceNotifier.addListener(_updateFilterVisibility);
@@ -113,7 +112,6 @@ class _DataTabState extends State<DataTab> {
 
     if (filterErrorType != null && filterErrorType.isNotEmpty) {
       filtered = filtered.where((q) {
-        // Converter a string para ErrorType
         switch (filterErrorType) {
           case 'conteudo':
             return q.errorTypes.contains(ErrorType.conteudo);
@@ -142,7 +140,6 @@ class _DataTabState extends State<DataTab> {
 
     return Column(
       children: [
-        // Filtros
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -157,7 +154,6 @@ class _DataTabState extends State<DataTab> {
           ),
           child: Column(
             children: [
-              // Dropdown de Matéria
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -204,8 +200,6 @@ class _DataTabState extends State<DataTab> {
               ),
 
               const SizedBox(height: 8),
-
-              // Dropdown de Ano
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -253,7 +247,6 @@ class _DataTabState extends State<DataTab> {
 
               const SizedBox(height: 8),
 
-              // Dropdown de Fonte
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -301,7 +294,6 @@ class _DataTabState extends State<DataTab> {
 
               const SizedBox(height: 8),
 
-              // Dropdown de Tipo de Erro
               Container(
                 height: 50,
                 decoration: BoxDecoration(
@@ -351,7 +343,6 @@ class _DataTabState extends State<DataTab> {
                 ),
               ),
 
-              // Botão Limpar
               if (_showClearFilters)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
@@ -384,8 +375,6 @@ class _DataTabState extends State<DataTab> {
             ],
           ),
         ),
-
-        // Lista de questões
         Expanded(
           child: widget.isLoading
               ? const Center(child: CircularProgressIndicator())
