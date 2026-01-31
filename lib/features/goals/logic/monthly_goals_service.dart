@@ -13,9 +13,8 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String? _errorMessage;
-  
-
   String? _cachedMonth;
+  String? _selectedLanguage; // 'english' ou 'spanish'
   
   MonthlyGoalsService(this._storageService, this._databaseService) {
     _initializeGoals();
@@ -25,6 +24,7 @@ class MonthlyGoalsService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String? get errorMessage => _errorMessage;
+  String? get selectedLanguage => _selectedLanguage;
   
   void _initializeGoals() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -38,6 +38,7 @@ class MonthlyGoalsService extends ChangeNotifier {
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
   
     if (_cachedMonth == currentMonth && _currentMonthGoals != null) {
+      _selectedLanguage = _currentMonthGoals?['config']?['selectedLanguage'];
       return;
     }
     
@@ -69,6 +70,7 @@ class MonthlyGoalsService extends ChangeNotifier {
     
     if (!mapEquals(_currentMonthGoals, goals)) {
       _currentMonthGoals = goals;
+      _selectedLanguage = goals?['config']?['selectedLanguage'];
     }
   }
   
@@ -78,12 +80,14 @@ class MonthlyGoalsService extends ChangeNotifier {
     required bool includeSunday,
     required bool useAutodiagnostico,
     required Map<String, int> weights,
+    required String selectedLanguage,
   }) async {
     if (_isLoading) return;
     
     _isLoading = true;
     _hasError = false;
     _errorMessage = null;
+    _selectedLanguage = selectedLanguage;
     notifyListeners();
     
     try {
@@ -123,6 +127,7 @@ class MonthlyGoalsService extends ChangeNotifier {
           'studyDays': studyDays,
           'weights': weights,
           'useAutodiagnostico': useAutodiagnostico,
+          'selectedLanguage': selectedLanguage,
         },
         'subjects': subjectHours,
         'questions': {},
@@ -148,8 +153,12 @@ class MonthlyGoalsService extends ChangeNotifier {
     double totalHours,
     Map<String, int> weights,
   ) {
+    final languageSubjects = _selectedLanguage == 'english' 
+        ? ['Inglês']
+        : ['Espanhol'];
+    
     final areas = {
-      'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
+      'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', ...languageSubjects],
       'matematica': ['Matemática'],
       'natureza': ['Física', 'Química', 'Biologia'],
       'humanas': ['História', 'Geografia', 'Filosofia', 'Sociologia'],
@@ -191,8 +200,12 @@ class MonthlyGoalsService extends ChangeNotifier {
         });
       }
       
+      final languageSubjects = _selectedLanguage == 'english' 
+          ? ['Inglês']
+          : ['Espanhol'];
+      
       final areas = {
-        'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', 'Inglês', 'Espanhol'],
+        'linguagens': ['Língua Portuguesa', 'Literatura', 'Artes', ...languageSubjects],
         'matematica': ['Matemática'],
         'natureza': ['Física', 'Química', 'Biologia'],
         'humanas': ['História', 'Geografia', 'Filosofia', 'Sociologia'],
@@ -298,11 +311,9 @@ class MonthlyGoalsService extends ChangeNotifier {
     return questions.map((key, value) => MapEntry(key, (value as int)));
   }
 
- 
   Future<void> syncWithCalendar(Map<String, int> calendarQuestions) async {
     if (_currentMonthGoals == null) return;
     
- 
     final currentQuestions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
     if (mapEquals(currentQuestions, calendarQuestions)) {
       return; 
@@ -371,5 +382,4 @@ class MonthlyGoalsService extends ChangeNotifier {
     _cachedMonth = null; 
     await _safeLoadCurrentMonthGoals();
   }
-  
 }
