@@ -173,6 +173,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                 _buildConfigRow(
                     'Domingo', config['includeSunday'] ? 'Sim' : 'Não'),
                 _buildConfigRow('Total de horas', '${config['totalHours']}h'),
+                _buildConfigRow('Idioma', config['selectedLanguage'] == 'english' ? 'Inglês' : 'Espanhol'),
               ],
             ),
           ),
@@ -305,6 +306,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
   double _hoursPerDay = 6.0;
   bool _includeSaturday = true;
   bool _includeSunday = false;
+  String _selectedLanguage = 'english';
 
   final Map<String, int> _weights = {
     'linguagens': 2,
@@ -408,6 +410,26 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
                       value: _includeSunday,
                       onChanged: (value) =>
                           setState(() => _includeSunday = value ?? false),
+                    ),
+
+                    const SizedBox(height: 24),
+                    const Text('Selecione o idioma',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    RadioListTile<String>(
+                      title: const Text('Inglês'),
+                      value: 'english',
+                      groupValue: _selectedLanguage,
+                      onChanged: (value) =>
+                          setState(() => _selectedLanguage = value ?? 'english'),
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('Espanhol'),
+                      value: 'spanish',
+                      groupValue: _selectedLanguage,
+                      onChanged: (value) =>
+                          setState(() => _selectedLanguage = value ?? 'english'),
                     ),
 
                     const SizedBox(height: 24),
@@ -546,6 +568,7 @@ class _GoalGeneratorDialogState extends State<_GoalGeneratorDialog> {
         includeSunday: _includeSunday,
         useAutodiagnostico: _useAutodiagnostico,
         weights: _weights,
+        selectedLanguage: _selectedLanguage,
       );
 
       if (!mounted) return;
