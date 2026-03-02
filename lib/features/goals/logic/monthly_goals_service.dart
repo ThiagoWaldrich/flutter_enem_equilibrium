@@ -10,17 +10,21 @@ class MonthlyGoalsService extends ChangeNotifier {
   final DatabaseService _databaseService;
   
   Map<String, dynamic>? _currentMonthGoals;
+  Map<String, Map<String, dynamic>> _historicalGoals = {};
+  List<String> _availableMonths = [];
   bool _isLoading = false;
   bool _hasError = false;
   String? _errorMessage;
   String? _cachedMonth;
-  String? _selectedLanguage; // 'english' ou 'spanish'
+  String? _selectedLanguage;
   
   MonthlyGoalsService(this._storageService, this._databaseService) {
     _initializeGoals();
   }
   
   Map<String, dynamic>? get currentMonthGoals => _currentMonthGoals;
+  Map<String, Map<String, dynamic>> get historicalGoals => _historicalGoals;
+  List<String> get availableMonths => _availableMonths;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String? get errorMessage => _errorMessage;
@@ -48,17 +52,63 @@ class MonthlyGoalsService extends ChangeNotifier {
     notifyListeners();
     
     try {
+      await _loadAvailableMonths();
       await _loadCurrentMonthGoals();
+      await _loadHistoricalGoals();
       _cachedMonth = currentMonth;
     } catch (e) {
       _hasError = true;
       _errorMessage = 'Erro ao carregar metas: $e';
       if (kDebugMode) {
-        print('Erro em _loadCurrentMonthGoals: $e');
+        print('Erro em _safeLoadCurrentMonthGoals: $e');
       }
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+  
+  Future<void> _loadAvailableMonths() async {
+    try {
+      final monthsKey = '${AppConstants.keyMonthlyGoals}_available_months';
+      final savedMonths = _storageService.getData(monthsKey) as List<dynamic>?;
+      
+      if (savedMonths != null) {
+        _availableMonths = savedMonths.map((m) => m.toString()).toList();
+      } else {
+        _availableMonths = [];
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro ao carregar meses disponíveis: $e');
+      }
+      _availableMonths = [];
+    }
+  }
+  
+  Future<void> _saveAvailableMonths() async {
+    try {
+      final monthsKey = '${AppConstants.keyMonthlyGoals}_available_months';
+      await _storageService.saveData(monthsKey, _availableMonths);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro ao salvar meses disponíveis: $e');
+      }
+    }
+  }
+  
+  Future<void> _addMonthToAvailable(String month) async {
+    if (!_availableMonths.contains(month)) {
+      _availableMonths.add(month);
+      _availableMonths.sort((a, b) => b.compareTo(a)); // Ordena do mais recente para o mais antigo
+      await _saveAvailableMonths();
+    }
+  }
+  
+  Future<void> _removeMonthFromAvailable(String month) async {
+    if (_availableMonths.contains(month)) {
+      _availableMonths.remove(month);
+      await _saveAvailableMonths();
     }
   }
   
@@ -72,6 +122,70 @@ class MonthlyGoalsService extends ChangeNotifier {
       _currentMonthGoals = goals;
       _selectedLanguage = goals?['config']?['selectedLanguage'];
     }
+  }
+  
+  Future<void> _loadHistoricalGoals() async {
+    try {
+      _historicalGoals = {};
+      
+      // Carrega apenas os meses históricos (excluindo o atual)
+      final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+      
+      for (final month in _availableMonths) {
+        if (month != currentMonth) {
+          final goalsKey = '${AppConstants.keyMonthlyGoals}_$month';
+          final goals = _storageService.getData(goalsKey);
+          
+          if (goals != null) {
+            _historicalGoals[month] = goals;
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro ao carregar metas históricas: $e');
+      }
+    }
+  }
+  
+  Future<Map<String, dynamic>?> getGoalsForMonth(String month) async {
+    if (month == DateFormat('yyyy-MM').format(DateTime.now())) {
+      return _currentMonthGoals;
+    }
+    
+    // Verifica no cache primeiro
+    if (_historicalGoals.containsKey(month)) {
+      return _historicalGoals[month];
+    }
+    
+    // Carrega do storage
+    final goalsKey = '${AppConstants.keyMonthlyGoals}_$month';
+    final goals = _storageService.getData(goalsKey);
+    
+    if (goals != null) {
+      _historicalGoals[month] = goals;
+    }
+    
+    return goals;
+  }
+  
+  Future<List<String>> getAvailableMonths() async {
+    // Retorna uma cópia da lista ordenada
+    return List.from(_availableMonths);
+  }
+  
+  Future<List<Map<String, dynamic>>> getMonthlySummaries() async {
+    final summaries = <Map<String, dynamic>>[];
+    
+    for (final month in _availableMonths) {
+      final goals = await getGoalsForMonth(month);
+      if (goals != null) {
+        final progress = calculateProgressForMonth(goals);
+        summaries.add(progress);
+      }
+    }
+    
+    return summaries;
   }
   
   Future<void> generateGoals({
@@ -92,6 +206,13 @@ class MonthlyGoalsService extends ChangeNotifier {
     
     try {
       final now = DateTime.now();
+      final currentMonth = DateFormat('yyyy-MM').format(now);
+      
+      // Verifica se já existem metas para o mês atual
+      final existingGoals = _storageService.getData('${AppConstants.keyMonthlyGoals}_$currentMonth');
+      final existingQuestions = existingGoals?['questions'] ?? {};
+      final existingProgress = existingGoals?['progress'] ?? {};
+      
       final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
       
       int studyDays = 0;
@@ -115,10 +236,11 @@ class MonthlyGoalsService extends ChangeNotifier {
         subjectHours = _distributeByWeights(totalHours, weights);
       }
       
-      final currentMonth = DateFormat('yyyy-MM').format(now);
       final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
       
       final goalsData = {
+        'month': currentMonth,
+        'monthName': _getMonthName(now),
         'config': {
           'hoursPerDay': hoursPerDay,
           'includeSaturday': includeSaturday,
@@ -130,13 +252,22 @@ class MonthlyGoalsService extends ChangeNotifier {
           'selectedLanguage': selectedLanguage,
         },
         'subjects': subjectHours,
-        'questions': {},
+        'questions': existingQuestions,
+        'progress': existingProgress,
         'generatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       };
       
       await _storageService.saveData(goalsKey, goalsData);
-      _cachedMonth = currentMonth; 
+      
+      // Adiciona o mês à lista de meses disponíveis
+      await _addMonthToAvailable(currentMonth);
+      
+      _cachedMonth = currentMonth;
+      
+      // Atualiza o cache
       await _loadCurrentMonthGoals();
+      await _loadHistoricalGoals();
     } catch (e) {
       _hasError = true;
       _errorMessage = 'Erro ao gerar metas: $e';
@@ -147,6 +278,25 @@ class MonthlyGoalsService extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+  
+  String _getMonthName(DateTime date) {
+    final monthNames = {
+      1: 'Janeiro',
+      2: 'Fevereiro',
+      3: 'Março',
+      4: 'Abril',
+      5: 'Maio',
+      6: 'Junho',
+      7: 'Julho',
+      8: 'Agosto',
+      9: 'Setembro',
+      10: 'Outubro',
+      11: 'Novembro',
+      12: 'Dezembro',
+    };
+    
+    return '${monthNames[date.month]} ${date.year}';
   }
   
   Map<String, double> _distributeByWeights(
@@ -288,6 +438,23 @@ class MonthlyGoalsService extends ChangeNotifier {
     
     questionsData[subject] = newValue;
     _currentMonthGoals!['questions'] = questionsData;
+    _currentMonthGoals!['updatedAt'] = DateTime.now().toIso8601String();
+    
+    await _storageService.saveData(goalsKey, _currentMonthGoals);
+    notifyListeners();
+  }
+  
+  Future<void> updateSubjectProgress(String subject, Map<String, dynamic> progress) async {
+    if (_currentMonthGoals == null) return;
+    
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+    final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
+    
+    final progressData = Map<String, dynamic>.from(_currentMonthGoals!['progress'] ?? {});
+    progressData[subject] = progress;
+    
+    _currentMonthGoals!['progress'] = progressData;
+    _currentMonthGoals!['updatedAt'] = DateTime.now().toIso8601String();
     
     await _storageService.saveData(goalsKey, _currentMonthGoals);
     notifyListeners();
@@ -316,13 +483,14 @@ class MonthlyGoalsService extends ChangeNotifier {
     
     final currentQuestions = _currentMonthGoals!['questions'] as Map<String, dynamic>?;
     if (mapEquals(currentQuestions, calendarQuestions)) {
-      return; 
+      return;
     }
     
     final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
     final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
     
     _currentMonthGoals!['questions'] = calendarQuestions;
+    _currentMonthGoals!['updatedAt'] = DateTime.now().toIso8601String();
     
     await _storageService.saveData(goalsKey, _currentMonthGoals);
     notifyListeners();
@@ -337,14 +505,53 @@ class MonthlyGoalsService extends ChangeNotifier {
       final goalsKey = '${AppConstants.keyMonthlyGoals}_$currentMonth';
       
       await _storageService.removeData(goalsKey);
+      await _removeMonthFromAvailable(currentMonth);
+      
       _cachedMonth = null;
-      await _loadCurrentMonthGoals();
+      _currentMonthGoals = null;
+      
+      await _loadHistoricalGoals();
     } catch (e) {
       _hasError = true;
       _errorMessage = 'Erro ao excluir metas: $e';
       if (kDebugMode) {
         print('Erro em deleteCurrentMonthGoals: $e');
       }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  Future<void> deleteGoalsForMonth(String month) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final goalsKey = '${AppConstants.keyMonthlyGoals}_$month';
+      
+      await _storageService.removeData(goalsKey);
+      await _removeMonthFromAvailable(month);
+      
+      // Remove do cache
+      if (_historicalGoals.containsKey(month)) {
+        _historicalGoals.remove(month);
+      }
+      
+      // Se for o mês atual, limpa o cache
+      if (month == DateFormat('yyyy-MM').format(DateTime.now())) {
+        _currentMonthGoals = null;
+        _cachedMonth = null;
+      }
+      
+      notifyListeners();
+    } catch (e) {
+      _hasError = true;
+      _errorMessage = 'Erro ao excluir metas do mês $month: $e';
+      if (kDebugMode) {
+        print('Erro em deleteGoalsForMonth: $e');
+      }
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -378,8 +585,118 @@ class MonthlyGoalsService extends ChangeNotifier {
     return _currentMonthGoals != null;
   }
   
+  bool hasGoalsForMonth(String month) {
+    if (month == DateFormat('yyyy-MM').format(DateTime.now())) {
+      return _currentMonthGoals != null;
+    }
+    return _availableMonths.contains(month);
+  }
+  
   Future<void> reload() async {
-    _cachedMonth = null; 
+    _cachedMonth = null;
+    _historicalGoals.clear();
     await _safeLoadCurrentMonthGoals();
+  }
+  
+  // Método para buscar metas antigas que não estão na lista
+  Future<void> searchForOldGoals() async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      // Verifica os últimos 24 meses
+      final now = DateTime.now();
+      for (int i = 0; i < 24; i++) {
+        final date = DateTime(now.year, now.month - i, 1);
+        final month = DateFormat('yyyy-MM').format(date);
+        final goalsKey = '${AppConstants.keyMonthlyGoals}_$month';
+        final goals = _storageService.getData(goalsKey);
+        
+        if (goals != null && !_availableMonths.contains(month)) {
+          await _addMonthToAvailable(month);
+          _historicalGoals[month] = goals;
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro em searchForOldGoals: $e');
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  // Método para calcular o progresso de um mês específico
+  Map<String, dynamic> calculateProgressForMonth(Map<String, dynamic> goals) {
+    if (goals == null || goals.isEmpty) return {};
+    
+    final subjects = goals['subjects'] as Map<String, dynamic>? ?? {};
+    final questions = goals['questions'] as Map<String, dynamic>? ?? {};
+    final config = goals['config'] as Map<String, dynamic>? ?? {};
+    final storedProgress = goals['progress'] as Map<String, dynamic>? ?? {};
+    
+    final progress = <String, Map<String, dynamic>>{};
+    double totalGoalHours = 0;
+    int totalQuestions = 0;
+    
+    for (final subject in subjects.keys) {
+      final goalHours = (subjects[subject] as num).toDouble();
+      final questionCount = (questions[subject] as num?)?.toInt() ?? 0;
+      
+      // Tenta usar o progresso armazenado, se disponível
+      final stored = storedProgress[subject] as Map<String, dynamic>?;
+      
+      if (stored != null) {
+        // Usa dados de progresso armazenados
+        final completedHours = (stored['completedHours'] as num?)?.toDouble() ?? 0;
+        final percentage = goalHours > 0 ? (completedHours / goalHours * 100) : 0;
+        
+        progress[subject] = {
+          'goalHours': goalHours,
+          'questions': questionCount,
+          'completedHours': completedHours,
+          'percentage': percentage.clamp(0, 100),
+          'lastUpdated': stored['lastUpdated'],
+        };
+      } else {
+        // Calcula com base em questões
+        final estimatedHours = questionCount * 4 / 60.0;
+        final percentage = goalHours > 0 ? (estimatedHours / goalHours * 100) : 0;
+        
+        progress[subject] = {
+          'goalHours': goalHours,
+          'questions': questionCount,
+          'completedHours': estimatedHours,
+          'percentage': percentage.clamp(0, 100),
+        };
+      }
+      
+      totalGoalHours += goalHours;
+      totalQuestions += questionCount;
+    }
+    
+    final totalCompletedHours = progress.values.fold<double>(
+      0, (sum, p) => sum + (p['completedHours'] as double)
+    );
+    
+    final totalPercentage = totalGoalHours > 0 ? (totalCompletedHours / totalGoalHours * 100) : 0;
+    
+    return {
+      'month': goals['month'] ?? 'Mês Desconhecido',
+      'monthName': goals['monthName'] ?? 'Mês Desconhecido',
+      'config': config,
+      'progressBySubject': progress,
+      'summary': {
+        'totalGoalHours': totalGoalHours,
+        'totalCompletedHours': totalCompletedHours,
+        'totalQuestions': totalQuestions,
+        'totalPercentage': totalPercentage.clamp(0, 100),
+        'daysStudied': config['studyDays'] ?? 0,
+        'hoursPerDay': config['hoursPerDay'] ?? 0,
+      },
+      'generatedAt': goals['generatedAt'],
+      'updatedAt': goals['updatedAt'],
+    };
   }
 }
