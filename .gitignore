@@ -79,6 +79,7 @@ flutter_*.png
 linked_*.ds
 unlinked.ds
 unlinked_spec.ds
+assets/sounds/rain.mp3
 
 # Android related
 **/android/**/gradle-wrapper.jar
