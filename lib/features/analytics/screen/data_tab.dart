@@ -452,6 +452,7 @@ class _DataTabState extends State<DataTab> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
+        isThreeLine: true,
         leading: Container(
           width: 4,
           height: 50,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:equilibrium/features/questions/models/question.dart';
 import 'package:equilibrium/features/questions/widgets/questions_grid_view.dart';
+import 'package:equilibrium/features/questions/widgets/question_card.dart';
 import 'package:equilibrium/features/core/theme/theme.dart';
 import 'question_detail_dialog.dart';
 
@@ -38,37 +39,44 @@ class NotebookTab extends StatefulWidget {
 }
 
 class _NotebookTabState extends State<NotebookTab> {
-  String? _filterSubject;
-  String? _filterYear;
-  String? _filterSource;
-  String? _filterErrorType;
-  bool _isGridView = true;
+  String _searchQuery = '';
+  String? _selectedSubject; // NOVO: filtro por matéria
+  bool _isGridView = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   List<Question> get _filteredQuestions {
     var result = widget.questions;
 
-    if (_filterSubject != null) {
-      result = result.where((q) => q.subject == _filterSubject).toList();
+    // Filtro por matéria
+    if (_selectedSubject != null) {
+      result = result.where((q) => q.subject == _selectedSubject).toList();
     }
-    if (_filterYear != null) {
-      result = result.where((q) => q.year == _filterYear).toList();
-    }
-    if (_filterSource != null) {
-      result = result.where((q) => q.source == _filterSource).toList();
-    }
-    if (_filterErrorType != null) {
-      final errorType = switch (_filterErrorType) {
-        'conteudo' => ErrorType.conteudo,
-        'atencao' => ErrorType.atencao,
-        'tempo' => ErrorType.tempo,
-        _ => null,
-      };
-      if (errorType != null) {
-        result = result.where((q) => q.errorTypes.contains(errorType)).toList();
-      }
+
+    // Busca por texto (tópico, subtópico, descrição do erro)
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      result = result.where((q) {
+        return q.topic.toLowerCase().contains(query) ||
+            (q.subtopic?.toLowerCase().contains(query) ?? false) ||
+            (q.errorDescription?.toLowerCase().contains(query) ?? false);
+      }).toList();
     }
 
     return result;
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _searchQuery = '';
+      _selectedSubject = null;
+      _searchController.clear();
+    });
   }
 
   void _showDetails(Question q, {bool withActions = true}) {
@@ -89,39 +97,157 @@ class _NotebookTabState extends State<NotebookTab> {
     }
 
     final displayed = _filteredQuestions;
+    final hasActiveFilters = _selectedSubject != null || _searchQuery.isNotEmpty;
 
     return Column(
       children: [
-        _FilterBar(
-          subjectStats: widget.subjectStats,
-          yearStats: widget.yearStats,
-          sourceStats: widget.sourceStats,
-          totalQuestions: widget.totalQuestions,
-          filterSubject: _filterSubject,
-          filterYear: _filterYear,
-          filterSource: _filterSource,
-          filterErrorType: _filterErrorType,
-          isGridView: _isGridView,
-          onSubjectChanged: (v) => setState(() => _filterSubject = v),
-          onYearChanged: (v) => setState(() => _filterYear = v),
-          onSourceChanged: (v) => setState(() => _filterSource = v),
-          onErrorTypeChanged: (v) => setState(() => _filterErrorType = v),
-          onGridToggle: (v) => setState(() => _isGridView = v),
+        // 🔍 Barra de busca + filtros
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Buscar por tópico, subtópico ou erro...',
+                        prefixIcon: const Icon(Icons.search, size: 20),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _searchController.clear();
+                                  });
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      ),
+                      onChanged: (value) => setState(() => _searchQuery = value),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Botões de visualização
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.grid_view,
+                              color: _isGridView ? Colors.blue : Colors.grey),
+                          onPressed: () => setState(() => _isGridView = true),
+                          tooltip: 'Visualização em grade',
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.view_list,
+                              color: !_isGridView ? Colors.blue : Colors.grey),
+                          onPressed: () => setState(() => _isGridView = false),
+                          tooltip: 'Visualização em lista',
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Chips de filtro por matéria
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    // Chip "Todas" - limpa o filtro de matéria
+                    FilterChip(
+                      label: const Text('Todas as matérias'),
+                      selected: _selectedSubject == null,
+                      onSelected: (_) => setState(() => _selectedSubject = null),
+                      backgroundColor: Colors.grey[100],
+                      selectedColor: Colors.blue.shade50,
+                      labelStyle: TextStyle(
+                        color: _selectedSubject == null ? Colors.blue : Colors.grey[600],
+                        fontWeight: _selectedSubject == null ? FontWeight.w500 : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Chips para cada matéria
+                    ...widget.subjectStats.keys.map((subject) {
+                      final count = widget.subjectStats[subject] ?? 0;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: Text('$subject ($count)'),
+                          selected: _selectedSubject == subject,
+                          onSelected: (_) => setState(() => _selectedSubject = subject),
+                          backgroundColor: Colors.grey[100],
+                          selectedColor: AppTheme.getSubjectColor(subject).withValues(alpha: 0.2),
+                          labelStyle: TextStyle(
+                            color: _selectedSubject == subject ? AppTheme.getSubjectColor(subject) : Colors.grey[600],
+                            fontWeight: _selectedSubject == subject ? FontWeight.w500 : null,
+                          ),
+                          avatar: _selectedSubject == subject
+                              ? Icon(Icons.check, size: 16, color: AppTheme.getSubjectColor(subject))
+                              : null,
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 4),
-        _ResultsHeader(
-          count: displayed.length,
-          isLoadingMore: false, // controlado pelo pai via hasMoreQuestions
+
+        // 📊 Linha com total de questões e botão limpar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${displayed.length} ${displayed.length == 1 ? 'questão' : 'questões'}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.grey),
+              ),
+              if (hasActiveFilters)
+                TextButton.icon(
+                  onPressed: _clearFilters,
+                  icon: const Icon(Icons.clear, size: 14),
+                  label: const Text('Limpar filtros'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+            ],
+          ),
         ),
+
         const SizedBox(height: 4),
+
+        // 📄 Lista / Grade de questões
         Expanded(
           child: displayed.isEmpty
-              ? const _EmptyState()
+              ? _EmptyState(hasActiveFilters: hasActiveFilters)
               : NotificationListener<ScrollNotification>(
                   onNotification: (info) {
                     if (widget.hasMoreQuestions &&
-                        info.metrics.pixels >=
-                            info.metrics.maxScrollExtent - 200) {
+                        info.metrics.pixels >= info.metrics.maxScrollExtent - 200) {
                       widget.onLoadMore();
                     }
                     return false;
@@ -133,13 +259,30 @@ class _NotebookTabState extends State<NotebookTab> {
                           onEditQuestion: widget.onEditQuestion,
                           onDeleteQuestion: widget.onDeleteQuestion,
                         )
-                      : _ListViewContent(
-                          questions: displayed,
-                          hasMore: widget.hasMoreQuestions,
-                          onTap: (q) => _showDetails(q),
-                          onEdit: widget.onEditQuestion,
-                          onDelete: widget.onDeleteQuestion,
-                          onDetails: (q) => _showDetails(q, withActions: false),
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(12),
+                          itemCount: displayed.length + (widget.hasMoreQuestions ? 1 : 0),
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (_, index) {
+                            if (index >= displayed.length) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            final q = displayed[index];
+                            return QuestionCard(
+                              question: q,
+                              compact: true,
+                              showThumbnail: true,
+                              showImage: true,
+                              onTap: () => _showDetails(q),
+                              onEdit: () => widget.onEditQuestion(q),
+                              onDelete: () => widget.onDeleteQuestion(q),
+                            );
+                          },
                         ),
                 ),
         ),
@@ -148,321 +291,34 @@ class _NotebookTabState extends State<NotebookTab> {
   }
 }
 
-class _FilterBar extends StatelessWidget {
-  final Map<String, int> subjectStats;
-  final Map<String, int> yearStats;
-  final Map<String, int> sourceStats;
-  final int totalQuestions;
-
-  final String? filterSubject;
-  final String? filterYear;
-  final String? filterSource;
-  final String? filterErrorType;
-  final bool isGridView;
-
-  final ValueChanged<String?> onSubjectChanged;
-  final ValueChanged<String?> onYearChanged;
-  final ValueChanged<String?> onSourceChanged;
-  final ValueChanged<String?> onErrorTypeChanged;
-  final ValueChanged<bool> onGridToggle;
-
-  const _FilterBar({
-    required this.subjectStats,
-    required this.yearStats,
-    required this.sourceStats,
-    required this.totalQuestions,
-    required this.filterSubject,
-    required this.filterYear,
-    required this.filterSource,
-    required this.filterErrorType,
-    required this.isGridView,
-    required this.onSubjectChanged,
-    required this.onYearChanged,
-    required this.onSourceChanged,
-    required this.onErrorTypeChanged,
-    required this.onGridToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.white,
-      child: Column(
-        children: [
-          _FilterDropdown(
-            value: filterSubject,
-            label: 'Filtrar por matéria',
-            allLabel: 'Todas',
-            items: subjectStats.keys.toList(),
-            onChanged: onSubjectChanged,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _FilterDropdown(
-                  value: filterYear,
-                  label: 'Filtrar por ano',
-                  allLabel: 'Todos',
-                  items: yearStats.keys.toList(),
-                  onChanged: onYearChanged,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _FilterDropdown(
-                  value: filterSource,
-                  label: 'Filtrar por fonte',
-                  allLabel: 'Todas',
-                  items: sourceStats.keys.toList(),
-                  onChanged: onSourceChanged,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _FilterDropdown(
-            value: filterErrorType,
-            label: 'Filtrar por tipo de erro',
-            allLabel: 'Todos',
-            items: const ['conteudo', 'atencao', 'tempo'],
-            displayNames: const {
-              'conteudo': 'Conteúdo',
-              'atencao': 'Atenção',
-              'tempo': 'Tempo',
-            },
-            onChanged: onErrorTypeChanged,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total: $totalQuestions questões',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.grid_view,
-                      color: isGridView ? Colors.blue : Colors.grey,
-                    ),
-                    onPressed: () => onGridToggle(true),
-                    tooltip: 'Visualização em grade',
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.view_list,
-                      color: !isGridView ? Colors.blue : Colors.grey,
-                    ),
-                    onPressed: () => onGridToggle(false),
-                    tooltip: 'Visualização em lista',
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterDropdown extends StatelessWidget {
-  final String? value;
-  final String label;
-  final String allLabel;
-  final List<String> items;
-  final Map<String, String>? displayNames;
-  final ValueChanged<String?> onChanged;
-
-  const _FilterDropdown({
-    required this.value,
-    required this.label,
-    required this.allLabel,
-    required this.items,
-    this.displayNames,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownButtonFormField<String?>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      items: [
-        DropdownMenuItem(value: null, child: Text(allLabel)),
-        ...items.map(
-          (item) => DropdownMenuItem(
-            value: item,
-            child: Text(displayNames?[item] ?? item),
-          ),
-        ),
-      ],
-      onChanged: onChanged,
-    );
-  }
-}
-
-class _ResultsHeader extends StatelessWidget {
-  final int count;
-  final bool isLoadingMore;
-
-  const _ResultsHeader({
-    required this.count,
-    required this.isLoadingMore,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: Colors.grey[50],
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Resultados: $count questões',
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
-          ),
-          if (isLoadingMore)
-            const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-        ],
-      ),
-    );
-  }
-}
+// ========== ESTADO VAZIO ==========
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  final bool hasActiveFilters;
+
+  const _EmptyState({this.hasActiveFilters = false});
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
+        children: [
           Icon(Icons.search_off, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
-            'Nenhuma questão encontrada',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            hasActiveFilters ? 'Nenhuma questão encontrada' : 'Nenhuma questão cadastrada',
+            style: const TextStyle(fontSize: 16, color: Colors.grey),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            'Tente ajustar os filtros',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            hasActiveFilters 
+                ? 'Tente ajustar os filtros ou a busca'
+                : 'Adicione questões na aba "Cadastrar"',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ListViewContent extends StatelessWidget {
-  final List<Question> questions;
-  final bool hasMore;
-  final void Function(Question) onTap;
-  final void Function(Question) onEdit;
-  final void Function(Question) onDelete;
-  final void Function(Question) onDetails;
-
-  const _ListViewContent({
-    required this.questions,
-    required this.hasMore,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onDetails,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: questions.length + (hasMore ? 1 : 0),
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, index) {
-        if (index >= questions.length) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-
-        final q = questions[index];
-        return Card(
-          elevation: 2,
-          child: ListTile(
-            leading: Container(
-              width: 4,
-              height: 50,
-              color: AppTheme.getSubjectColor(q.subject),
-            ),
-            title: Text(
-              q.subject,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(q.topic),
-                if (q.subtopic != null)
-                  Text(
-                    'Subtópico: ${q.subtopic}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                if (q.year != null)
-                  Text(
-                    'Ano: ${q.year}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                  onPressed: () => onEdit(q),
-                  tooltip: 'Editar questão',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                  onPressed: () => onDelete(q),
-                  tooltip: 'Excluir questão',
-                ),
-                IconButton(
-                  icon:
-                      const Icon(Icons.visibility, color: Colors.green, size: 20),
-                  onPressed: () => onDetails(q),
-                  tooltip: 'Ver detalhes',
-                ),
-              ],
-            ),
-            onTap: () => onTap(q),
-          ),
-        );
-      },
     );
   }
 }

@@ -60,19 +60,18 @@ class TopicBarChart extends StatelessWidget {
           Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           SizedBox(
-            height: 250,
+            height: 350,
             child: PieChart(
               PieChartData(
                 sectionsSpace: 2,
-                centerSpaceRadius: 50,
                 sections: sortedData.take(8).map((entry) {
                   final percentage = total > 0 ? (entry.value / total * 100).round() : 0;
                   return PieChartSectionData(
                     value: entry.value.toDouble(),
                     title: '${entry.key}\n$percentage%',
                     color: AppTheme.getTopicColor(entry.key),
-                    radius: 70,
-                    titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                    radius: 100,
+                    titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
                   );
                 }).toList(),
               ),

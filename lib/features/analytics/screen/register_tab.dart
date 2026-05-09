@@ -24,6 +24,8 @@ class RegisterTab extends StatelessWidget {
   final String? imageFilePath;
   final bool isEditing;
   final Question? questionToEdit;
+  
+  // CALLBACKS
   final Function(String?)? onSubjectChanged;
   final Function(String?)? onTopicChanged;
   final Function(String?)? onSubtopicChanged;
@@ -93,6 +95,7 @@ class RegisterTab extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Cabeçalho
               Row(
                 children: [
                   Container(
@@ -139,9 +142,9 @@ class RegisterTab extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 24),
 
-
+              // Matéria
               DropdownButtonFormField<String>(
-                initialValue: selectedSubject,
+                value: selectedSubject,
                 decoration: const InputDecoration(
                   labelText: 'Matéria *',
                   prefixIcon: Icon(Icons.book),
@@ -158,9 +161,9 @@ class RegisterTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-
+              // Tópico
               DropdownButtonFormField<String>(
-                initialValue: selectedTopic,
+                value: selectedTopic,
                 decoration: const InputDecoration(
                   labelText: 'Tópico *',
                   prefixIcon: Icon(Icons.topic),
@@ -178,8 +181,9 @@ class RegisterTab extends StatelessWidget {
 
               const SizedBox(height: 16),
 
+              // Subtópico
               DropdownButtonFormField<String>(
-                initialValue: selectedSubtopic,
+                value: selectedSubtopic,
                 decoration: const InputDecoration(
                   labelText: 'Subtópico',
                   prefixIcon: Icon(Icons.subdirectory_arrow_right),
@@ -196,11 +200,13 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
+              
+              // Ano e Fonte
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: selectedYear,
+                      value: selectedYear,
                       decoration: const InputDecoration(
                         labelText: 'Ano *',
                         prefixIcon: Icon(Icons.calendar_today),
@@ -219,7 +225,7 @@ class RegisterTab extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      initialValue: selectedSource,
+                      value: selectedSource,
                       decoration: const InputDecoration(
                         labelText: 'Fonte',
                         prefixIcon: Icon(Icons.source),
@@ -239,6 +245,8 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
+              
+              // Análise do Erro
               TextField(
                 controller: errorDescriptionController,
                 maxLines: 4,
@@ -252,6 +260,8 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
+
+              // Imagem
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -320,6 +330,8 @@ class RegisterTab extends StatelessWidget {
               ),
 
               const SizedBox(height: 24),
+              
+              // Tipos de Erro
               const Text(
                 'Tipo de Erro',
                 style: TextStyle(
@@ -364,6 +376,7 @@ class RegisterTab extends StatelessWidget {
 
               const SizedBox(height: 32),
 
+              // Botões
               Row(
                 children: [
                   Expanded(
@@ -398,6 +411,7 @@ class RegisterTab extends StatelessWidget {
     );
   }
 }
+
 class _ErrorCheckbox extends StatelessWidget {
   final String label;
   final String subtitle;

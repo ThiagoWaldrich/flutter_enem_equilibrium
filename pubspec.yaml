@@ -13,6 +13,7 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
+  audioplayers: ^6.0.0
   
   flutter:
     sdk: flutter
@@ -62,6 +63,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/model.ico
+    - assets/sounds/rain.mp3
 
 # flutter_icons:
 #   image_path: "assets/model.ico"

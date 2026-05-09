@@ -1,4 +1,5 @@
 import 'package:equilibrium/features/questions/widgets/notebook_tab.dart';
+import 'package:equilibrium/features/review/screens/study_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:equilibrium/features/analytics/screen/register_tab.dart';
@@ -67,7 +68,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _errorDescriptionController = TextEditingController();
     _topicController = TextEditingController();
     _subtopicController = TextEditingController();
@@ -462,6 +463,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             Tab(icon: Icon(Icons.add), text: 'Cadastrar'),
             Tab(icon: Icon(Icons.bar_chart), text: 'Gráficos'),
             Tab(icon: Icon(Icons.menu_book), text: 'Caderno'),
+            Tab(icon: Icon(Icons.checklist), text: 'Revisão'),
             Tab(icon: Icon(Icons.lightbulb), text: 'Mapas'),
           ],
         ),
@@ -534,6 +536,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             onDeleteQuestion: _deleteQuestion,
             onLoadMore: _loadMoreQuestions,
           ),
+          const StudyScreen(),
           const MindMapsScreen(key: PageStorageKey<String>('mindmaps')),
         ],
       ),

@@ -9,6 +9,8 @@ class QuestionCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool compact;
+  final bool showThumbnail;
 
   const QuestionCard({
     super.key,
@@ -17,184 +19,232 @@ class QuestionCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.compact = false,
+    this.showThumbnail = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final errorTypes = question.errorTypes.map((e) => e.displayName).toList();
+    final hasImage = question.image != null && showImage;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Card(
         margin: EdgeInsets.zero,
-        elevation: 2,
+        elevation: 1,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           side: BorderSide(color: Colors.grey[200]!, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (question.image != null && showImage)
+            if (hasImage && !compact)
               InkWell(
                 onTap: () => _showImageDialog(context),
                 child: Container(
                   width: double.infinity,
-                  height: 180,
+                  height: 160,
                   decoration: const BoxDecoration(
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
                     ),
                     color: Color(0xFFF5F5F5),
                   ),
                   child: ClipRRect(
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
                     ),
-                    child: _buildImage(fit: BoxFit.cover, cacheSize: 300),
+                    child: _buildImage(fit: BoxFit.cover, cacheSize: 400),
                   ),
                 ),
               ),
+            
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
+              padding: compact 
+                  ? const EdgeInsets.fromLTRB(12, 10, 12, 10)
+                  : const EdgeInsets.all(16),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    question.topic,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1890FF),
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (question.subtopic != null &&
-                      question.subtopic!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        question.subtopic!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[700],
-                          height: 1.3,
+                  if (compact && showThumbnail && hasImage)
+                    GestureDetector(
+                      onTap: () => _showImageDialog(context),
+                      child: Container(
+                        width: 45,
+                        height: 45,
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey[100],
+                          border: Border.all(color: Colors.grey[200]!),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: _buildImage(fit: BoxFit.cover, cacheSize: 100),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  if (question.errorDescription != null &&
-                      question.errorDescription!.isNotEmpty)
+                  
+                  if (compact && !(showThumbnail && hasImage))
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 3,
+                      height: 36,
+                      margin: const EdgeInsets.only(right: 12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF9E6),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: const Color(0xFFFFE58F),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        question.errorDescription!,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          height: 1.5,
-                          color: Color(0xFF595959),
-                        ),
+                        color: AppTheme.getSubjectColor(question.subject),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  if (errorTypes.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: errorTypes.map((type) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(
-                              color: Colors.grey[300]!,
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            type,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDate(question.timestamp),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          if (onEdit != null)
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 16),
-                              onPressed: onEdit,
-                            ),
-                          if (onDelete != null)
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                size: 16,
-                                color: Colors.red,
+                  
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              question.subject,
+                              style: TextStyle(
+                                fontSize: compact ? 10 : 12,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[600],
                               ),
-                              onPressed: onDelete,
                             ),
-                          if (question.image != null)
-                            InkWell(
-                              onTap: () => _showImageDialog(context),
-                              child: const Padding(
-                                padding: EdgeInsets.only(left: 4),
+                            const SizedBox(width: 6),
+                            if (errorTypes.isNotEmpty && compact)
+                              ...errorTypes.take(2).map((type) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                margin: const EdgeInsets.only(right: 4),
+                                decoration: BoxDecoration(
+                                  color: _getErrorColor(type).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Text(
-                                  'Ver imagem',
+                                  type,
                                   style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppTheme.successColor,
+                                    fontSize: 8,
+                                    color: _getErrorColor(type),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                              )),
+                            if (errorTypes.length > 2 && compact)
+                              Text(
+                                '+${errorTypes.length - 2}',
+                                style: TextStyle(fontSize: 8, color: Colors.grey[500]),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          question.topic,
+                          style: TextStyle(
+                            fontSize: compact ? 13 : 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primaryColor,
+                            height: 1.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (question.subtopic != null && question.subtopic!.isNotEmpty)
+                          Text(
+                            question.subtopic!,
+                            style: TextStyle(
+                              fontSize: compact ? 10 : 12,
+                              color: Colors.grey[500],
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        if (!compact && question.errorDescription != null && question.errorDescription!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF9E6),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                question.errorDescription!,
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF595959)),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (onEdit != null)
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 18),
+                          onPressed: onEdit,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      if (onDelete != null)
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                          onPressed: onDelete,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      if (hasImage && !compact)
+                        IconButton(
+                          icon: const Icon(Icons.image, size: 18, color: Colors.blue),
+                          onPressed: () => _showImageDialog(context),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                        ),
                     ],
                   ),
                 ],
               ),
             ),
+            
+            if (!compact)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDate(question.timestamp),
+                      style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getErrorColor(String errorType) {
+    switch (errorType) {
+      case 'Conteúdo': return Colors.red;
+      case 'Atenção': return Colors.orange;
+      case 'Tempo': return Colors.blue;
+      default: return Colors.grey;
+    }
   }
 
   Widget _buildImage({required BoxFit fit, required int cacheSize}) {
@@ -235,7 +285,7 @@ class QuestionCard extends StatelessWidget {
                   child: InteractiveViewer(
                     minScale: 0.5,
                     maxScale: 4.0,
-                    child: _buildImage(fit: BoxFit.contain, cacheSize: 800),
+                    child: _buildImage(fit: BoxFit.contain, cacheSize: 1200),
                   ),
                 ),
               ),
@@ -260,18 +310,18 @@ class QuestionCard extends StatelessWidget {
     );
   }
 
-  static Widget _imageError() {
+  Widget _imageError() {
     return Container(
       color: Colors.grey[200],
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.broken_image, size: 40, color: Colors.grey),
-            SizedBox(height: 8),
+            Icon(Icons.broken_image, size: 24, color: Colors.grey),
+            SizedBox(height: 4),
             Text(
-              'Imagem não encontrada',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              'Erro',
+              style: TextStyle(fontSize: 9, color: Colors.grey),
             ),
           ],
         ),

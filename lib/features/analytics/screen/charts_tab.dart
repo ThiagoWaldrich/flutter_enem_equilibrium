@@ -1,5 +1,4 @@
 import 'package:equilibrium/features/analytics/widgets/topic_bar_chart.dart';
-import 'package:equilibrium/features/analytics/widgets/year_bar_chart.dart';
 import 'package:equilibrium/features/questions/models/question.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -288,6 +287,194 @@ class _ChartsTabState extends State<ChartsTab> {
     );
   }
 
+  // GRÁFICO DE ERROS POR MATÉRIA - substitui o YearBarChart
+  Widget _buildErrorsBySubjectChart() {
+    // Calcula erros por matéria
+    final Map<String, int> errorsBySubject = {};
+    for (final question in widget.questions) {
+      if (question.errorTypes.isNotEmpty) {
+        errorsBySubject[question.subject] = 
+            (errorsBySubject[question.subject] ?? 0) + 1;
+      }
+    }
+    
+    if (errorsBySubject.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Center(
+          child: Column(
+            children: [
+              Icon(Icons.bar_chart, size: 48, color: Colors.grey),
+              SizedBox(height: 16),
+              Text(
+                'Nenhum erro registrado ainda',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Ordenar por quantidade de erros (decrescente)
+    final sortedEntries = errorsBySubject.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    
+    final maxErrors = sortedEntries.first.value.toDouble();
+    
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.bar_chart, color: Colors.red),
+              SizedBox(width: 8),
+              Text(
+                '📊 Erros por Matéria',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Total de erros: ${errorsBySubject.values.reduce((a, b) => a + b)}',
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 400,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: maxErrors * 1.1,
+                minY: 0,
+                barGroups: sortedEntries.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final subjectEntry = entry.value;
+                  
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: subjectEntry.value.toDouble(),
+                        color: AppTheme.getSubjectColor(subjectEntry.key),
+                        width: 40,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(6),
+                          topRight: Radius.circular(6),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < sortedEntries.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: RotatedBox(
+                              quarterTurns: 1,
+                              child: Text(
+                                sortedEntries[index].key,
+                                style: const TextStyle(fontSize: 11),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      reservedSize: 60,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(fontSize: 11),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                gridData: const FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 1,
+                ),
+                borderData: FlBorderData(show: true),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Legenda com valores
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: sortedEntries.map((entry) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.getSubjectColor(entry.key).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppTheme.getSubjectColor(entry.key).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  '${entry.key}: ${entry.value}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.getSubjectColor(entry.key),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSubjectControls() {
     if (_selectedSubject == null) return const SizedBox();
 
@@ -477,7 +664,8 @@ class _ChartsTabState extends State<ChartsTab> {
                 TopicBarChart(data: _subtopicStatsForSubject, title: 'Subtópicos de $_selectedSubject'),
             ],
             const SizedBox(height: 24),
-            if (widget.yearStats.isNotEmpty) YearBarChart(data: widget.yearStats),
+            // GRÁFICO DE ERROS POR MATÉRIA (substitui o YearBarChart)
+            _buildErrorsBySubjectChart(),
           ],
         ),
       ),

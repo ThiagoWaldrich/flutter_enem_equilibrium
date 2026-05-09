@@ -28,13 +28,20 @@ class QuestionsGridView extends StatelessWidget {
           _ => 1,
         };
 
+        final cardWidth =
+            (constraints.maxWidth - 32 - (crossAxisCount - 1) * 16) /
+                crossAxisCount;
+
+        // Altura mínima generosa para acomodar cards com muito conteúdo
+        final mainAxisExtent = cardWidth * 1.9;
+
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: 0.75,
+            mainAxisExtent: mainAxisExtent, // altura fixa calculada dinamicamente
           ),
           itemCount: questions.length,
           itemBuilder: (_, index) {
@@ -44,8 +51,9 @@ class QuestionsGridView extends StatelessWidget {
               key: ValueKey(question.id),
               question: question,
               onTap: () => onQuestionTap(question),
-              onEdit:
-                  onEditQuestion != null ? () => onEditQuestion!(question) : null,
+              onEdit: onEditQuestion != null
+                  ? () => onEditQuestion!(question)
+                  : null,
               onDelete: onDeleteQuestion != null
                   ? () => onDeleteQuestion!(question)
                   : null,
