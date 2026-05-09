@@ -1,5 +1,5 @@
 import 'package:equilibrium/features/questions/widgets/notebook_tab.dart';
-import 'package:equilibrium/features/review/screens/study_screen.dart';
+import '../../review/screens/review_home_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:equilibrium/features/analytics/screen/register_tab.dart';
@@ -536,7 +536,7 @@ class _AutodiagnosticoScreenState extends State<AutodiagnosticoScreen>
             onDeleteQuestion: _deleteQuestion,
             onLoadMore: _loadMoreQuestions,
           ),
-          const StudyScreen(),
+          const ReviewHomeScreen(),
           const MindMapsScreen(key: PageStorageKey<String>('mindmaps')),
         ],
       ),
